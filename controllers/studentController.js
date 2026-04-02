@@ -30,14 +30,14 @@ const registerStudent = async (req, res) => {
 };
 
 const loginStudent = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ success: false, message: "Please provide username and password" });
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: "Please provide email and password" });
   }
 
   try {
-    const student = await Student.findOne({ username });
+    const student = await Student.findOne({ email });
 
     if (!student) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });

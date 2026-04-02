@@ -57,7 +57,17 @@ const loginStudent = async (req, res) => {
   }
 };
 
+const getAllStudents = async (req, res) => {
+  try {
+    const students = await Student.find({}, '-password'); // find all students, exclude password from result
+    res.status(200).json({ success: true, students });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 module.exports = {
   registerStudent,
   loginStudent,
+  getAllStudents,
 };

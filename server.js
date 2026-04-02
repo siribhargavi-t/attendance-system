@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const app = express();
+const PORT = 5000; // use 5000 to avoid conflict with frontend
 
 // middleware
 app.use(cors());
@@ -18,6 +19,6 @@ mongoose.connect("mongodb+srv://test:test123@cluster0.ajuicv3.mongodb.net/attend
 .catch(err => console.log(err));
 
 // server
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });

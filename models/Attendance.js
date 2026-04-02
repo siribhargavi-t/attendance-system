@@ -9,11 +9,12 @@ const attendanceSchema = new Schema({
     },
     date: {
         type: Date,
-        required: true
+        required: true,
+        default: Date.now
     },
     status: {
         type: String,
-        enum: ['present', 'absent', 'late'],
+        enum: ['present', 'absent'], // As per your request for 'present' or 'absent'
         required: true
     }
 });

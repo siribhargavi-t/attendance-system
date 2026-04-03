@@ -1,5 +1,6 @@
 const Student = require("../models/student");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const registerStudent = async (req, res) => {
   try {
@@ -49,8 +50,25 @@ const loginStudent = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
-    // You can generate a JWT token here for session management
-    res.status(200).json({ success: true, message: "Login successful" });
+    const payload = {
+      user: {
+        id: student._id
+      }
+    };
+
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET || 'your_jwt_secret',
+      { expiresIn: '1d' }, // Set expiry to 1 day
+      (err, token) => {
+        if (err) throw err;
+        res.status(200).json({
+          success: true,
+          message: "Login successful",
+          token: token
+        });
+      }
+    );
 
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

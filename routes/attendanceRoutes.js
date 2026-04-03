@@ -1,17 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const { markAttendance, getAttendanceByStudentId, getAllAttendance } = require('../controllers/attendanceController');
+const { 
+    markAttendance, 
+    getAttendanceByStudentId, 
+    getAllAttendance, 
+    getAttendanceSummary, 
+    getStudentAttendanceReport, 
+    getMonthlyAttendanceReport,
+    getMyAttendance,
+    getMyAttendanceReport
+} = require('../controllers/attendanceController');
+const authMiddleware = require('../middleware/authMiddleware');
 
-// Defines the POST route for marking attendance
-// The full path will be /api/attendance/mark
-router.post('/mark', markAttendance);
+// PROTECTED ROUTES (for logged-in users)
+router.post('/mark', authMiddleware, markAttendance);
+router.get('/my-records', authMiddleware, getMyAttendance);
+router.get('/my-report', authMiddleware, getMyAttendanceReport);
 
-// Defines the GET route for fetching all attendance records
-// The full path will be /api/attendance/
+
+// PUBLIC / ADMIN ROUTES
 router.get('/', getAllAttendance);
-
-// Defines the GET route for fetching attendance by student ID
-// The full path will be /api/attendance/:studentId
+router.get('/summary', getAttendanceSummary);
+router.get('/monthly', getMonthlyAttendanceReport);
+router.get('/student/:studentId', getStudentAttendanceReport);
 router.get('/:studentId', getAttendanceByStudentId);
+
 
 module.exports = router;

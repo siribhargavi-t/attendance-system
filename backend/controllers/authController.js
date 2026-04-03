@@ -4,10 +4,10 @@ const jwt = require('jsonwebtoken');
 
 const login = async (req, res) => {
     try {
-        const { email, password } = req.body;
+        const { username, password } = req.body;
 
-        // 1. Find user by email
-        const user = await User.findOne({ email });
+        // 1. Find user by username
+        const user = await User.findOne({ username });
         if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }

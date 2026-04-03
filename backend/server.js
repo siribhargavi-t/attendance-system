@@ -14,9 +14,14 @@ app.use(express.json());
 const studentRoutes = require("./routes/studentRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes"); // Import attendance routes
 const adminRoutes = require('./routes/adminRoutes');
+const authController = require('./controllers/authController');
+
 app.use("/api/students", studentRoutes);
 app.use("/api/attendance", attendanceRoutes); // Use attendance routes with a base path
 app.use('/api/admin', adminRoutes);
+
+// login route natively used by frontend
+app.post('/api/login', authController.login);
 
 // MongoDB Atlas connection
 mongoose.connect(process.env.MONGO_URI)

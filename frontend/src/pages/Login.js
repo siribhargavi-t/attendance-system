@@ -1,7 +1,6 @@
 import "./Login.css";
 import React, { useState } from "react";
 import axios from "axios";
-import "./Login.css";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -10,7 +9,7 @@ function Login() {
   const handleLogin = async () => {
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/students/login",
+        "http://localhost:5000/api/login",
         {
           email,
           password,
@@ -25,7 +24,7 @@ function Login() {
       alert("Login Successful ✅");
 
       // optional: redirect
-      window.location.href = "/attendance";
+      window.location.href = "/Attendance";
 
     } catch (err) {
       console.error(err);

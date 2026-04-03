@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -14,9 +15,9 @@ const studentRoutes = require("./routes/studentRoutes");
 app.use("/api/students", studentRoutes);
 
 // MongoDB Atlas connection
-mongoose.connect("mongodb+srv://test:test123@cluster0.ajuicv3.mongodb.net/attendance-system")
+mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("Connected to MongoDB"))
-.catch(err => console.log(err));
+.catch(err => console.error("MongoDB Error:", err.message));
 
 // server
 app.listen(PORT, () => {

@@ -1,5 +1,6 @@
 const Student = require("../models/student");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 const registerStudent = async (req, res) => {
   try {
@@ -30,14 +31,14 @@ const registerStudent = async (req, res) => {
 };
 
 const loginStudent = async (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ success: false, message: "Please provide username and password" });
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: "Please provide email and password" });
   }
 
   try {
-    const student = await Student.findOne({ username });
+    const student = await Student.findOne({ email });
 
     if (!student) {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
@@ -49,9 +50,35 @@ const loginStudent = async (req, res) => {
       return res.status(401).json({ success: false, message: "Invalid credentials" });
     }
 
-    // You can generate a JWT token here for session management
-    res.status(200).json({ success: true, message: "Login successful" });
+    const payload = {
+      user: {
+        id: student._id
+      }
+    };
 
+    jwt.sign(
+      payload,
+      process.env.JWT_SECRET || 'your_jwt_secret',
+      { expiresIn: '1d' }, // Set expiry to 1 day
+      (err, token) => {
+        if (err) throw err;
+        res.status(200).json({
+          success: true,
+          message: "Login successful",
+          token: token
+        });
+      }
+    );
+
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+const getAllStudents = async (req, res) => {
+  try {
+    const students = await Student.find({}, '-password'); // find all students, exclude password from result
+    res.status(200).json({ success: true, students });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -60,4 +87,5 @@ const loginStudent = async (req, res) => {
 module.exports = {
   registerStudent,
   loginStudent,
+  getAllStudents,
 };

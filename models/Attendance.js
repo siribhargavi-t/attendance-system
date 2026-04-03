@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import React, { useState } from "react";
 import axios from "axios";
 
@@ -27,6 +28,26 @@ function AttendanceForm() {
     } catch (err) {
       console.error(err);
       alert("Error storing attendance ❌");
+=======
+// create mongoose schema for attendance with studentId, date, status
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+const attendanceSchema = new Schema({
+    studentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Student',
+        required: true
+    },
+    date: {
+        type: Date,
+        required: true,
+        default: Date.now
+    },
+    status: {
+        type: String,
+        enum: ['present', 'absent'], // As per your request for 'present' or 'absent'
+        required: true
+>>>>>>> e6b0874d42ba57d0ee79310642bc0ad2025bae5a
     }
   };
 

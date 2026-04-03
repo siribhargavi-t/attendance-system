@@ -62,7 +62,34 @@ const getAttendanceByStudentId = async (req, res) => {
   }
 };
 
+// Fetches all attendance records and populates student details
+const getAllAttendance = async (req, res) => {
+    try {
+        const { date } = req.query;
+        const query = {};
+
+        if (date) {
+            // Converts query date to the start of the day
+            const startDate = new Date(date);
+            startDate.setUTCHours(0, 0, 0, 0);
+
+            // Converts query date to the end of the day
+            const endDate = new Date(date);
+            endDate.setUTCHours(23, 59, 59, 999);
+            
+            // Uses $gte and $lte to filter within the date range
+            query.date = { $gte: startDate, $lte: endDate };
+        }
+
+        const attendanceRecords = await Attendance.find(query).populate('studentId', 'name rollNumber'); // Populates with student's name and rollNumber
+        res.status(200).json({ success: true, data: attendanceRecords });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Error fetching attendance records', error: error.message });
+    }
+};
+
 module.exports = {
   markAttendance,
   getAttendanceByStudentId,
+  getAllAttendance
 };

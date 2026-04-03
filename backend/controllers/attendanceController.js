@@ -1,6 +1,9 @@
 const Attendance = require('../models/Attendance');
 const Student = require('../models/student');
 
+// @desc    Mark attendance for a student
+// @route   POST /api/attendance
+// @access  Private
 const markAttendance = async (req, res) => {
   try {
     const studentId = req.user.id; 
@@ -43,6 +46,20 @@ const markAttendance = async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// @desc    Get full attendance report
+// @route   GET /api/attendance/report
+// @access  Private
+const getAttendanceReport = async (req, res) => {
+  try {
+    // This is already correct and populates the student's name and email.
+    const report = await Attendance.find({}).populate('studentId', 'name email');
+    res.status(200).json(report);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to fetch attendance report.' });
   }
 };
 
@@ -299,6 +316,7 @@ const getAdminStats = async (req, res) => {
 
 module.exports = {
   markAttendance,
+  getAttendanceReport,
   getMyAttendance,
   getAttendanceByStudentId,
   getAllAttendance,

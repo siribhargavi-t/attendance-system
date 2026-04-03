@@ -7,7 +7,11 @@ const app = express();
 const PORT = 5000; // use 5000 to avoid conflict with frontend
 
 // middleware
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:3000",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 app.use(express.json());
 
 // routes

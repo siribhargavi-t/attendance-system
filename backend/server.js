@@ -1,55 +1,37 @@
-require("dotenv").config();
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const dotenv = require('dotenv');
 
+// Load environment variables from .env file
+dotenv.config();
+
+// Initialize Express app
 const app = express();
-const PORT = 5001; // changed to 5001 to bypass macOS AirPlay control receiver
 
-// middleware
-app.use(cors());
-app.use(express.json());
+// Middleware
+app.use(cors()); // Enable Cross-Origin Resource Sharing
+app.use(express.json()); // Middleware to parse JSON bodies
 
-// routes
-const studentRoutes = require("./routes/studentRoutes");
-const attendanceRoutes = require("./routes/attendanceRoutes"); 
-const adminRoutes = require('./routes/adminRoutes');
-const authRoutes = require('./routes/authRoutes');
+// --- Database Connection ---
+const MONGO_URI = process.env.MONGO_URI;
 
-app.use("/api/auth", authRoutes);
-app.use("/api/students", studentRoutes);
-app.use("/api/attendance", attendanceRoutes);
-app.use('/api/admin', adminRoutes);
+mongoose.connect(MONGO_URI)
+.then(() => console.log('MongoDB Connected...'))
+.catch(err => console.error('MongoDB Connection Error:', err));
 
-const User = require('./models/User');
-const bcrypt = require('bcryptjs');
+// --- API Routes ---
+// Import your route files
+const authRoutes = require('./routes/auth');
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
-.then(async () => {
-    console.log("Connected to MongoDB");
-    try {
-        const adminCount = await User.countDocuments({ role: 'admin' });
-        if (adminCount === 0) {
-            const salt = await bcrypt.genSalt(10);
-            const hashedPassword = await bcrypt.hash('password123', salt);
-            const defaultAdmin = new User({
-                username: 'admin',
-                email: 'admin@system.com',
-                password: hashedPassword,
-                role: 'admin',
-                isSuperAdmin: true
-            });
-            await defaultAdmin.save();
-            console.log("Default admin account created: [admin / password123]");
-        }
-    } catch (err) {
-        console.error("Error seeding default admin:", err);
-    }
-})
-.catch(err => console.log(err));
+// Use the routes with a base path
+app.use('/api/auth', authRoutes);
+// You will add other routes here later, e.g., app.use('/api/students', studentRoutes);
 
-// server
+
+// --- Server Initialization ---
+const PORT = process.env.PORT || 5000;
+
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });

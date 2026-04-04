@@ -1,19 +1,34 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Login from "./pages/Login"
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import Attendance from "./pages/Attendance";
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Login from './components/Login';
+import Dashboard from './components/Dashboard';
+import MarkAttendance from './components/MarkAttendance';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
-    <BrowserRouter>
+    <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/attendance" element={<Attendance />} />
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/mark-attendance" 
+          element={
+            <ProtectedRoute>
+              <MarkAttendance />
+            </ProtectedRoute>
+          } 
+        />
+        {/* Add other routes here */}
       </Routes>
-    </BrowserRouter>
+    </Router>
   );
 }
 

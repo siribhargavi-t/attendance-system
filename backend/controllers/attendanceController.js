@@ -30,7 +30,7 @@ const checkAndSendLowAttendanceEmail = async (student, subjectId, threshold) => 
 const markAttendance = async (req, res) => {
     try {
         const adminId = req.user.id; 
-        const { studentId, subjectId, status, date } = req.body;
+        const { studentId, subjectId, status, date, startTime, endTime } = req.body;
 
         if (!studentId || !subjectId || !status || !date) {
             return res.status(400).json({ success: false, message: 'All fields are required.' });
@@ -50,7 +50,9 @@ const markAttendance = async (req, res) => {
         let attendance = await Attendance.findOne({
             studentId,
             subjectId,
-            date: { $gte: markDate, $lt: tomorrow }
+            date: { $gte: markDate, $lt: tomorrow },
+            startTime,
+            endTime
         });
 
         // "teacher can able to change the attenedece of the student withh on a day itself"
@@ -58,14 +60,18 @@ const markAttendance = async (req, res) => {
         const differenceInTime = now.getTime() - markDate.getTime();
         const differenceInDays = differenceInTime / (1000 * 3600 * 24);
 
+        const markedAt = new Date(); // exact timestamp of this marking action
+
         if (attendance) {
             if (differenceInDays > 1 && attendance.status !== status) {
-                 // Might allow or deny based on strictness. Allowing for now but noting.
                  attendance.status = status;
             } else {
                  attendance.status = status;
             }
             attendance.markedBy = adminId;
+            attendance.markedAt = markedAt;
+            attendance.startTime = startTime;
+            attendance.endTime = endTime;
             await attendance.save();
         } else {
             attendance = new Attendance({
@@ -73,7 +79,10 @@ const markAttendance = async (req, res) => {
                 subjectId,
                 status,
                 date: markDate,
-                markedBy: adminId
+                markedBy: adminId,
+                markedAt,
+                startTime,
+                endTime
             });
             await attendance.save();
         }
@@ -102,10 +111,26 @@ const markAttendance = async (req, res) => {
 
 const getAdminAllAttendance = async (req, res) => {
     try {
-        const attendanceRecords = await Attendance.find()
-            .populate('studentId', 'name rollNumber')
+        const query = {};
+
+        // Optional date filter: ?date=YYYY-MM-DD  (matches records for that calendar day)
+        if (req.query.date) {
+            const d = new Date(req.query.date);
+            d.setUTCHours(0, 0, 0, 0);
+            const next = new Date(d);
+            next.setUTCDate(d.getUTCDate() + 1);
+            query.date = { $gte: d, $lt: next };
+        }
+
+        // Optional status filter: ?status=present | absent
+        if (req.query.status && ['present', 'absent'].includes(req.query.status)) {
+            query.status = req.query.status;
+        }
+
+        const attendanceRecords = await Attendance.find(query)
+            .populate('studentId', 'name rollNumber branch')
             .populate('subjectId', 'name code')
-            .sort({ date: -1 });
+            .sort({ markedAt: -1, date: -1 });
 
         res.status(200).json({ success: true, data: attendanceRecords });
     } catch (error) {
@@ -162,7 +187,7 @@ const reviewAttendanceRequest = async (req, res) => {
 const markBulk = async (req, res) => {
     try {
         const adminId = req.user.id;
-        const { subjectId, date, records } = req.body; // records: [{studentId, status}]
+        const { subjectId, date, startTime, endTime, records } = req.body; // records: [{studentId, status}]
 
         if (!subjectId || !date || !Array.isArray(records)) {
             return res.status(400).json({ success: false, message: 'Invalid data format' });
@@ -173,10 +198,11 @@ const markBulk = async (req, res) => {
         const tomorrow = new Date(markDate);
         tomorrow.setUTCDate(markDate.getUTCDate() + 1);
 
+        const now = new Date(); // exact timestamp for bulk marking
         const operations = records.map(record => ({
             updateOne: {
-                filter: { studentId: record.studentId, subjectId, date: { $gte: markDate, $lt: tomorrow } },
-                update: { $set: { status: record.status, markedBy: adminId, date: markDate } },
+                filter: { studentId: record.studentId, subjectId, date: { $gte: markDate, $lt: tomorrow }, startTime, endTime },
+                update: { $set: { status: record.status, markedBy: adminId, date: markDate, markedAt: now, startTime, endTime } },
                 upsert: true
             }
         }));

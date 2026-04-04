@@ -10,6 +10,7 @@ import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
 import Register from "./pages/Auth/Register";
 
+
 import AdminDashboard from "./pages/Admin/Dashboard";
 import ManageAdmins from "./pages/Admin/ManageAdmins";
 import Students from "./pages/Admin/Students";
@@ -21,6 +22,7 @@ import Settings from "./pages/Admin/Settings";
 import StudentDashboard from "./pages/Student/Dashboard";
 import StudentAttendance from "./pages/Student/Attendance";
 import StudentRequest from "./pages/Student/Request";
+import StudentChangePassword from "./pages/Student/ChangePassword";
 
 function App() {
   return (
@@ -57,6 +59,7 @@ function App() {
              <Route index element={<StudentDashboard />} />
              <Route path="attendance" element={<StudentAttendance />} />
              <Route path="request" element={<StudentRequest />} />
+             <Route path="change-password" element={<StudentChangePassword />} />
           </Route>
 
         </Routes>

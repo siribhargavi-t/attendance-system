@@ -1,28 +1,19 @@
 import axios from 'axios';
 
-// Create a new Axios instance with a custom configuration
 const api = axios.create({
-  // Set the base URL for all API requests to your backend server
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'http://localhost:5001/api', // Backend base URL
 });
 
-// Use an interceptor to automatically add the JWT token to every request
+// Add a request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Get the token from local storage
-    const token = localStorage.getItem('token');
-    
-    // If the token exists, add it to the Authorization header
+    const token = localStorage.getItem('token'); // Get token from storage
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`; // Inject token
     }
-    
     return config;
   },
-  (error) => {
-    // Handle request errors
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default api;

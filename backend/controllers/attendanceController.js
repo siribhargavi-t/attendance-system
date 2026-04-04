@@ -314,6 +314,73 @@ const getAdminStats = async (req, res) => {
     }
 };
 
+/**
+ * @desc    Get attendance records, with optional filtering and pagination
+ * @route   GET /api/attendance
+ * @access  Private
+ */
+const getAttendance = async (req, res) => {
+  try {
+    // Extract all potential query parameters
+    const { date, studentId, startDate, endDate } = req.query;
+    const filter = {};
+
+    // --- DATE FILTERING LOGIC ---
+    if (startDate && endDate) {
+      // Date range filter (takes precedence)
+      const start = new Date(startDate);
+      start.setUTCHours(0, 0, 0, 0);
+
+      const end = new Date(endDate);
+      end.setUTCHours(23, 59, 59, 999);
+
+      filter.date = { $gte: start, $lte: end };
+    } else if (date) {
+      // Single day filter
+      const startOfDay = new Date(date);
+      startOfDay.setUTCHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(date);
+      endOfDay.setUTCHours(23, 59, 59, 999);
+      
+      filter.date = { $gte: startOfDay, $lte: endOfDay };
+    }
+
+    // Student ID filter
+    if (studentId) {
+      filter.studentId = studentId;
+    }
+
+    // --- PAGINATION LOGIC ---
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    // Get total number of documents that match the filter
+    const total = await Attendance.countDocuments(filter);
+
+    // Find records with filter, sort, skip, and limit
+    const records = await Attendance.find(filter)
+      .populate("studentId", "name email")
+      .sort({ date: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.json({
+      success: true,
+      total,
+      page,
+      limit,
+      pages: Math.ceil(total / limit),
+      count: records.length,
+      data: records,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
 module.exports = {
   markAttendance,
   getAttendanceReport,
@@ -325,5 +392,6 @@ module.exports = {
   getStudentAttendanceReport,
   getMonthlyAttendanceReport,
   getAdminAllAttendance,
-  getAdminStats
+  getAdminStats,
+  getAttendance
 };

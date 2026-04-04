@@ -3,21 +3,24 @@ const router = express.Router();
 const {
   markAttendance,
   getAttendanceReport,
-  getAttendanceByStudentId // Assuming you have this controller
+  getAttendanceByStudentId,
+  getAttendance 
 } = require('../controllers/attendanceController');
-const authMiddleware = require('../middleware/authMiddleware'); // Assuming you have auth middleware
+const authMiddleware = require('../middleware/authMiddleware');
 
-// --- CORRECT ORDER ---
+// Routes for the base path ('/api/attendance')
+router.route('/')
+  // Temporarily remove authMiddleware to debug
+  .get(getAttendance)    // Handles GET /api/attendance
+  .post(authMiddleware, markAttendance); // Handles POST /api/attendance
 
-// 1. Specific route for reports should come first.
-router.get('/report', authMiddleware, getAttendanceReport); // This is line 13
+// Route for '/api/attendance/report'
+router.route('/report')
+  .get(authMiddleware, getAttendanceReport);
 
-// 2. Route to mark attendance
-router.post('/', authMiddleware, markAttendance);
-
-// 3. Dynamic route for a specific student should come last.
-// Commenting this out to prevent crash until it is implemented.
-// router.get('/:studentId', authMiddleware, getAttendanceByStudentId);
-
+// Route for '/api/attendance/:studentId'
+// Make sure getAttendanceByStudentId is implemented in your controller
+// router.route('/:studentId')
+//   .get(authMiddleware, getAttendanceByStudentId);
 
 module.exports = router;

@@ -1,17 +1,15 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Login from "./pages/Login"
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import Attendance from "./pages/Attendance";
+import Login from "./pages/Login";
+import MarkAttendance from "./pages/MarkAttendance";
+import ViewAttendance from "./pages/ViewAttendance";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/attendance" element={<Attendance />} />
+        <Route path="/mark" element={<MarkAttendance />} />
+        <Route path="/view" element={<ViewAttendance />} />
       </Routes>
     </BrowserRouter>
   );

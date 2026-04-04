@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../api";
-import Navbar from "../components/Navbar";
+import Header from "../components/Header";
 
 function ViewAttendance() {
   const [data, setData] = useState({ total: 0, present: 0, percentage: 0 });
@@ -16,24 +16,17 @@ function ViewAttendance() {
 
   return (
     <>
-      <Navbar />
+      <Header />
       <div className="page">
         <div className="card">
-          <h2>Attendance Report</h2>
+  <h3>Attendance Summary</h3>
+  <p>Total Classes: {data.total}</p>
+  <p>Present: {data.present}</p>
 
-          <p>Total Classes: {data.total}</p>
-          <p>Present: {data.present}</p>
-
-          <h1 className={data.percentage >= 75 ? "green" : "red"}>
-            {data.percentage}%
-          </h1>
-
-          <p>
-            {data.percentage >= 75
-              ? "On Track"
-              : "Needs Improvement"}
-          </p>
-        </div>
+  <h2 style={{color: data.percentage >= 75 ? "green" : "red"}}>
+    {data.percentage}%
+  </h2>
+</div>
       </div>
     </>
   );

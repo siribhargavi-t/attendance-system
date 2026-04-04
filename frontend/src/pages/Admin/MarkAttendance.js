@@ -10,6 +10,8 @@ const MarkAttendance = () => {
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
     const [selectedSubject, setSelectedSubject] = useState('');
     const [selectedBranch, setSelectedBranch] = useState('');
+    const [startTime, setStartTime] = useState('09:00');
+    const [endTime, setEndTime] = useState('10:00');
     
     // Bulk state
     const [attendanceMap, setAttendanceMap] = useState({}); // { studentId: 'present' | 'absent' }
@@ -91,6 +93,8 @@ const MarkAttendance = () => {
             await api.post('/attendance/mark-bulk', {
                 subjectId: selectedSubject,
                 date: selectedDate,
+                startTime,
+                endTime,
                 records
             });
             alert('Bulk attendance marked successfully!');
@@ -129,6 +133,14 @@ const MarkAttendance = () => {
                             <option value="All">All Branches</option>
                             {uniqueBranches.map(b => <option key={b} value={b}>{b}</option>)}
                         </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Start Time</label>
+                        <input type="time" className="w-full px-4 py-2 border dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" value={startTime} onChange={e => setStartTime(e.target.value)} />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">End Time</label>
+                        <input type="time" className="w-full px-4 py-2 border dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" value={endTime} onChange={e => setEndTime(e.target.value)} />
                     </div>
                 </div>
             </div>

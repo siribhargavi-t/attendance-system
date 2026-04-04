@@ -1,10 +1,15 @@
-// create mongoose schema for attendance with studentId, date, status
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+
 const attendanceSchema = new Schema({
     studentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Student',
+        required: true
+    },
+    subjectId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Subject',
         required: true
     },
     date: {
@@ -14,8 +19,29 @@ const attendanceSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ['present', 'absent'], // As per your request for 'present' or 'absent'
+        enum: ['present', 'absent'], 
         required: true
+    },
+    markedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User' // teacher/admin who marked it
+    },
+    // For student making a request to change absent to present
+    changeRequest: {
+        type: Boolean,
+        default: false
+    },
+    changeReason: {
+        type: String
+    },
+    documentUrl: { // Letter/doc submitted for evidence
+        type: String
+    },
+    requestStatus: {
+        type: String,
+        enum: ['pending', 'approved', 'rejected', 'none'],
+        default: 'none'
     }
-});
+}, { timestamps: true });
+
 module.exports = mongoose.model('Attendance', attendanceSchema);

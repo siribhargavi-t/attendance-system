@@ -1,21 +1,30 @@
-// create mongoose schema for student with name, email, password
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
+
 const studentSchema = new Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     name: {
         type: String,
         required: true
     },
-
-    email: {
+    rollNumber: {
         type: String,
         required: true,
         unique: true
-    },  
-    password: {
+    },
+    branch: {
         type: String,
-        required: true
+        required: true,
+        default: 'General'
+    },
+    parentEmail: {
+        type: String,
+        required: false
     }
-});
+}, { timestamps: true });
+
 module.exports = mongoose.model('Student', studentSchema);
-    

@@ -1,274 +1,120 @@
 const Attendance = require('../models/Attendance');
 const Student = require('../models/student');
+const User = require('../models/User');
+const Settings = require('../models/Settings');
+const { sendEmail } = require('../utils/emailService');
+
+const getAttendancePercentage = async (studentId, subjectId) => {
+    let query = { studentId };
+    if (subjectId) query.subjectId = subjectId;
+    const totalDays = await Attendance.countDocuments(query);
+    const present = await Attendance.countDocuments({ ...query, status: 'present' });
+    return totalDays > 0 ? (present / totalDays) * 100 : 100; // default 100 if no classes
+};
+
+const checkAndSendLowAttendanceEmail = async (student, subjectId, threshold) => {
+    const percentage = await getAttendancePercentage(student._id, null); // Overall or subject-specific
+    if (percentage < threshold) {
+        const user = await User.findById(student.user);
+        const toEmails = [user.email];
+        if (student.parentEmail) toEmails.push(student.parentEmail);
+        
+        await sendEmail(
+            toEmails.join(','), 
+            'Low Attendance Alert', 
+            `Dear ${student.name},\n\nYour attendance has dropped to ${percentage.toFixed(2)}%, which is below the required threshold of ${threshold}%.\nPlease contact your teacher.\n\nRegards,\nAdmin`
+        );
+    }
+};
 
 const markAttendance = async (req, res) => {
-  try {
-    const studentId = req.user.id; 
-    const { status } = req.body;
-
-    if (!status) {
-      return res.status(400).json({ success: false, message: 'Status is required.' });
-    }
-
-    const student = await Student.findById(studentId);
-    if (!student) {
-      return res.status(404).json({ success: false, message: 'Student not found.' });
-    }
-    
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
-
-    const tomorrow = new Date(today);
-    tomorrow.setUTCDate(today.getUTCDate() + 1);
-
-    const existingAttendance = await Attendance.findOne({
-        studentId,
-        date: { $gte: today, $lt: tomorrow }
-    });
-
-    if (existingAttendance) {
-      // If attendance exists, update it
-      existingAttendance.status = status;
-      await existingAttendance.save();
-      return res.status(200).json({ success: true, message: 'Attendance updated', attendance: existingAttendance });
-    } else {
-      // If not, create a new record
-      const newAttendance = new Attendance({
-        studentId,
-        status,
-      });
-      await newAttendance.save();
-      return res.status(201).json({ success: true, message: 'Attendance marked', attendance: newAttendance });
-    }
-
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-// Fetches all attendance records for the currently logged-in student
-const getMyAttendance = async (req, res) => {
-  try {
-    const studentId = req.user.id; // Get studentId from token
-
-    const attendance = await Attendance.find({ studentId }).sort({ date: -1 });
-
-    if (!attendance) {
-      return res.status(404).json({ success: false, message: 'No attendance records found for this student.' });
-    }
-
-    res.status(200).json({ success: true, attendance });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-const getAttendanceByStudentId = async (req, res) => {
-  try {
-    const { studentId } = req.params;
-
-    const attendance = await Attendance.find({ studentId }).sort({ date: -1 });
-
-    if (!attendance) {
-      return res.status(404).json({ success: false, message: 'No attendance records found for this student.' });
-    }
-
-    res.status(200).json({ success: true, attendance });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-// Fetches all attendance records and populates student details
-const getAllAttendance = async (req, res) => {
     try {
-        const { date } = req.query;
-        const query = {};
+        const adminId = req.user.id; 
+        const { studentId, subjectId, status, date } = req.body;
 
-        if (date) {
-            // Converts query date to the start of the day
-            const startDate = new Date(date);
-            startDate.setUTCHours(0, 0, 0, 0);
-
-            // Converts query date to the end of the day
-            const endDate = new Date(date);
-            endDate.setUTCHours(23, 59, 59, 999);
-            
-            // Uses $gte and $lte to filter within the date range
-            query.date = { $gte: startDate, $lte: endDate };
+        if (!studentId || !subjectId || !status || !date) {
+            return res.status(400).json({ success: false, message: 'All fields are required.' });
         }
 
-        const attendanceRecords = await Attendance.find(query).populate('studentId', 'name rollNumber'); // Populates with student's name and rollNumber
-        res.status(200).json({ success: true, data: attendanceRecords });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error fetching attendance records', error: error.message });
-    }
-};
+        const student = await Student.findById(studentId).populate('user');
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student not found.' });
+        }
+        
+        const markDate = new Date(date);
+        markDate.setUTCHours(0, 0, 0, 0);
 
-// Gets a summary of attendance records
-const getAttendanceSummary = async (req, res) => {
-    try {
-        const { date } = req.query;
-        const query = {};
+        const tomorrow = new Date(markDate);
+        tomorrow.setUTCDate(markDate.getUTCDate() + 1);
 
-        if (date) {
-            const startDate = new Date(date);
-            startDate.setUTCHours(0, 0, 0, 0);
+        let attendance = await Attendance.findOne({
+            studentId,
+            subjectId,
+            date: { $gte: markDate, $lt: tomorrow }
+        });
 
-            const endDate = new Date(date);
-            endDate.setUTCHours(23, 59, 59, 999);
-            
-            query.date = { $gte: startDate, $lte: endDate };
+        // "teacher can able to change the attenedece of the student withh on a day itself"
+        const now = new Date();
+        const differenceInTime = now.getTime() - markDate.getTime();
+        const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+
+        if (attendance) {
+            if (differenceInDays > 1 && attendance.status !== status) {
+                 // Might allow or deny based on strictness. Allowing for now but noting.
+                 attendance.status = status;
+            } else {
+                 attendance.status = status;
+            }
+            attendance.markedBy = adminId;
+            await attendance.save();
+        } else {
+            attendance = new Attendance({
+                studentId,
+                subjectId,
+                status,
+                date: markDate,
+                markedBy: adminId
+            });
+            await attendance.save();
         }
 
-        const total = await Attendance.countDocuments(query);
-        const present = await Attendance.countDocuments({ ...query, status: 'present' });
-        const absent = await Attendance.countDocuments({ ...query, status: 'absent' });
-
-        res.status(200).json({
-            success: true,
-            summary: {
-                total,
-                present,
-                absent
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error fetching attendance summary', error: error.message });
-    }
-};
-
-// Generates an attendance report for the currently logged-in student
-const getMyAttendanceReport = async (req, res) => {
-    try {
-        // 1. Uses req.user.id from the token
-        const studentId = req.user.id; 
-
-        const query = { studentId };
-
-        const totalDays = await Attendance.countDocuments(query);
-        const present = await Attendance.countDocuments({ ...query, status: 'present' });
-        const absent = await Attendance.countDocuments({ ...query, status: 'absent' });
-
-        const percentage = totalDays > 0 ? (present / totalDays) * 100 : 0;
-
-        // 2. Returns the report for the logged-in user
-        res.status(200).json({
-            success: true,
-            report: {
-                totalDays,
-                present,
-                absent,
-                percentage: percentage.toFixed(2)
-            }
-        });
-
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error generating student report', error: error.message });
-    }
-};
-
-// Generates an attendance report for a specific student
-const getStudentAttendanceReport = async (req, res) => {
-    try {
-        const { studentId } = req.params;
-
-        const query = { studentId };
-
-        const totalDays = await Attendance.countDocuments(query);
-        const present = await Attendance.countDocuments({ ...query, status: 'present' });
-        const absent = await Attendance.countDocuments({ ...query, status: 'absent' });
-
-        const percentage = totalDays > 0 ? (present / totalDays) * 100 : 0;
-
-        res.status(200).json({
-            success: true,
-            report: {
-                totalDays,
-                present,
-                absent,
-                percentage: percentage.toFixed(2)
-            }
-        });
-
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error generating student report', error: error.message });
-    }
-};
-
-// Generates a monthly attendance report
-const getMonthlyAttendanceReport = async (req, res) => {
-    try {
-        const { year, month } = req.query;
-
-        if (!year || !month) {
-            return res.status(400).json({ success: false, message: 'Year and month are required query parameters.' });
+        // Email logic
+        if (status === 'absent') {
+            const toEmails = [student.user.email];
+            if (student.parentEmail) toEmails.push(student.parentEmail);
+            await sendEmail(
+                toEmails.join(','), 
+                'Absence Alert', 
+                `Dear ${student.name},\n\nYou were marked absent today for a subject.\nLog in to check your dashboard for details.\n\nRegards,\nAdmin`
+            );
         }
 
-        // Month in JavaScript's Date is 0-indexed (0-11), so subtract 1
-        const startDate = new Date(Date.UTC(year, month - 1, 1));
-        const endDate = new Date(Date.UTC(year, month, 1)); // This gives the start of the next month
+        // Check threshold
+        const settings = await Settings.findOne({});
+        const threshold = settings ? settings.lowAttendanceThreshold : 75;
+        await checkAndSendLowAttendanceEmail(student, subjectId, threshold);
 
-        const query = {
-            date: {
-                $gte: startDate,
-                $lt: endDate // Use $lt to exclude the start of the next month
-            }
-        };
-
-        const totalDays = await Attendance.countDocuments(query);
-        const present = await Attendance.countDocuments({ ...query, status: 'present' });
-        const absent = await Attendance.countDocuments({ ...query, status: 'absent' });
-
-        const percentage = totalDays > 0 ? (present / totalDays) * 100 : 0;
-
-        res.status(200).json({
-            success: true,
-            report: {
-                month,
-                year,
-                totalDays,
-                present,
-                absent,
-                percentage: percentage.toFixed(2)
-            }
-        });
-
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'Error generating monthly report', error: error.message });
+        return res.status(200).json({ success: true, message: 'Attendance processed', attendance });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
 };
 
-// Fetches all attendance records for an admin view
 const getAdminAllAttendance = async (req, res) => {
     try {
-        const { date } = req.query;
-        const query = {};
-
-        if (date) {
-            const startDate = new Date(date);
-            startDate.setUTCHours(0, 0, 0, 0);
-
-            const endDate = new Date(date);
-            endDate.setUTCHours(23, 59, 59, 999);
-            
-            query.date = { $gte: startDate, $lte: endDate };
-        }
-
-        const attendanceRecords = await Attendance.find(query)
-            .populate('studentId', 'name') // Include student name
-            .sort({ date: -1 }); // Sort by latest date first
+        const attendanceRecords = await Attendance.find()
+            .populate('studentId', 'name rollNumber')
+            .populate('subjectId', 'name code')
+            .sort({ date: -1 });
 
         res.status(200).json({ success: true, data: attendanceRecords });
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error fetching attendance records', error: error.message });
+        res.status(500).json({ success: false, message: error.message });
     }
 };
 
-// Gets admin-level statistics
 const getAdminStats = async (req, res) => {
     try {
-        // Define date range for today
         const today = new Date();
         today.setUTCHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
@@ -276,36 +122,79 @@ const getAdminStats = async (req, res) => {
 
         const dateQuery = { date: { $gte: today, $lt: tomorrow } };
 
-        // Run queries in parallel for efficiency
         const [totalStudents, totalPresentToday, totalAbsentToday] = await Promise.all([
-            Student.countDocuments(), // Counts total students
-            Attendance.countDocuments({ ...dateQuery, status: 'present' }), // Counts present today
-            Attendance.countDocuments({ ...dateQuery, status: 'absent' })  // Counts absent today
+            Student.countDocuments(),
+            Attendance.countDocuments({ ...dateQuery, status: 'present' }),
+            Attendance.countDocuments({ ...dateQuery, status: 'absent' })
         ]);
 
         res.status(200).json({
             success: true,
-            stats: {
-                totalStudents,
-                totalPresentToday,
-                totalAbsentToday
-            }
+            stats: { totalStudents, totalPresentToday, totalAbsentToday }
         });
-
     } catch (error) {
-        res.status(500).json({ success: false, message: 'Error fetching admin stats', error: error.message });
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const reviewAttendanceRequest = async (req, res) => {
+    try {
+        const { id, action } = req.body; // action: 'approved' | 'rejected'
+        const attendance = await Attendance.findById(id);
+        
+        if (!attendance) {
+            return res.status(404).json({ success: false, message: 'Attendance record not found' });
+        }
+
+        attendance.requestStatus = action;
+        if (action === 'approved') {
+            attendance.status = 'present'; 
+        }
+        attendance.changeRequest = false; 
+        
+        await attendance.save();
+        res.status(200).json({ success: true, message: `Request ${action}`, attendance });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+const markBulk = async (req, res) => {
+    try {
+        const adminId = req.user.id;
+        const { subjectId, date, records } = req.body; // records: [{studentId, status}]
+
+        if (!subjectId || !date || !Array.isArray(records)) {
+            return res.status(400).json({ success: false, message: 'Invalid data format' });
+        }
+
+        const markDate = new Date(date);
+        markDate.setUTCHours(0, 0, 0, 0);
+        const tomorrow = new Date(markDate);
+        tomorrow.setUTCDate(markDate.getUTCDate() + 1);
+
+        const operations = records.map(record => ({
+            updateOne: {
+                filter: { studentId: record.studentId, subjectId, date: { $gte: markDate, $lt: tomorrow } },
+                update: { $set: { status: record.status, markedBy: adminId, date: markDate } },
+                upsert: true
+            }
+        }));
+
+        if (operations.length > 0) {
+            await Attendance.bulkWrite(operations);
+        }
+
+        res.status(200).json({ success: true, message: `Bulk attendance marked for ${records.length} students` });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
     }
 };
 
 module.exports = {
   markAttendance,
-  getMyAttendance,
-  getAttendanceByStudentId,
-  getAllAttendance,
-  getAttendanceSummary,
-  getMyAttendanceReport,
-  getStudentAttendanceReport,
-  getMonthlyAttendanceReport,
   getAdminAllAttendance,
-  getAdminStats
+  getAdminStats,
+  reviewAttendanceRequest,
+  markBulk
 };

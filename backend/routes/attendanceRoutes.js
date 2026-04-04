@@ -1,29 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { 
-    markAttendance, 
-    getAttendanceByStudentId, 
-    getAllAttendance, 
-    getAttendanceSummary, 
-    getStudentAttendanceReport, 
-    getMonthlyAttendanceReport,
-    getMyAttendance,
-    getMyAttendanceReport
-} = require('../controllers/attendanceController');
 const authMiddleware = require('../middleware/authMiddleware');
+const adminMiddleware = require('../middleware/adminMiddleware');
+const { reviewAttendanceRequest, markAttendance, markBulk } = require('../controllers/attendanceController');
 
-// PROTECTED ROUTES (for logged-in users)
-router.post('/mark', authMiddleware, markAttendance);
-router.get('/my-records', authMiddleware, getMyAttendance);
-router.get('/my-report', authMiddleware, getMyAttendanceReport);
-
-
-// PUBLIC / ADMIN ROUTES
-router.get('/', getAllAttendance);
-router.get('/summary', getAttendanceSummary);
-router.get('/monthly', getMonthlyAttendanceReport);
-router.get('/student/:studentId', getStudentAttendanceReport);
-router.get('/:studentId', getAttendanceByStudentId);
-
+// All custom overrides / manual additions
+router.post('/mark', authMiddleware, adminMiddleware, markAttendance);
+router.post('/mark-bulk', authMiddleware, adminMiddleware, markBulk);
+router.post('/review-request', authMiddleware, adminMiddleware, reviewAttendanceRequest);
 
 module.exports = router;

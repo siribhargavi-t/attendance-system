@@ -1,91 +1,70 @@
-const Student = require("../models/student");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
+const Attendance = require('../models/Attendance');
+const Student = require('../models/student');
+const User = require('../models/User');
 
-const registerStudent = async (req, res) => {
-  try {
-    const { username, password, ...rest } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({ success: false, message: "Username and password are required." });
-    }
+const getDashboardStats = async (req, res) => {
+    try {
+        const student = await Student.findOne({ user: req.user.id });
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student profile not found.' });
+        }
 
-    const existingStudent = await Student.findOne({ username });
-    if (existingStudent) {
-      return res.status(409).json({ success: false, message: "Username already exists." });
-    }
+        const totalDays = await Attendance.countDocuments({ studentId: student._id });
+        const present = await Attendance.countDocuments({ studentId: student._id, status: 'present' });
+        const percentage = totalDays > 0 ? (present / totalDays) * 100 : 100;
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const student = new Student({
-      username,
-      password: hashedPassword,
-      ...rest
-    });
-
-    await student.save();
-    res.status(201).json({ success: true, message: "Student registered successfully.", student: { id: student._id, username: student.username } });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-};
-
-const loginStudent = async (req, res) => {
-  const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ success: false, message: "Please provide email and password" });
-  }
-
-  try {
-    const student = await Student.findOne({ email });
-
-    if (!student) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
-    }
-
-    const isMatch = await bcrypt.compare(password, student.password);
-
-    if (!isMatch) {
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
-    }
-
-    const payload = {
-      user: {
-        id: student._id
-      }
-    };
-
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET || 'your_jwt_secret',
-      { expiresIn: '1d' }, // Set expiry to 1 day
-      (err, token) => {
-        if (err) throw err;
         res.status(200).json({
-          success: true,
-          message: "Login successful",
-          token: token
+            success: true,
+            stats: {
+                totalDays,
+                present,
+                absent: totalDays - present,
+                percentage: percentage.toFixed(2)
+            }
         });
-      }
-    );
-
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 };
 
-const getAllStudents = async (req, res) => {
-  try {
-    const students = await Student.find({}, '-password'); // find all students, exclude password from result
-    res.status(200).json({ success: true, students });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
+const getMyAttendance = async (req, res) => {
+    try {
+        const student = await Student.findOne({ user: req.user.id });
+        const attendance = await Attendance.find({ studentId: student._id })
+            .populate('subjectId', 'name code')
+            .sort({ date: -1 });
+
+        res.status(200).json({ success: true, attendance });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+const submitAttendanceRequest = async (req, res) => {
+    try {
+        const student = await Student.findOne({ user: req.user.id });
+        const { attendanceId, changeReason, documentUrl } = req.body;
+
+        const attendance = await Attendance.findOne({ _id: attendanceId, studentId: student._id });
+        if (!attendance) {
+            return res.status(404).json({ success: false, message: 'Attendance record not found.' });
+        }
+
+        attendance.changeRequest = true;
+        attendance.changeReason = changeReason;
+        attendance.documentUrl = documentUrl || '';
+        attendance.requestStatus = 'pending';
+
+        await attendance.save();
+
+        res.status(200).json({ success: true, message: 'Request submitted successfully.', attendance });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
 };
 
 module.exports = {
-  registerStudent,
-  loginStudent,
-  getAllStudents,
+    getDashboardStats,
+    getMyAttendance,
+    submitAttendanceRequest
 };

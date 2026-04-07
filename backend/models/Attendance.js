@@ -4,13 +4,13 @@ const Schema = mongoose.Schema;
 const attendanceSchema = new Schema({
     studentId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Student',
-        required: true
+        ref: 'User',
+        required: false
     },
     subjectId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Subject',
-        required: true
+        required: false
     },
     date: {
         type: Date,

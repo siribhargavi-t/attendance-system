@@ -48,6 +48,14 @@ function App() {
             } 
           />
           <Route 
+            path="/admin/attendance" 
+            element={
+              <ProtectedRoute role="admin">
+                <MarkAttendance />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
             path="/admin/view-attendance" 
             element={
               <ProtectedRoute role="admin">

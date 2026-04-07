@@ -1,210 +1,117 @@
 const User = require('../models/User');
-const Student = require('../models/student');
-const Subject = require('../models/Subject');
-const Settings = require('../models/Settings');
-const bcrypt = require('bcryptjs');
+const Attendance = require('../models/Attendance');
 
-const addStudent = async (req, res) => {
-    try {
-        const { username, email, password, name, rollNumber, parentEmail, branch } = req.body;
-        
-        // Ensure username and email don't exist
-        let existingUser = await User.findOne({ $or: [{ username }, { email }] });
-        if (existingUser) {
-            return res.status(400).json({ success: false, message: 'Username or email already exists in User record' });
-        }
-        
-        let existingStudent = await Student.findOne({ rollNumber });
-        if (existingStudent) {
-            return res.status(400).json({ success: false, message: 'Roll number already exists' });
-        }
+// @desc    Get dashboard statistics
+// @route   GET /api/admin/stats
+// @access  Private/Admin
+const getDashboardStats = async (req, res) => {
+  try {
+    // Get total number of students
+    const totalStudents = await User.countDocuments({ role: 'student' });
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+    // Get today's date range
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
 
-        const newUser = new User({
-            username,
-            email,
-            password: hashedPassword,
-            role: 'student'
-        });
-        await newUser.save();
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
 
-        const newStudent = new Student({
-            user: newUser._id,
-            name,
-            rollNumber,
-            parentEmail,
-            branch: branch || 'General'
-        });
-        await newStudent.save();
+    // Get total attendance records for today
+    const classesToday = await Attendance.countDocuments({
+      date: { $gte: todayStart, $lte: todayEnd },
+    });
 
-        res.status(201).json({ success: true, message: 'Student added successfully', student: newStudent });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
+    // Get total "present" attendance records for today
+    const presentToday = await Attendance.countDocuments({
+      date: { $gte: todayStart, $lte: todayEnd },
+      status: 'present',
+    });
+
+    // Calculate attendance percentage, handle division by zero
+    const attendancePercentage =
+      classesToday > 0 ? (presentToday / classesToday) * 100 : 0;
+
+    res.json({
+      totalStudents,
+      classesToday,
+      attendancePercentage: attendancePercentage.toFixed(2), // Format to 2 decimal places
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Get weekly attendance statistics for a chart
+// @route   GET /api/admin/weekly-attendance
+// @access  Private/Admin
+const getWeeklyAttendance = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // End of today
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0); // Start of the day 7 days ago
+
+    const weeklyData = await Attendance.aggregate([
+      // 1. Filter records for the last 7 days
+      {
+        $match: {
+          date: { $gte: sevenDaysAgo, $lte: today },
+        },
+      },
+      // 2. Group by date and calculate total and present counts
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
+          totalRecords: { $sum: 1 },
+          presentCount: {
+            $sum: { $cond: [{ $eq: ['$status', 'present'] }, 1, 0] },
+          },
+        },
+      },
+      // 3. Calculate percentage
+      {
+        $project: {
+          _id: 0,
+          date: '$_id',
+          attendancePercentage: {
+            $cond: [
+              { $eq: ['$totalRecords', 0] },
+              0,
+              { $multiply: [{ $divide: ['$presentCount', '$totalRecords'] }, 100] },
+            ],
+          },
+        },
+      },
+      // 4. Sort by date
+      { $sort: { date: 1 } },
+    ]);
+
+    // Create a map of results for easy lookup
+    const resultsMap = new Map(
+      weeklyData.map((item) => [item.date, item.attendancePercentage])
+    );
+
+    // Ensure all 7 days are present in the final array, filling missing days with 0%
+    const finalData = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(sevenDaysAgo);
+      day.setDate(sevenDaysAgo.getDate() + i);
+      const dayString = day.toISOString().split('T')[0];
+      
+      finalData.push({
+        date: dayString,
+        percentage: resultsMap.get(dayString) || 0,
+      });
     }
+
+    res.json(finalData);
+  } catch (error) {
+    console.error('Error fetching weekly attendance:', error);
+    res.status(500).json({ message: 'Server Error' });
+  }
 };
 
-const getStudents = async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id);
-        let students;
-        if (user.isSuperAdmin) {
-            students = await Student.find({}).populate('user', 'username email');
-        } else {
-            students = await Student.find({ branch: { $in: user.assignedBranches || [] } }).populate('user', 'username email');
-        }
-        res.status(200).json({ success: true, data: students });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-const addSubject = async (req, res) => {
-    try {
-        const { name, code } = req.body;
-        let existingSub = await Subject.findOne({ code });
-        if (existingSub) {
-            return res.status(400).json({ success: false, message: 'Subject code already exists' });
-        }
-
-        const newSubject = new Subject({ name, code, teacher: req.user.id });
-        await newSubject.save();
-
-        res.status(201).json({ success: true, data: newSubject });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-const getSubjects = async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id);
-        let subjects;
-        if (user.isSuperAdmin) {
-            subjects = await Subject.find({});
-        } else {
-            subjects = await Subject.find({ _id: { $in: user.assignedSubjects || [] } });
-        }
-        res.status(200).json({ success: true, data: subjects });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-const getSettings = async (req, res) => {
-    try {
-        let settings = await Settings.findOne({});
-        if (!settings) {
-            settings = new Settings({});
-            await settings.save();
-        }
-        res.status(200).json({ success: true, data: settings });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-const updateSettings = async (req, res) => {
-    try {
-        const { lowAttendanceThreshold } = req.body;
-        let settings = await Settings.findOne({});
-        if (!settings) {
-            settings = new Settings({ lowAttendanceThreshold });
-        } else {
-            settings.lowAttendanceThreshold = lowAttendanceThreshold;
-        }
-        await settings.save();
-        res.status(200).json({ success: true, data: settings });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-const getAdmins = async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id);
-        if (!user.isSuperAdmin) {
-            return res.status(403).json({ success: false, message: 'Access denied: Super Admins only' });
-        }
-        const admins = await User.find({ role: 'admin' }).select('-password');
-        res.status(200).json({ success: true, data: admins });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-const updateAdmin = async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id);
-        if (!user.isSuperAdmin) {
-            return res.status(403).json({ success: false, message: 'Access denied' });
-        }
-        
-        const adminId = req.params.id;
-        const { assignedBranches, assignedSubjects, password } = req.body;
-        
-        const targetAdmin = await User.findById(adminId);
-        if (!targetAdmin || targetAdmin.role !== 'admin') {
-             return res.status(404).json({ success: false, message: 'Admin not found' });
-        }
-
-        if (assignedBranches !== undefined) targetAdmin.assignedBranches = assignedBranches;
-        if (assignedSubjects !== undefined) targetAdmin.assignedSubjects = assignedSubjects;
-        
-        // Dynamic re-eval of SuperAdmin status based on payload if modified
-        if (assignedBranches !== undefined || assignedSubjects !== undefined) {
-             targetAdmin.isSuperAdmin = (!targetAdmin.assignedBranches || targetAdmin.assignedBranches.length === 0) &&
-                                        (!targetAdmin.assignedSubjects || targetAdmin.assignedSubjects.length === 0);
-        }
-
-        if (password) {
-            const salt = await bcrypt.genSalt(10);
-            targetAdmin.password = await bcrypt.hash(password, salt);
-        }
-
-        await targetAdmin.save();
-        res.status(200).json({ success: true, message: 'Admin updated successfully' });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-const deleteAdmin = async (req, res) => {
-    try {
-        const user = await User.findById(req.user.id);
-        if (!user.isSuperAdmin) {
-            return res.status(403).json({ success: false, message: 'Access denied' });
-        }
-        
-        const adminId = req.params.id;
-        if (req.user.id === adminId) {
-             return res.status(400).json({ success: false, message: 'Cannot delete yourself' });
-        }
-
-        const targetAdmin = await User.findById(adminId);
-        if (!targetAdmin || targetAdmin.role !== 'admin') {
-             return res.status(404).json({ success: false, message: 'Admin not found' });
-        }
-
-        // Release teacher bindings in subjects
-        await Subject.updateMany({ teacher: adminId }, { $unset: { teacher: "" } });
-        
-        await User.findByIdAndDelete(adminId);
-        res.status(200).json({ success: true, message: 'Admin deleted successfully' });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
-
-module.exports = {
-    addStudent,
-    getStudents,
-    addSubject,
-    getSubjects,
-    getSettings,
-    updateSettings,
-    getAdmins,
-    updateAdmin,
-    deleteAdmin
-};
+module.exports = { getDashboardStats, getWeeklyAttendance };

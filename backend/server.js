@@ -2,16 +2,15 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
-
+const attendanceRoutes = require('./routes/attendance');
+const authRoutes = require('./routes/auth'); 
+const adminRoutes = require('./routes/adminRoutes');
+const attendance = require("./routes/attendance");
 // FIX: Remove the path to let dotenv find the .env file automatically
-dotenv.config();
+require('dotenv').config();
 
 // Connect to database
 connectDB();
-
-// Route files
-const auth = require('./routes/auth');
-const attendance = require('./routes/attendance'); // Assuming you have this
 
 const app = express();
 
@@ -22,8 +21,9 @@ app.use(express.json());
 app.use(cors());
 
 // Mount routers
-app.use('/api/auth', auth);
-app.use('/api/attendance', attendance); // Example for attendance routes
+app.use('/api/auth', authRoutes); 
+app.use('/api/attendance', attendance);
+app.use('/api/admin', adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 

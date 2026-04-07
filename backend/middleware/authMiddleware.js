@@ -1,35 +1,47 @@
 const jwt = require('jsonwebtoken');
+const User = require('../models/User');
 
-module.exports = function(req, res, next) {
-    // Get token from header
-    const authHeader = req.header('Authorization');
+// Protect routes
+const protect = async (req, res, next) => {
+    let token;
 
-    // Check if Authorization header exists
-    if (!authHeader) {
-        return res.status(401).json({ success: false, message: 'No token, authorization denied' });
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
     }
 
-    // Check if the token is in the correct 'Bearer <token>' format
-    const tokenParts = authHeader.split(' ');
-    if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
-        return res.status(401).json({ success: false, message: 'Token is not valid' });
+    if (!token) {
+        return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
     }
-
-    const token = tokenParts[1];
 
     try {
-        // Verify token using the secret key
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
-
-        // Attach the decoded user payload (which contains the userId) to req.user
-        req.user = decoded.user;
-        
-        // Allow the request to proceed to the next middleware or route handler
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = await User.findById(decoded.user.id);
         next();
     } catch (err) {
-        // Return unauthorized error if token is invalid
-        res.status(401).json({ success: false, message: 'Token is not valid' });
+        return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
     }
+};
+
+// Grant access to specific roles
+const authorize = (...roles) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            return res.status(401).json({ success: false, message: 'Not authorized' });
+        }
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({
+                success: false,
+                message: `User role '${req.user.role}' is not authorized to access this route`
+            });
+        }
+        next();
+    };
+};
+
+// FIX: Add module.exports to export both functions
+module.exports = {
+    protect,
+    authorize
 };
 
 

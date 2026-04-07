@@ -1,66 +1,73 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 
-export const AuthContext = createContext();
+export const AuthContext = React.createContext();
 
-export const AuthProvider = ({ children }) => {
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check local storage for existing session on load
     const token = localStorage.getItem('token');
-    const storedRole = localStorage.getItem('role');
-    const storedUsername = localStorage.getItem('username');
-    const storedIsSuperAdmin = localStorage.getItem('isSuperAdmin');
+    const role = localStorage.getItem('role');
+    const username = localStorage.getItem('username');
 
-    if (token && storedRole) {
-      setUser({ 
-          token, 
-          role: storedRole, 
-          username: storedUsername, 
-          isSuperAdmin: storedIsSuperAdmin === 'true' 
-      });
+    if (token && role) {
+      setUser({ token, role, username });
     }
     setLoading(false);
   }, []);
 
-  const login = async (username, password) => {
+  // ✅ FIXED LOGIN
+  const login = async (email, password) => {
     try {
-      const response = await api.post('/auth/login', { username, password });
+      const response = await api.post('/auth/login', { email, password });
+
       if (response.data.success) {
-        const { token, role, username: resUser, isSuperAdmin } = response.data;
+        const { token, role, email: resUser } = response.data.data;
+
+        // Store in localStorage
         localStorage.setItem('token', token);
         localStorage.setItem('role', role);
         localStorage.setItem('username', resUser);
-        localStorage.setItem('isSuperAdmin', isSuperAdmin);
-        
-        setUser({ token, role, username: resUser, isSuperAdmin });
-        
-        if (role === 'admin') navigate('/admin');
-        else navigate('/student');
-        return true;
+
+        // Update state
+        setUser({ token, role, username: resUser });
+
+        // Navigate
+        if (role === 'admin') navigate('/admin/dashboard');
+        else navigate('/student/dashboard');
+
+        return { token, role };
       }
     } catch (error) {
       console.error('Login error', error);
-      throw new Error(error.response?.data?.message || 'Login failed');
+      throw error.response?.data?.message || 'Login failed';
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
-    localStorage.removeItem('username');
-    localStorage.removeItem('isSuperAdmin');
+    localStorage.clear();
     setUser(null);
     navigate('/');
   };
 
+  const value = {
+    user,
+    loading,
+    login,
+    logout,
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
-      {children}
+    <AuthContext.Provider value={value}>
+      {!loading && children}
     </AuthContext.Provider>
   );
-};
+}

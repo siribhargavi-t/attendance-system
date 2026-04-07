@@ -1,15 +1,19 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5001/api', // Backend base URL
+  baseURL: 'http://localhost:5000/api', // Your backend base URL
 });
 
-// Add a request interceptor
+// Add a request interceptor to include the token in headers
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token'); // Get token from storage
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`; // Inject token
+    // Get user info from storage, which should contain the token
+    const userInfo = localStorage.getItem('userInfo');
+    if (userInfo) {
+      const { token } = JSON.parse(userInfo);
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },

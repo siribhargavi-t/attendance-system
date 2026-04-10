@@ -12,7 +12,7 @@ import Register from "./pages/Auth/Register";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
 
 // ADMIN
-import AdminDashBoard from "./pages/Admin/DashBoard";
+import DashBoard from "./pages/Admin/DashBoard";
 import MarkAttendance from "./pages/Admin/MarkAttendance";
 import ViewAttendance from "./pages/Admin/ViewAttendance";
 import Report from "./pages/Admin/Report";
@@ -42,8 +42,8 @@ function App() {
               path="/admin/dashboard" 
               element={
                 <ProtectedRoute role="admin">
-                  <AdminDashBoard />
-                </ProtectedRoute>
+                  <DashBoard />
+              </ProtectedRoute>
               } 
             />
             <Route 

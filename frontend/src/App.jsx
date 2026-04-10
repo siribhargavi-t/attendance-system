@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
-
+import SelectRole from "./pages/Auth/SelectRole";
 // AUTH
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
@@ -28,8 +28,9 @@ function App() {
     <Router>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<Login />} /> 
-          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<SelectRole />} />
+          <Route path="/login/:role" element={<Login />} />
+          <Route path="/register/:role" element={<Register />} />
           
           <Route 
             path="/admin/dashboard" 

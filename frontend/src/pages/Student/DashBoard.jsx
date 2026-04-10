@@ -49,6 +49,7 @@ function Dashboard() {
           <div className="card">
             <h3>Attendance %</h3>
             <p style={{ fontSize: "24px", color: "green" }}>82%</p>
+            
           </div>
         </div>
 

@@ -1,47 +1,32 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const attendanceSchema = new Schema({
+const AttendanceSchema = new mongoose.Schema({
+    // FIX: Change the field name from 'student' to 'studentId'
     studentId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: false
+        ref: 'User', // This should reference your User model
+        required: true
     },
     subjectId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Subject',
-        required: false
-    },
-    date: {
-        type: Date,
-        required: true,
-        default: Date.now
+        ref: 'Subject', // This should reference your Subject model
+        required: true
     },
     status: {
         type: String,
-        enum: ['present', 'absent'], 
+        enum: ['present', 'absent'],
+        required: true
+    },
+    date: {
+        type: Date,
         required: true
     },
     markedBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User' // teacher/admin who marked it
-    },
-    // For student making a request to change absent to present
-    changeRequest: {
-        type: Boolean,
-        default: false
-    },
-    changeReason: {
-        type: String
-    },
-    documentUrl: { // Letter/doc submitted for evidence
-        type: String
-    },
-    requestStatus: {
-        type: String,
-        enum: ['pending', 'approved', 'rejected', 'none'],
-        default: 'none'
+        ref: 'User' // Reference to the admin/faculty who marked it
     }
-}, { timestamps: true });
+}, {
+    timestamps: true // Adds createdAt and updatedAt fields
+});
 
-module.exports = mongoose.model('Attendance', attendanceSchema);
+module.exports = mongoose.model('Attendance', AttendanceSchema);

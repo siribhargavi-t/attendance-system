@@ -1,200 +1,184 @@
 const Attendance = require('../models/Attendance');
-const Student = require('../models/student');
-const User = require('../models/User');
-const Settings = require('../models/Settings');
-const { sendEmail } = require('../utils/emailService');
+const User = require('../models/User'); // Assuming you have a User model
+const Subject = require('../models/Subject'); // Assuming you have a Subject model
+const { protect } = require('../middleware/authMiddleware'); // Assuming you have this middleware
 
-const getAttendancePercentage = async (studentId, subjectId) => {
-    let query = { studentId };
-    if (subjectId) query.subjectId = subjectId;
-    const totalDays = await Attendance.countDocuments(query);
-    const present = await Attendance.countDocuments({ ...query, status: 'present' });
-    return totalDays > 0 ? (present / totalDays) * 100 : 100; // default 100 if no classes
-};
-
-const checkAndSendLowAttendanceEmail = async (student, subjectId, threshold) => {
-    const percentage = await getAttendancePercentage(student._id, null); // Overall or subject-specific
-    if (percentage < threshold) {
-        const user = await User.findById(student.user);
-        const toEmails = [user.email];
-        if (student.parentEmail) toEmails.push(student.parentEmail);
-        
-        await sendEmail(
-            toEmails.join(','), 
-            'Low Attendance Alert', 
-            `Dear ${student.name},\n\nYour attendance has dropped to ${percentage.toFixed(2)}%, which is below the required threshold of ${threshold}%.\nPlease contact your teacher.\n\nRegards,\nAdmin`
-        );
-    }
-};
-
+// @desc    Mark attendance
+// @route   POST /api/attendance/mark
+// @access  Private (assuming only authenticated users can mark)
 const markAttendance = async (req, res) => {
-    try {
-        const adminId = req.user.id; 
-        const { studentId, subjectId, status, date } = req.body;
+  // The request body should contain the ObjectId of the student
+  const { studentId, subjectId, status, date } = req.body;
 
-        if (!studentId || !subjectId || !status || !date) {
-            return res.status(400).json({ success: false, message: 'All fields are required.' });
-        }
+  // 1. Validate input
+  if (!studentId || !subjectId || !status) {
+    return res.status(400).json({ message: 'Please provide studentId, subjectId, and status.' });
+  }
 
-        const student = await Student.findById(studentId).populate('user');
-        if (!student) {
-            return res.status(404).json({ success: false, message: 'Student not found.' });
-        }
-        
-        const markDate = new Date(date);
-        markDate.setUTCHours(0, 0, 0, 0);
-
-        const tomorrow = new Date(markDate);
-        tomorrow.setUTCDate(markDate.getUTCDate() + 1);
-
-        let attendance = await Attendance.findOne({
-            studentId,
-            subjectId,
-            date: { $gte: markDate, $lt: tomorrow }
-        });
-
-        // "teacher can able to change the attenedece of the student withh on a day itself"
-        const now = new Date();
-        const differenceInTime = now.getTime() - markDate.getTime();
-        const differenceInDays = differenceInTime / (1000 * 3600 * 24);
-
-        if (attendance) {
-            if (differenceInDays > 1 && attendance.status !== status) {
-                 // Might allow or deny based on strictness. Allowing for now but noting.
-                 attendance.status = status;
-            } else {
-                 attendance.status = status;
-            }
-            attendance.markedBy = adminId;
-            await attendance.save();
-        } else {
-            attendance = new Attendance({
-                studentId,
-                subjectId,
-                status,
-                date: markDate,
-                markedBy: adminId
-            });
-            await attendance.save();
-        }
-
-        // Email logic
-        if (status === 'absent') {
-            const toEmails = [student.user.email];
-            if (student.parentEmail) toEmails.push(student.parentEmail);
-            await sendEmail(
-                toEmails.join(','), 
-                'Absence Alert', 
-                `Dear ${student.name},\n\nYou were marked absent today for a subject.\nLog in to check your dashboard for details.\n\nRegards,\nAdmin`
-            );
-        }
-
-        // Check threshold
-        const settings = await Settings.findOne({});
-        const threshold = settings ? settings.lowAttendanceThreshold : 75;
-        await checkAndSendLowAttendanceEmail(student, subjectId, threshold);
-
-        return res.status(200).json({ success: true, message: 'Attendance processed', attendance });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
+  try {
+    // 2. Check if student exists
+    const student = await User.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found.' });
     }
+
+    // 3. Normalize date to the start of the day
+    const attendanceDate = new Date(date || new Date());
+    attendanceDate.setHours(0, 0, 0, 0);
+
+    // 4. Check for duplicate attendance using the correct field name
+    const existingAttendance = await Attendance.findOne({
+      studentId: studentId, // Use studentId for the query
+      subjectId: subjectId,
+      date: attendanceDate,
+    });
+
+    if (existingAttendance) {
+      return res.status(409).json({ message: 'Attendance already marked for this student, subject, and date.' });
+    }
+
+    // 5. Create and save new attendance record
+    const newAttendance = new Attendance({
+      studentId: studentId, // Store the ID in the 'studentId' field
+      subjectId: subjectId,
+      status,
+      date: attendanceDate,
+      markedBy: req.user.id // Store who marked the attendance
+    });
+
+    await newAttendance.save();
+
+    res.status(201).json({
+      message: 'Attendance marked successfully.',
+      attendance: newAttendance,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
 };
 
-const getAdminAllAttendance = async (req, res) => {
-    try {
-        const attendanceRecords = await Attendance.find()
-            .populate('studentId', 'name rollNumber')
-            .populate('subjectId', 'name code')
-            .sort({ date: -1 });
+// @desc    Get attendance records for a specific student
+// @route   GET /api/attendance/student/:id
+// @access  Private
+const getStudentAttendance = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const query = { studentId: studentId }; // Query uses studentId
 
-        res.status(200).json({ success: true, data: attendanceRecords });
+    const attendanceRecords = await Attendance.find(query)
+      .populate('subjectId', 'name')
+      .sort({ date: -1 });
+
+    res.status(200).json(attendanceRecords);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// @desc    Get attendance percentage for a specific student
+// @route   GET /api/attendance/percentage/:id
+// @access  Private
+const getAttendancePercentage = async (req, res) => {
+    try {
+        const studentId = req.params.id;
+        // Ensure queries use the consistent 'studentId' field name
+        const totalRecords = await Attendance.countDocuments({ studentId: studentId });
+        const presentRecords = await Attendance.countDocuments({ studentId: studentId, status: 'present' });
+        const percentage = totalRecords > 0 ? (presentRecords / totalRecords) * 100 : 0;
+        res.status(200).json({ percentage });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 
-const getAdminStats = async (req, res) => {
+// @desc    Get weekly attendance report (present count per day)
+// @route   GET /api/attendance/weekly
+// @access  Private
+const getWeeklyAttendance = async (req, res) => {
     try {
-        const today = new Date();
-        today.setUTCHours(0, 0, 0, 0);
-        const tomorrow = new Date(today);
-        tomorrow.setUTCDate(today.getUTCDate() + 1);
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
 
-        const dateQuery = { date: { $gte: today, $lt: tomorrow } };
-
-        const [totalStudents, totalPresentToday, totalAbsentToday] = await Promise.all([
-            Student.countDocuments(),
-            Attendance.countDocuments({ ...dateQuery, status: 'present' }),
-            Attendance.countDocuments({ ...dateQuery, status: 'absent' })
+        const weeklyReport = await Attendance.aggregate([
+            { $match: { date: { $gte: sevenDaysAgo } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: '%Y-%m-%d', date: '$date' } },
+                    presentCount: { $sum: { $cond: [{ $eq: ['$status', 'present'] }, 1, 0] } },
+                },
+            },
+            { $sort: { _id: 1 } },
+            { $project: { _id: 0, date: '$_id', presentCount: 1 } }
         ]);
 
+        res.status(200).json(weeklyReport);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Get recent attendance records
+// @route   GET /api/attendance/recent
+// @access  Private
+const getRecentAttendance = async (req, res) => {
+    try {
+        const recentRecords = await Attendance.find()
+            .sort({ createdAt: -1 }) // Get the most recently created records
+            .limit(5) // Limit to the latest 5
+            .populate('studentId', 'name') // Populate student's name
+            .populate('subjectId', 'name'); // Populate subject's name
+
+        res.status(200).json(recentRecords);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server Error' });
+    }
+};
+
+// @desc    Get attendance data for the logged-in student
+// @route   GET /api/attendance/student/me
+// @access  Private/Student
+const getMyAttendance = async (req, res) => {
+    try {
+        // The user's ID is attached to req.user by the authMiddleware
+        const studentId = req.user.id;
+        console.log(`Fetching data for student ID: ${studentId}`); // DEBUG LOG
+
+        // Fetch all attendance records for this student using the correct field
+        const attendanceRecords = await Attendance.find({ studentId: studentId })
+            .populate('subjectId', 'name') // Populate subject name
+            .sort({ date: -1 }); // Sort by most recent date
+
+        // Calculate percentage
+        const totalRecords = attendanceRecords.length;
+        const presentRecords = attendanceRecords.filter(record => record.status === 'present').length;
+        const percentage = totalRecords > 0 ? (presentRecords / totalRecords) * 100 : 0;
+
+        console.log(`Found ${totalRecords} records, calculated percentage: ${percentage}%`); // DEBUG LOG
+
+        // Send both records and percentage in one response
         res.status(200).json({
-            success: true,
-            stats: { totalStudents, totalPresentToday, totalAbsentToday }
+            attendanceData: attendanceRecords,
+            percentage: percentage
         });
+
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error('Error in getMyAttendance:', error);
+        res.status(500).json({ message: 'Server Error' });
     }
 };
 
-const reviewAttendanceRequest = async (req, res) => {
-    try {
-        const { id, action } = req.body; // action: 'approved' | 'rejected'
-        const attendance = await Attendance.findById(id);
-        
-        if (!attendance) {
-            return res.status(404).json({ success: false, message: 'Attendance record not found' });
-        }
-
-        attendance.requestStatus = action;
-        if (action === 'approved') {
-            attendance.status = 'present'; 
-        }
-        attendance.changeRequest = false; 
-        
-        await attendance.save();
-        res.status(200).json({ success: true, message: `Request ${action}`, attendance });
-    } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-};
-
-const markBulk = async (req, res) => {
-    try {
-        const adminId = req.user.id;
-        const { subjectId, date, records } = req.body; // records: [{studentId, status}]
-
-        if (!subjectId || !date || !Array.isArray(records)) {
-            return res.status(400).json({ success: false, message: 'Invalid data format' });
-        }
-
-        const markDate = new Date(date);
-        markDate.setUTCHours(0, 0, 0, 0);
-        const tomorrow = new Date(markDate);
-        tomorrow.setUTCDate(markDate.getUTCDate() + 1);
-
-        const operations = records.map(record => ({
-            updateOne: {
-                filter: { studentId: record.studentId, subjectId, date: { $gte: markDate, $lt: tomorrow } },
-                update: { $set: { status: record.status, markedBy: adminId, date: markDate } },
-                upsert: true
-            }
-        }));
-
-        if (operations.length > 0) {
-            await Attendance.bulkWrite(operations);
-        }
-
-        res.status(200).json({ success: true, message: `Bulk attendance marked for ${records.length} students` });
-    } catch (err) {
-        res.status(500).json({ success: false, message: err.message });
-    }
-};
 
 module.exports = {
   markAttendance,
-  getAdminAllAttendance,
-  getAdminStats,
-  reviewAttendanceRequest,
-  markBulk
+  getStudentAttendance,
+  getAttendancePercentage,
+  getWeeklyAttendance,
+  getRecentAttendance,
+  getMyAttendance,
 };

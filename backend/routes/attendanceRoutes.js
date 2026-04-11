@@ -1,20 +1,31 @@
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
-const adminMiddleware = require('../middleware/adminMiddleware');
 const { 
-  reviewAttendanceRequest, 
   markAttendance, 
-  markBulk, 
-  createAttendance // Import the new controller function
+  getStudentAttendance, 
+  getAttendancePercentage, 
+  getWeeklyAttendance,
+  getRecentAttendance,
+  getMyAttendance 
 } = require('../controllers/attendanceController');
+const { protect, authorize } = require('../middleware/authMiddleware'); // Assuming you have this middleware
 
-// Create a single attendance record
-router.post('/', authMiddleware, createAttendance);
+// POST /api/attendance/mark
+router.post('/mark', protect, authorize('admin'), markAttendance); 
 
-// All custom overrides / manual additions
-router.post('/mark', authMiddleware, adminMiddleware, markAttendance);
-router.post('/mark-bulk', authMiddleware, adminMiddleware, markBulk);
-router.post('/review-request', authMiddleware, adminMiddleware, reviewAttendanceRequest);
+// GET /api/attendance/student/me  <-- ADD THIS NEW ROUTE
+router.get('/student/me', protect, authorize('student'), getMyAttendance);
+
+// GET /api/attendance/student/:id (Can be kept for admin use if needed)
+router.get('/student/:id', protect, getStudentAttendance);
+
+// GET /api/attendance/percentage/:id
+router.get('/percentage/:id', protect, getAttendancePercentage);
+
+// GET /api/attendance/weekly
+router.get('/weekly', protect, getWeeklyAttendance);
+
+// GET /api/attendance/recent
+router.get('/recent', protect, getRecentAttendance);
 
 module.exports = router;

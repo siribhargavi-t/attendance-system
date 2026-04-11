@@ -6,8 +6,10 @@ const jwt = require('jsonwebtoken');
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
+        // Log 1: Entered email and password
+        console.log('Login attempt for email:', email);
+        console.log('Password received:', password);
 
-        // 1. Validate input
         if (!email || !password) {
             return res.status(400).json({
                 success: false,
@@ -15,27 +17,33 @@ const login = async (req, res) => {
             });
         }
 
-        // 2. Find user
+        // Find user and explicitly select the password field
         const user = await User.findOne({ email }).select('+password');
+        // Log 2: User fetched from DB
+        console.log('User found in DB:', user);
 
         if (!user) {
+            console.log('Login failed: User not found in database.');
             return res.status(401).json({
                 success: false,
                 message: 'Invalid credentials'
             });
         }
 
-        // 3. Compare password
+        // Compare password
         const isMatch = await bcrypt.compare(password, user.password);
+        // Log 3: bcrypt password match result
+        console.log('Password match result:', isMatch);
 
         if (!isMatch) {
+            console.log('Login failed: Password does not match.');
             return res.status(401).json({
                 success: false,
                 message: 'Invalid credentials'
             });
         }
 
-        // 4. Generate JWT
+        // Generate JWT
         const payload = {
             user: {
                 id: user.id,
@@ -49,7 +57,6 @@ const login = async (req, res) => {
             { expiresIn: '1d' }
         );
 
-        // 5. Send response
         res.status(200).json({
             success: true,
             message: 'Login successful',

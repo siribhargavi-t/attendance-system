@@ -14,10 +14,17 @@ const protect = async (req, res, next) => {
     }
 
     try {
+        // Verify token
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = await User.findById(decoded.user.id);
+
+        // Get user from the token payload
+        // The 'select(-password)' ensures the password hash is not attached to the request object
+        req.user = await User.findById(decoded.user.id).select('-password');
+        
+        console.log('Auth Middleware User:', req.user); // DEBUG LOG
+
         next();
-    } catch (err) {
+    } catch (error) {
         return res.status(401).json({ success: false, message: 'Not authorized to access this route' });
     }
 };

@@ -10,12 +10,12 @@ import Register from "./pages/Auth/Register";
 // FIX: Changed 'Dashboard' to 'DashBoard' to match the filename
 import AdminDashBoard from "./pages/Admin/DashBoard"; 
 import MarkAttendance from "./pages/Admin/MarkAttendance";
-import ViewAttendance from "./pages/Admin/ViewAttendance";
-import Report from "./pages/Admin/Report";
+import ManageStudents from "./pages/Admin/ManageStudents";
+import Header from './components/Header'; // <-- IMPORT THE HEADER
 
 // STUDENT
 // FIX: Changed 'Dashboard' to 'DashBoard' to match the filename
-import StudentDashBoard from "./pages/Student/DashBoard"; 
+import StudentDashBoard from "./pages/Student/StudentDashBoard"; 
 import Attendance from "./pages/Student/Attendance";
 
 // PROTECTED ROUTE
@@ -24,8 +24,8 @@ import { ProtectedRoute } from "./components/Layout/ProtectedRoute";
 
 function App() {
   return (
-    // FIX: Swapped Router and AuthProvider
     <Router>
+      <Header /> {/* <-- ADD THE HEADER COMPONENT HERE */}
       <AuthProvider>
         <Routes>
           <Route path="/" element={<SelectRole />} />
@@ -34,11 +34,7 @@ function App() {
           
           <Route 
             path="/admin/dashboard" 
-            element={
-              <ProtectedRoute role="admin">
-                <AdminDashBoard />
-              </ProtectedRoute>
-            } 
+            element={<AdminDashBoard />} 
           />
           <Route 
             path="/admin/mark-attendance" 
@@ -57,20 +53,8 @@ function App() {
             } 
           />
           <Route 
-            path="/admin/view-attendance" 
-            element={
-              <ProtectedRoute role="admin">
-                <ViewAttendance />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/admin/report" 
-            element={
-              <ProtectedRoute role="admin">
-                <Report />
-              </ProtectedRoute>
-            } 
+            path="/admin/manage-students" 
+            element={<ManageStudents />} 
           />
           <Route 
             path="/student/dashboard" 

@@ -2,10 +2,12 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
-const attendanceRoutes = require('./routes/attendance');
+// FIX: Correct the path to the attendance routes file
+const attendanceRoutes = require('./routes/attendanceRoutes'); 
 const authRoutes = require('./routes/auth'); 
 const adminRoutes = require('./routes/adminRoutes');
-const attendance = require("./routes/attendance");
+const path = require('path');
+
 // FIX: Remove the path to let dotenv find the .env file automatically
 require('dotenv').config();
 
@@ -17,14 +19,26 @@ const app = express();
 // Body parser
 app.use(express.json());
 
-// FIX: Enable CORS
+// Enable CORS
 app.use(cors());
 
 // Mount routers
-app.use('/api/auth', authRoutes); 
-app.use('/api/attendance', attendance);
+app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/attendance', attendanceRoutes);
+
+// =================== ADD THIS SECTION ===================
+// Serve static assets if in production
+if (process.env.NODE_ENV === 'production') {
+  // Set static folder
+  app.use(express.static(path.join(__dirname, '../frontend/build')));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../frontend/build', 'index.html'));
+  });
+}
+// ========================================================
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`));

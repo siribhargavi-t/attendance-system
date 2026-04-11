@@ -1,4 +1,4 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 // FIX: Import addStudent from the controller
 const { getDashboardStats, getStudents, addStudent } = require('../controllers/adminController');

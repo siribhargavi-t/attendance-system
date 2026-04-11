@@ -1,39 +1,37 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const {
-  getDashboardStats,
-  getWeeklyAttendance,
-} = require('../controllers/adminController');
-const { protect, authorize } = require('../middleware/authMiddleware'); // Change 'admin' to 'authorize'
 
-// @desc    Get dashboard statistics
-// @route   GET /api/admin/stats
-// @access  Private/Admin
-router.get('/stats', protect, authorize('admin'), getDashboardStats); // Use authorize('admin')
+const User = require("../models/User");
+const Attendance = require("../models/Attendance");
 
-// @desc    Get weekly attendance data for chart
-// @route   GET /api/admin/weekly-attendance
-// @access  Private/Admin
-router.get(
-  '/weekly-attendance',
-  protect,
-  authorize('admin'),
-  getWeeklyAttendance
-);
-router.get("/students", protect, authorize("admin"), async (req, res) => {
-  const students = await User.find({ role: "student" }).select("-password");
-  res.json(students);
-});
-router.post("/", protect, async (req, res) => {
-  const { studentId, status } = req.body;
+// GET DASHBOARD STATS
+router.get("/stats", async (req, res) => {
+  try {
+    const totalStudents = await User.countDocuments({ role: "student" });
+    const totalFaculty = await User.countDocuments({ role: "faculty" });
 
-  const attendance = await Attendance.create({
-    studentId,
-    status,
-    date: new Date(),
-  });
+    const today = new Date().toISOString().split("T")[0];
 
-  res.json(attendance);
+    const presentToday = await Attendance.countDocuments({
+      date: today,
+      status: "present"
+    });
+
+    const absentToday = await Attendance.countDocuments({
+      date: today,
+      status: "absent"
+    });
+
+    res.json({
+      totalStudents,
+      totalFaculty,
+      presentToday,
+      absentToday
+    });
+
+  } catch (err) {
+    res.status(500).json({ message: "Server Error" });
+  }
 });
 
 module.exports = router;

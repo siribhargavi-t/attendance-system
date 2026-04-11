@@ -168,8 +168,7 @@ const Login = () => {
         </form>
 
         <div className="auth-link">
-          <Link to="/forgot-password">Forgot Password?</Link>
-        </div>
+          <Link to={`/forgot-password/${role}`}>Forgot Password?</Link>        </div>
 
         <div className="auth-link">
           <p>

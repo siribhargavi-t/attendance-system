@@ -10,6 +10,7 @@ import SelectRole from "./pages/Auth/SelectRole";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
+import ResetPassword from "./pages/Auth/ResetPassword";
 
 // ADMIN
 import DashBoard from "./pages/Admin/DashBoard";
@@ -35,7 +36,8 @@ function App() {
             <Route path="/" element={<SelectRole />} />
             <Route path="/login/:role" element={<Login />} />
             <Route path="/register/:role" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/forgot-password/:role" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token/:role" element={<ResetPassword />} />
 
             {/* ADMIN */}
             <Route 

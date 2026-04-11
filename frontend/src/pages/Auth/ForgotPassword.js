@@ -1,97 +1,131 @@
-import React, { useState, useContext } from 'react';
-import { Link } from "react-router-dom";
-import api from '../../api/axios';
-import { Mail } from 'lucide-react';
-import { ThemeContext } from '../../contexts/ThemeContext';
-import ThemeToggle from '../../components/ThemeToggle'; // adjust path if needed
+import React, { useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import api from "../../api/axios";
+import "./Auth.css";
 
 const ForgotPassword = () => {
-  const { theme } = useContext(ThemeContext);
+  const { role } = useParams();
 
-  const [email, setEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const roleConfig = {
+    admin: {
+      title: "Admin Password Reset",
+      color: "#4f46e5",
+    },
+    student: {
+      title: "Student Password Reset",
+      color: "#16a34a",
+    },
+    faculty: {
+      title: "Faculty Password Reset",
+      color: "#f59e0b",
+    },
+  };
+
+  const current = roleConfig[role];
+
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  if (!role || !current) {
+    return <h2 style={{ textAlign: "center" }}>Invalid Role</h2>;
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
-    setIsLoading(true);
+    setError("");
+    setMessage("");
+    setLoading(true);
 
     try {
-      const res = await api.post('/auth/forgot-password', { email });
-      setMessage(res.data.message);
+      const res = await api.post("/auth/forgot-password", { email });
+      setMessage(res.data.message || "Reset link sent to your email");
     } catch (err) {
-      setError(err.response?.data?.message || 'Error sending email');
+      setError(err.response?.data?.message || "Something went wrong");
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:to-slate-950 flex flex-col items-center justify-center p-4 transition-colors">
-      
-      <div className="absolute top-4 right-4">
-        <ThemeToggle />
-      </div>
+    <div className="auth-container">
+      <div className="auth-card">
+        
+        {/* 🔥 Header */}
+        <div style={{ textAlign: "center", marginBottom: "20px" }}>
+          <h1
+            style={{
+              fontSize: "26px",
+              fontWeight: "bold",
+              color: current.color,
+            }}
+          >
+            {current.title}
+          </h1>
 
-      <div className="max-w-md w-full bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 transition-colors">
+          <div style={{ marginTop: "10px" }}>
+            <span
+              style={{
+                background: current.color,
+                color: "#fff",
+                padding: "5px 12px",
+                borderRadius: "20px",
+                fontSize: "12px",
+                fontWeight: "bold",
+                letterSpacing: "1px",
+              }}
+            >
+              {role.toUpperCase()}
+            </span>
 
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mb-4">
-            <Mail className="w-8 h-8 text-white" />
+            <p
+              style={{
+                marginTop: "8px",
+                fontSize: "13px",
+                color: "#666",
+              }}
+            >
+              Enter your email to receive reset link
+            </p>
           </div>
-
-          <h2 className="text-3xl font-bold text-gray-800 dark:text-white">
-            Forgot Password
-          </h2>
-
-          <p className="text-gray-500 dark:text-slate-400 mt-2 text-center text-sm">
-            Enter your email to receive reset link
-          </p>
         </div>
 
-        {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-6 text-sm text-center">
-            {error}
-          </div>
-        )}
-
+        {/* 🔥 Messages */}
+        {error && <p className="auth-error">{error}</p>}
         {message && (
-          <div className="bg-green-50 text-green-600 p-3 rounded-lg mb-6 text-sm text-center">
-            {message}
-          </div>
+          <p style={{ color: "green", textAlign: "center" }}>{message}</p>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <input
-            type="email"
-            required
-            className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-          />
+        {/* 🔥 Form */}
+        <form onSubmit={handleSubmit}>
+          <div className="auth-form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+            />
+          </div>
 
           <button
             type="submit"
-            disabled={isLoading}
-            className="w-full bg-indigo-600 text-white py-3 rounded-lg hover:bg-indigo-700"
+            disabled={loading}
+            className="auth-button"
+            style={{
+              background: current.color,
+            }}
           >
-            {isLoading ? "Sending..." : "Send Reset Link"}
+            {loading ? "Sending..." : "Send Reset Link"}
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <Link 
-            to="/" 
-            className="text-sm text-indigo-600 dark:text-indigo-400"
-          >
-            Back to Login
-          </Link>
+        {/* 🔥 Back to Login */}
+        <div className="auth-link">
+          <Link to={`/login/${role}`}>← Back to Login</Link>
         </div>
-
       </div>
     </div>
   );

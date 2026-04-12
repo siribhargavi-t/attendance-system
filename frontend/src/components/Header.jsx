@@ -35,6 +35,15 @@ const Header = () => {
                         <Link to="/admin/mark-attendance" className={linkStyle}><CalendarCheck size={18} className="mr-2" />Mark Attendance</Link>
                     </>
                 );
+            
+            // FIX: Add the case for the 'faculty' role
+            case 'faculty':
+                return (
+                    <>
+                        <Link to="/faculty/dashboard" className={linkStyle}><LayoutDashboard size={18} className="mr-2" />Dashboard</Link>
+                    </>
+                );
+
             case 'student':
                 return (
                     <>

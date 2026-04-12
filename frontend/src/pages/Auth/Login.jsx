@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import axios from "axios";
 import { useAuth } from "../../contexts/AuthContext";
 import "./Auth.css";
 
 const Login = () => {
   const { role } = useParams();
+  const navigate = useNavigate();
   const { login } = useAuth();
 
   const [formData, setFormData] = useState({
@@ -47,16 +49,34 @@ const Login = () => {
       [e.target.name]: e.target.value,
     });
   };
-
+console.log({ email, password });
   const onSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+    console.log({ email, password });
 
     try {
-      await login(email, password);
+      const res = await axios.post("/api/auth/login", {
+        email: formData.email,
+        password: formData.password
+      });
+      // Store token and user in context and localStorage
+      await login(email, password); // <-- FIXED
+
+      // Redirect based on user role
+      const userRole = res.data.user.role;
+      if (userRole === "admin") navigate("/admin/dashboard");
+      else if (userRole === "student") navigate("/student/dashboard");
+      else if (userRole === "faculty") navigate("/faculty/dashboard");
+      else navigate("/");
     } catch (err) {
-      setError(err || "Login failed. Please check your credentials.");
+      console.error("Login error:", err); // Add this line for debugging
+      setError(
+        err?.response?.data?.message ||
+        err?.message ||
+        "Login failed. Please check your credentials or try again later."
+      );
       setLoading(false);
     }
   };
@@ -77,10 +97,7 @@ const Login = () => {
         boxShadow: "0 10px 30px rgba(0,0,0,0.1)"
       }}>
 
-        {/* TOP SECTION */}
         <div style={{ textAlign: "center", marginBottom: "25px" }}>
-
-          {/* ICON */}
           <div style={{
             width: "60px",
             height: "60px",
@@ -94,8 +111,6 @@ const Login = () => {
           }}>
             {current.icon}
           </div>
-
-          {/* TITLE */}
           <h1 style={{
             fontSize: "22px",
             fontWeight: "600",
@@ -103,8 +118,6 @@ const Login = () => {
           }}>
             {current.title}
           </h1>
-
-          {/* SUBTEXT */}
           <p style={{
             fontSize: "13px",
             color: "#777",
@@ -112,8 +125,6 @@ const Login = () => {
           }}>
             Sign in to continue
           </p>
-
-          {/* ROLE BADGE */}
           <span style={{
             display: "inline-block",
             padding: "4px 12px",
@@ -125,12 +136,10 @@ const Login = () => {
           }}>
             {role.toUpperCase()}
           </span>
-
         </div>
 
         {error && <p className="auth-error">{error}</p>}
 
-        {/* FORM */}
         <form onSubmit={onSubmit}>
           <div className="auth-form-group">
             <label>Email</label>
@@ -168,7 +177,8 @@ const Login = () => {
         </form>
 
         <div className="auth-link">
-          <Link to={`/forgot-password/${role}`}>Forgot Password?</Link>        </div>
+          <Link to={`/forgot-password/${role}`}>Forgot Password?</Link>
+        </div>
 
         <div className="auth-link">
           <p>

@@ -13,14 +13,16 @@ import ForgotPassword from "./pages/Auth/ForgotPassword";
 import ResetPassword from "./pages/Auth/ResetPassword";
 
 // ADMIN
-import DashBoard from "./pages/Admin/DashBoard";
+import AdminDashBoard from "./pages/Admin/DashBoard"; // <-- ADD THIS LINE
 import MarkAttendance from "./pages/Admin/MarkAttendance";
 import ManageStudents from "./pages/Admin/ManageStudents";
 import Header from './components/Header'; // <-- IMPORT THE HEADER
 
+// FACULTY
+import FacultyDashboard from "./pages/Faculty/FacultyDashboard";
+
 // STUDENT
-// FIX: Changed 'Dashboard' to 'DashBoard' to match the filename
-import StudentDashBoard from "./pages/Student/StudentDashBoard"; 
+import StudentDashBoard from "./pages/Student/StudentDashBoard";
 import Attendance from "./pages/Student/Attendance";
 
 // PROTECTED ROUTE
@@ -29,7 +31,7 @@ import { ProtectedRoute } from "./components/Layout/ProtectedRoute";
 function App() {
   return (
     <Router>
-      <Header /> {/* <-- ADD THE HEADER COMPONENT HERE */}
+      <Header />
       <AuthProvider>
         <Routes>
           <Route path="/" element={<SelectRole />} />
@@ -38,7 +40,11 @@ function App() {
           
           <Route 
             path="/admin/dashboard" 
-            element={<AdminDashBoard />} 
+            element={
+              <ProtectedRoute role="admin">
+                <AdminDashBoard /> {/* This line was causing the error */}
+              </ProtectedRoute>
+            } 
           />
           <Route 
             path="/admin/mark-attendance" 
@@ -59,6 +65,14 @@ function App() {
           <Route 
             path="/admin/manage-students" 
             element={<ManageStudents />} 
+          />
+          <Route 
+            path="/faculty/dashboard" 
+            element={
+              <ProtectedRoute role="faculty">
+                <FacultyDashboard />
+              </ProtectedRoute>
+            } 
           />
           <Route 
             path="/student/dashboard" 

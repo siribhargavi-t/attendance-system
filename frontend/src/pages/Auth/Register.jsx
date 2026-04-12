@@ -8,6 +8,7 @@ const Register = () => {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -40,7 +41,7 @@ const Register = () => {
     return <h2 style={{ textAlign: "center", marginTop: "100px" }}>Invalid Access</h2>;
   }
 
-  const { email, password, confirmPassword } = formData;
+  const { name, email, password, confirmPassword } = formData;
 
   const onChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -64,18 +65,19 @@ const Register = () => {
     if (password !== confirmPassword) {
       return setError("Passwords do not match.");
     }
+    if (!name.trim()) {
+      return setError("Name is required.");
+    }
 
     setLoading(true);
     try {
-      await axios.post("/auth/register", {
-        email,
-        password,
-        role
-      });
-
+      if (role === "student") {
+        await axios.post("/student/register", { name, email, password });
+      } else {
+        await axios.post("/api/auth/register", { name, email, password, role });
+      }
       navigate(`/login/${role}`);
     } catch (err) {
-      console.log(err.response?.data);
       if (err.response && err.response.data && err.response.data.message) {
         setError(err.response.data.message);
       } else {
@@ -84,7 +86,7 @@ const Register = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }; 
 
   return (
     <div style={{
@@ -153,6 +155,17 @@ const Register = () => {
 
         {/* FORM */}
         <form onSubmit={onSubmit}>
+          <div className="auth-form-group">
+            <label>Name</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={onChange}
+              required
+            />
+          </div>
+
           <div className="auth-form-group">
             <label>Email</label>
             <input

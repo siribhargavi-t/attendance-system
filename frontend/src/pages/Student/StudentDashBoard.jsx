@@ -30,7 +30,7 @@ const StudentDashBoard = () => {
                 console.log("Frontend: Received data:", data); // DEBUG LOG
 
                 // Set state from the single response object
-                setAttendanceData(data.attendanceData);
+                setAttendanceData(Array.isArray(data.attendanceData) ? data.attendanceData : []);
                 setPercentage(data.percentage);
 
             } catch (err) {
@@ -80,7 +80,9 @@ const StudentDashBoard = () => {
                     </div>
                     <div>
                         <p className="text-lg text-gray-500 font-medium">Overall Attendance</p>
-                        <p className="text-4xl font-bold text-gray-800">{percentage.toFixed(1)}%</p>
+                        <p className="text-4xl font-bold text-gray-800">
+                            {typeof percentage === "number" && !isNaN(percentage) ? percentage.toFixed(1) : "N/A"}%
+                        </p>
                     </div>
                 </div>
             </div>
@@ -98,7 +100,7 @@ const StudentDashBoard = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {attendanceData.length > 0 ? attendanceData.map((record) => (
+                            {Array.isArray(attendanceData) && attendanceData.length > 0 ? attendanceData.map((record) => (
                                 <tr key={record._id} className="bg-white border-b hover:bg-gray-50">
                                     <td className="py-4 px-6 font-medium text-gray-900">
                                         {new Date(record.date).toLocaleDateString()}

@@ -29,23 +29,24 @@ export function AuthProvider({ children }) {
     try {
       const response = await api.post('/auth/login', { email, password });
 
-      if (response.data.success) {
-        const { token, role, email: resUser } = response.data.data;
+      // Use the backend's response structure
+      const { token, user } = response.data;
 
-        // Store in localStorage
-        localStorage.setItem('token', token);
-        localStorage.setItem('role', role);
-        localStorage.setItem('username', resUser);
+      // Store in localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('role', user.role);
+      localStorage.setItem('username', user.email);
 
-        // Update state
-        setUser({ token, role, username: resUser });
+      // Update state
+      setUser({ token, role: user.role, username: user.email });
 
-        // Navigate
-        if (role === 'admin') navigate('/admin/dashboard');
-        else navigate('/student/dashboard');
+      // Navigate
+      if (user.role === 'admin') navigate('/admin/dashboard');
+      else if (user.role === 'student') navigate('/student/dashboard');
+      else if (user.role === 'faculty') navigate('/faculty/dashboard');
+      else navigate('/');
 
-        return { token, role };
-      }
+      return { token, role: user.role };
     } catch (error) {
       console.error('Login error', error);
       throw error.response?.data?.message || 'Login failed';

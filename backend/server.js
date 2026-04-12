@@ -4,7 +4,8 @@ const cors = require('cors');
 const connectDB = require('./config/db');
 // FIX: Correct the path to the attendance routes file
 const attendanceRoutes = require('./routes/attendanceRoutes'); 
-const authRoutes = require('./routes/auth'); 
+const authRoutes = require('./routes/authRoutes'); 
+const studentRoutes = require('./routes/student');
 const adminRoutes = require('./routes/adminRoutes');
 const path = require('path');
 
@@ -26,6 +27,7 @@ app.use(cors());
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/attendance', attendanceRoutes);
+app.use('/api/student', studentRoutes);
 
 // =================== ADD THIS SECTION ===================
 // Serve static assets if in production
@@ -41,8 +43,4 @@ if (process.env.NODE_ENV === 'production') {
 
 const PORT = process.env.PORT || 5000;
 
-<<<<<<< HEAD
 app.listen(PORT, () => console.log(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`));
-=======
-app.listen(PORT, console.log(`Server running on port ${PORT}`));
->>>>>>> 8c4e74d3ebd9aeb673baa2ae2c2def86dd594b99

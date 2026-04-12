@@ -1,191 +1,122 @@
 import React, { useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { useAuth } from "../../contexts/AuthContext";
-import "./Auth.css";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
-  const { role } = useParams();
-  const navigate = useNavigate();
-  const { login } = useAuth();
-
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("admin");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  const roleConfig = {
-    admin: {
-      title: "Admin Login",
-      color: "#4f46e5",
-      icon: "🛠"
-    },
-    student: {
-      title: "Student Login",
-      color: "#16a34a",
-      icon: "🎓"
-    },
-    faculty: {
-      title: "Faculty Login",
-      color: "#f59e0b",
-      icon: "👨‍🏫"
-    }
-  };
-
-  const current = roleConfig[role];
-
-  if (!role || !current) {
-    return <h2 style={{ textAlign: "center", marginTop: "100px" }}>Invalid Role</h2>;
-  }
-
-  const { email, password } = formData;
-
-  const onChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-console.log({ email, password });
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    console.log({ email, password });
-
-    try {
-      const res = await axios.post("/api/auth/login", {
-        email: formData.email,
-        password: formData.password
-      });
-      // Store token and user in context and localStorage
-      await login(email, password); // <-- FIXED
-
-      // Redirect based on user role
-      const userRole = res.data.user.role;
-      if (userRole === "admin") navigate("/admin/dashboard");
-      else if (userRole === "student") navigate("/student/dashboard");
-      else if (userRole === "faculty") navigate("/faculty/dashboard");
-      else navigate("/");
-    } catch (err) {
-      console.error("Login error:", err); // Add this line for debugging
-      setError(
-        err?.response?.data?.message ||
-        err?.message ||
-        "Login failed. Please check your credentials or try again later."
+  const handleLogin = () => {
+    // Dummy credentials
+    const creds = {
+      admin: { email: "admin@gmail.com", password: "1234" },
+      student: { email: "student@gmail.com", password: "1234" },
+      faculty: { email: "faculty@gmail.com", password: "1234" },
+    };
+    if (
+      email === creds[role].email &&
+      password === creds[role].password
+    ) {
+      // Optionally store user in localStorage
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ email, role })
       );
-      setLoading(false);
+      setError("");
+      navigate("/dashboard");
+    } else {
+      setError("Invalid email, password, or role. Please try again.");
     }
   };
 
   return (
-    <div style={{
-      height: "100vh",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      background: "linear-gradient(135deg, #e0e7ff, #f0fdf4)"
-    }}>
-      <div className="auth-card" style={{
-        width: "350px",
-        padding: "30px",
-        borderRadius: "16px",
-        background: "#fff",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.1)"
-      }}>
-
-        <div style={{ textAlign: "center", marginBottom: "25px" }}>
-          <div style={{
-            width: "60px",
-            height: "60px",
-            margin: "0 auto 10px",
-            borderRadius: "50%",
-            background: `${current.color}20`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "26px"
-          }}>
-            {current.icon}
-          </div>
-          <h1 style={{
-            fontSize: "22px",
-            fontWeight: "600",
-            marginBottom: "5px"
-          }}>
-            {current.title}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-purple-100">
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 space-y-6 border border-gray-200">
+        {/* 🔥 TITLE */}
+        <div className="text-center space-y-2">
+          <h1 className="text-3xl font-bold text-blue-600 flex items-center justify-center gap-2">
+            👤 Login
           </h1>
-          <p style={{
-            fontSize: "13px",
-            color: "#777",
-            marginBottom: "10px"
-          }}>
-            Sign in to continue
+          <p className="text-sm text-gray-500">
+            Welcome back! Please login to continue
           </p>
-          <span style={{
-            display: "inline-block",
-            padding: "4px 12px",
-            borderRadius: "20px",
-            fontSize: "11px",
-            fontWeight: "600",
-            background: current.color,
-            color: "#fff"
-          }}>
-            {role.toUpperCase()}
-          </span>
         </div>
 
-        {error && <p className="auth-error">{error}</p>}
-
-        <form onSubmit={onSubmit}>
-          <div className="auth-form-group">
-            <label>Email</label>
+        {/* 🔥 EMAIL */}
+        <div className="space-y-1">
+          <label className="text-sm text-gray-600">Email</label>
+          <div className="flex items-center bg-gray-100 px-3 py-2 rounded-xl focus-within:ring-2 focus-within:ring-blue-400">
+            <span className="text-gray-500">📧</span>
             <input
               type="email"
-              name="email"
+              className="bg-transparent outline-none px-2 w-full"
+              placeholder="Enter your email"
               value={email}
-              onChange={onChange}
-              required
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
+        </div>
 
-          <div className="auth-form-group">
-            <label>Password</label>
+        {/* 🔥 PASSWORD */}
+        <div className="space-y-1">
+          <label className="text-sm text-gray-600">Password</label>
+          <div className="flex items-center bg-gray-100 px-3 py-2 rounded-xl focus-within:ring-2 focus-within:ring-blue-400">
+            <span className="text-gray-500">🔒</span>
             <input
               type="password"
-              name="password"
+              className="bg-transparent outline-none px-2 w-full"
+              placeholder="Enter password"
               value={password}
-              onChange={onChange}
-              required
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="auth-button"
-            style={{
-              background: current.color,
-              border: "none"
-            }}
-          >
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-
-        <div className="auth-link">
-          <Link to={`/forgot-password/${role}`}>Forgot Password?</Link>
         </div>
 
-        <div className="auth-link">
-          <p>
-            Don't have an account? <Link to={`/register/${role}`}>Register</Link>
-          </p>
+        {/* 🔥 ROLE */}
+        <div className="space-y-2">
+          <label className="text-sm text-gray-600">Role</label>
+          <div className="flex gap-2">
+            {["admin", "student", "faculty"].map((r) => (
+              <button
+                key={r}
+                type="button"
+                onClick={() => setRole(r)}
+                className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium transition ${
+                  role === r
+                    ? "bg-blue-600 text-white shadow"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
+              >
+                {r.charAt(0).toUpperCase() + r.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
 
+        {/* 🔥 ERROR MESSAGE */}
+        {error && (
+          <div className="text-red-500 text-sm text-center">
+            {error}
+          </div>
+        )}
+
+        {/* 🔥 LOGIN BUTTON */}
+        <button
+          onClick={handleLogin}
+          className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition shadow-md"
+        >
+          Login
+        </button>
+
+        {/* 🔥 DEMO */}
+        <div className="text-xs text-gray-500 text-center space-y-1">
+          <p className="font-semibold text-gray-600">Demo credentials:</p>
+          <p>Admin: admin@gmail.com / 1234</p>
+          <p>Student: student@gmail.com / 1234</p>
+          <p>Faculty: faculty@gmail.com / 1234</p>
+        </div>
       </div>
     </div>
   );

@@ -1,131 +1,162 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-// We don't need jwt-decode here anymore as the backend handles it
-import { CheckCircle, XCircle, Percent, Calendar, AlertTriangle } from 'lucide-react';
+import React, { useState } from "react";
+import MainLayout from "../../components/Layout/MainLayout";
+import Card from "../../components/Card";
+import { FiCheckCircle, FiXCircle, FiBookOpen, FiPercent, FiCalendar } from "react-icons/fi";
 
-const StudentDashBoard = () => {
-    const [attendanceData, setAttendanceData] = useState([]);
-    const [percentage, setPercentage] = useState(0);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+// Dummy data
+const DUMMY_KPI = {
+  total: 40,
+  present: 36,
+  absent: 4,
+};
+const DUMMY_SUBJECTS = [
+  { name: "Mathematics", percentage: 95 },
+  { name: "Physics", percentage: 90 },
+  { name: "Chemistry", percentage: 85 },
+  { name: "English", percentage: 100 },
+];
+const DUMMY_ATTENDANCE = [
+  { id: 1, date: "2024-06-01", subject: "Mathematics", status: "Present" },
+  { id: 2, date: "2024-05-31", subject: "Physics", status: "Absent" },
+  { id: 3, date: "2024-05-30", subject: "Chemistry", status: "Present" },
+  { id: 4, date: "2024-05-29", subject: "English", status: "Present" },
+  { id: 5, date: "2024-05-28", subject: "Mathematics", status: "Present" },
+];
 
-    useEffect(() => {
-        const fetchData = async () => {
-            const token = localStorage.getItem('token');
-            if (!token) {
-                setError("Authentication token not found. Please log in.");
-                setLoading(false);
-                return;
-            }
+// Helper for attendance %
+const getPercentage = (present, total) =>
+  total === 0 ? 0 : Math.round((present / total) * 100);
 
-            try {
-                const config = {
-                    headers: { Authorization: `Bearer ${token}` }
-                };
+const StudentDashboard = () => {
+  const [kpi] = useState(DUMMY_KPI);
+  const [subjects] = useState(DUMMY_SUBJECTS);
+  const [attendance] = useState(DUMMY_ATTENDANCE);
+  const [search, setSearch] = useState("");
 
-                // Call the new single endpoint
-                console.log("Frontend: Calling /api/attendance/student/me"); // DEBUG LOG
-                const { data } = await axios.get('/api/attendance/student/me', config);
+  const attendancePercentage = getPercentage(kpi.present, kpi.total);
 
-                console.log("Frontend: Received data:", data); // DEBUG LOG
+  const filteredData = attendance.filter((item) =>
+    item.name.toLowerCase().includes(search.toLowerCase())
+  );
 
-                // Set state from the single response object
-                setAttendanceData(Array.isArray(data.attendanceData) ? data.attendanceData : []);
-                setPercentage(data.percentage);
-
-            } catch (err) {
-                console.error("Failed to fetch student data:", err);
-                setError(err.response?.data?.message || "Could not load your attendance data.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []);
-
-    // --- Loading State UI ---
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center min-h-[calc(100vh-64px)]">
-                <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500"></div>
-            </div>
-        );
-    }
-
-    // --- Error State UI ---
-    if (error) {
-        return (
-            <div className="p-8">
-                <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg relative flex items-center" role="alert">
-                    <AlertTriangle className="mr-4" size={24} />
-                    <div>
-                        <strong className="font-bold">An error occurred: </strong>
-                        <span className="block sm:inline">{error}</span>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    return (
-        <div className="p-6 md:p-8 bg-gray-100 min-h-[calc(100vh-64px)]">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">My Dashboard</h1>
-
-            {/* --- Attendance Percentage Card --- */}
-            <div className="mb-8">
-                <div className="bg-white p-6 rounded-xl shadow-lg flex items-center space-x-4 max-w-sm mx-auto">
-                    <div className="bg-blue-500 rounded-full p-4">
-                        <Percent className="text-white" size={32} />
-                    </div>
-                    <div>
-                        <p className="text-lg text-gray-500 font-medium">Overall Attendance</p>
-                        <p className="text-4xl font-bold text-gray-800">
-                            {typeof percentage === "number" && !isNaN(percentage) ? percentage.toFixed(1) : "N/A"}%
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* --- Attendance History Table --- */}
-            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                <h2 className="text-xl font-bold text-gray-700 p-6 flex items-center border-b"><Calendar className="mr-3" />Attendance History</h2>
-                <div className="overflow-y-auto">
-                    <table className="w-full text-sm text-left text-gray-600">
-                        <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-                            <tr>
-                                <th scope="col" className="py-3 px-6">Date</th>
-                                <th scope="col" className="py-3 px-6">Subject</th>
-                                <th scope="col" className="py-3 px-6">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {Array.isArray(attendanceData) && attendanceData.length > 0 ? attendanceData.map((record) => (
-                                <tr key={record._id} className="bg-white border-b hover:bg-gray-50">
-                                    <td className="py-4 px-6 font-medium text-gray-900">
-                                        {new Date(record.date).toLocaleDateString()}
-                                    </td>
-                                    <td className="py-4 px-6">{record.subjectId?.name || 'N/A'}</td>
-                                    <td className="py-4 px-6">
-                                        <span className={`flex items-center text-sm font-semibold ${
-                                            record.status === 'present' ? 'text-green-600' : 'text-red-600'
-                                        }`}>
-                                            {record.status === 'present' ? <CheckCircle size={16} className="mr-2" /> : <XCircle size={16} className="mr-2" />}
-                                            {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                                        </span>
-                                    </td>
-                                </tr>
-                            )) : (
-                                <tr>
-                                    <td colSpan="3" className="text-center p-6 text-gray-500">No attendance records found.</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+  return (
+    <MainLayout>
+      <div className="max-w-6xl mx-auto px-2 py-8 space-y-8">
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+          <Card className="flex flex-col items-center py-6">
+            <span className="text-gray-500 text-sm mb-1">Total Classes</span>
+            <span className="text-3xl font-bold flex items-center gap-2">
+              <FiBookOpen className="text-blue-500" /> {kpi.total}
+            </span>
+          </Card>
+          <Card className="flex flex-col items-center py-6">
+            <span className="text-gray-500 text-sm mb-1">Present</span>
+            <span className="text-3xl font-bold text-green-600 flex items-center gap-2">
+              <FiCheckCircle /> {kpi.present}
+            </span>
+          </Card>
+          <Card className="flex flex-col items-center py-6">
+            <span className="text-gray-500 text-sm mb-1">Absent</span>
+            <span className="text-3xl font-bold text-red-500 flex items-center gap-2">
+              <FiXCircle /> {kpi.absent}
+            </span>
+          </Card>
+          <Card className="flex flex-col items-center py-6">
+            <span className="text-gray-500 text-sm mb-1">Attendance %</span>
+            <span className="text-3xl font-bold text-blue-600 flex items-center gap-2">
+              <FiPercent /> {attendancePercentage}%
+            </span>
+          </Card>
         </div>
-    );
+
+        {/* Subject-wise Attendance */}
+        <Card>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <FiBookOpen className="text-blue-500" /> Subject-wise Attendance
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {(subjects || []).map((subj) => (
+              <div
+                key={subj.name}
+                className="bg-blue-50 rounded-xl p-4 flex flex-col items-center shadow-sm"
+              >
+                <span className="font-medium text-gray-700">{subj.name}</span>
+                <span className="text-xl font-bold text-blue-600 mt-2">
+                  {typeof subj.percentage === "number"
+                    ? `${subj.percentage}%`
+                    : "N/A"}
+                </span>
+                <div className="w-full bg-blue-100 h-2 rounded-full mt-2">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full transition-all"
+                    style={{ width: `${subj.percentage || 0}%` }}
+                  ></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Recent Attendance Table */}
+        <Card>
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <FiCalendar className="text-green-500" /> Recent Attendance
+          </h2>
+          <input
+            type="text"
+            placeholder="Search..."
+            className="mb-4 px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-200 dark:bg-gray-800 dark:text-white"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-gray-500 border-b">
+                  <th className="py-3 px-4 text-left">Date</th>
+                  <th className="py-3 px-4 text-left">Subject</th>
+                  <th className="py-3 px-4 text-left">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(filteredData || []).length > 0 ? (
+                  filteredData.map((rec) => (
+                    <tr
+                      key={rec.id}
+                      className="border-b hover:bg-blue-50 transition"
+                    >
+                      <td className="py-3 px-4 font-medium">
+                        {rec.date}
+                      </td>
+                      <td className="py-3 px-4">{rec.subject}</td>
+                      <td className="py-3 px-4">
+                        <span
+                          className={`px-3 py-1 text-xs rounded-full font-medium ${
+                            rec.status === "Present"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {rec.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="text-center py-8 text-gray-400">
+                      No attendance records found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
+    </MainLayout>
+  );
 };
 
-export default StudentDashBoard;
+export default StudentDashboard;

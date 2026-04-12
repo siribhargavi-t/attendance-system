@@ -1,224 +1,162 @@
 import React, { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import axios from "../../api/axios";
-import "./Auth.css";
+import { useNavigate } from "react-router-dom";
+import { FiUser, FiMail, FiLock, FiChevronDown } from "react-icons/fi";
+
+const ROLES = ["Admin", "Student", "Faculty"];
 
 const Register = () => {
-  const { role } = useParams();
   const navigate = useNavigate();
-
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
-    confirmPassword: "",
+    role: "Student",
   });
-
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const roleConfig = {
-    admin: {
-      title: "Admin Registration",
-      color: "#4f46e5",
-      icon: "🛠"
-    },
-    student: {
-      title: "Student Registration",
-      color: "#16a34a",
-      icon: "🎓"
-    },
-    faculty: {
-      title: "Faculty Registration",
-      color: "#f59e0b",
-      icon: "👨‍🏫"
-    }
+  // Input change handler
+  const handleChange = (e) => {
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+    setError("");
+    setSuccess("");
   };
 
-  const current = roleConfig[role];
-
-  if (!role || !current) {
-    return <h2 style={{ textAlign: "center", marginTop: "100px" }}>Invalid Access</h2>;
-  }
-
-  const { name, email, password, confirmPassword } = formData;
-
-  const onChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const validateEmail = (email) => {
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(String(email).toLowerCase());
-  };
-
-  const onSubmit = async (e) => {
+  // Form submit handler
+  const handleSubmit = (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
 
-    if (!validateEmail(email)) {
-      return setError("Please enter a valid email.");
+    // Validation
+    if (!form.name || !form.email || !form.password) {
+      setError("Please fill in all fields.");
+      return;
     }
-    if (password.length < 6) {
-      return setError("Password must be at least 6 characters.");
+    if (!/\S+@\S+\.\S+/.test(form.email)) {
+      setError("Please enter a valid email address.");
+      return;
     }
-    if (password !== confirmPassword) {
-      return setError("Passwords do not match.");
-    }
-    if (!name.trim()) {
-      return setError("Name is required.");
+    if (form.password.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
     }
 
     setLoading(true);
-    try {
-      if (role === "student") {
-        await axios.post("/student/register", { name, email, password });
-      } else {
-        await axios.post("/api/auth/register", { name, email, password, role });
-      }
-      navigate(`/login/${role}`);
-    } catch (err) {
-      if (err.response && err.response.data && err.response.data.message) {
-        setError(err.response.data.message);
-      } else {
-        setError("Registration failed. Please try again.");
-      }
-    } finally {
+
+    // Simulate registration (frontend only)
+    setTimeout(() => {
       setLoading(false);
-    }
-  }; 
+      setSuccess("Registration successful! Redirecting to login...");
+      setTimeout(() => navigate("/login"), 1200);
+    }, 900);
+  };
 
   return (
-    <div style={{
-      height: "100vh",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      background: "linear-gradient(135deg, #e0e7ff, #f0fdf4)"
-    }}>
-      <div className="auth-card" style={{
-        width: "350px",
-        padding: "30px",
-        borderRadius: "16px",
-        background: "#fff",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.1)"
-      }}>
-
-        {/* TOP SECTION */}
-        <div style={{ textAlign: "center", marginBottom: "25px" }}>
-
-          <div style={{
-            width: "60px",
-            height: "60px",
-            margin: "0 auto 10px",
-            borderRadius: "50%",
-            background: `${current.color}20`,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: "26px"
-          }}>
-            {current.icon}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-green-100">
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-lg rounded-2xl shadow-2xl p-8">
+        <h2 className="text-2xl font-bold text-center text-blue-700 mb-6 flex items-center justify-center gap-2">
+          <FiUser /> Register
+        </h2>
+        <form className="space-y-5" onSubmit={handleSubmit} autoComplete="off">
+          <div>
+            <label className="block text-gray-600 mb-1 font-medium">Name</label>
+            <div className="relative">
+              <FiUser className="absolute left-3 top-3 text-blue-400" />
+              <input
+                type="text"
+                name="name"
+                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                placeholder="Enter your name"
+                value={form.name}
+                onChange={handleChange}
+                autoComplete="name"
+                required
+              />
+            </div>
           </div>
-
-          <h1 style={{
-            fontSize: "22px",
-            fontWeight: "600",
-            marginBottom: "5px"
-          }}>
-            {current.title}
-          </h1>
-
-          <p style={{
-            fontSize: "13px",
-            color: "#777",
-            marginBottom: "10px"
-          }}>
-            Create your account
-          </p>
-
-          <span style={{
-            display: "inline-block",
-            padding: "4px 12px",
-            borderRadius: "20px",
-            fontSize: "11px",
-            fontWeight: "600",
-            background: current.color,
-            color: "#fff"
-          }}>
-            {role.toUpperCase()}
-          </span>
-
-        </div>
-
-        {error && <p className="auth-error">{error}</p>}
-
-        {/* FORM */}
-        <form onSubmit={onSubmit}>
-          <div className="auth-form-group">
-            <label>Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={onChange}
-              required
-            />
+          <div>
+            <label className="block text-gray-600 mb-1 font-medium">Email</label>
+            <div className="relative">
+              <FiMail className="absolute left-3 top-3 text-blue-400" />
+              <input
+                type="email"
+                name="email"
+                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                placeholder="Enter your email"
+                value={form.email}
+                onChange={handleChange}
+                autoComplete="username"
+                required
+              />
+            </div>
           </div>
-
-          <div className="auth-form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              name="email"
-              value={email}
-              onChange={onChange}
-              required
-            />
+          <div>
+            <label className="block text-gray-600 mb-1 font-medium">Password</label>
+            <div className="relative">
+              <FiLock className="absolute left-3 top-3 text-blue-400" />
+              <input
+                type="password"
+                name="password"
+                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                placeholder="Create a password"
+                value={form.password}
+                onChange={handleChange}
+                autoComplete="new-password"
+                required
+              />
+            </div>
           </div>
-
-          <div className="auth-form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              name="password"
-              value={password}
-              onChange={onChange}
-              required
-            />
+          <div>
+            <label className="block text-gray-600 mb-1 font-medium">Role</label>
+            <div className="relative">
+              <select
+                name="role"
+                value={form.role}
+                onChange={handleChange}
+                className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-200 outline-none transition appearance-none"
+              >
+                {ROLES.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
+              <FiChevronDown className="absolute left-3 top-3 text-blue-400 pointer-events-none" />
+            </div>
           </div>
-
-          <div className="auth-form-group">
-            <label>Confirm Password</label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={confirmPassword}
-              onChange={onChange}
-              required
-            />
-          </div>
-
+          {error && (
+            <div className="bg-red-100 text-red-700 px-4 py-2 rounded-lg text-center text-sm">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="bg-green-100 text-green-700 px-4 py-2 rounded-lg text-center text-sm">
+              {success}
+            </div>
+          )}
           <button
             type="submit"
-            className="auth-button"
+            className="w-full py-2.5 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition text-lg"
             disabled={loading}
-            style={{
-              background: current.color,
-              border: "none"
-            }}
           >
             {loading ? "Registering..." : "Register"}
           </button>
         </form>
-
-        <div className="auth-link">
-          <p>
-            Already have an account?{" "}
-            <Link to={`/login/${role}`}>Login</Link>
-          </p>
+        <div className="mt-6 text-center text-gray-500 text-sm">
+          Already have an account?{" "}
+          <button
+            className="text-blue-600 hover:underline"
+            onClick={() => navigate("/login")}
+            type="button"
+          >
+            Login
+          </button>
         </div>
-
       </div>
     </div>
   );

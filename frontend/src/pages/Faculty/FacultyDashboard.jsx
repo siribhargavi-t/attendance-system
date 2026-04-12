@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import MainLayout from "../../components/Layout/MainLayout";
 import Card from "../../components/Card";
-import { FiUsers, FiUserCheck, FiUserX, FiCheck, FiX } from "react-icons/fi";
+import { FiUsers, FiUserCheck, FiUserX } from "react-icons/fi";
 
 // Dummy student data
 const DUMMY_STUDENTS = [
@@ -22,7 +22,6 @@ const getSummary = (students) => {
 
 const FacultyDashboard = () => {
   const [students, setStudents] = useState(DUMMY_STUDENTS);
-  const [search, setSearch] = useState("");
 
   const summary = getSummary(students);
 
@@ -39,11 +38,6 @@ const FacultyDashboard = () => {
       )
     );
   };
-
-  // Filter data
-  const filteredData = students.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase())
-  );
 
   return (
     <MainLayout>
@@ -73,13 +67,6 @@ const FacultyDashboard = () => {
         {/* Student List Table */}
         <Card>
           <h2 className="text-lg font-semibold mb-4">Student Attendance</h2>
-          <input
-            type="text"
-            placeholder="Search..."
-            className="mb-4 px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-200 dark:bg-gray-800 dark:text-white"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -91,8 +78,8 @@ const FacultyDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {(filteredData || []).length > 0 ? (
-                  filteredData.map((student) => (
+                {(students || []).length > 0 ? (
+                  students.map((student) => (
                     <tr
                       key={student.id}
                       className="border-b hover:bg-blue-50 transition"
@@ -120,15 +107,7 @@ const FacultyDashboard = () => {
                                 : "bg-green-100 text-green-700 hover:bg-green-200"
                             }`}
                         >
-                          {student.status === "Present" ? (
-                            <>
-                              <FiX /> Mark Absent
-                            </>
-                          ) : (
-                            <>
-                              <FiCheck /> Mark Present
-                            </>
-                          )}
+                          {student.status === "Present" ? "Mark Absent" : "Mark Present"}
                         </button>
                       </td>
                     </tr>

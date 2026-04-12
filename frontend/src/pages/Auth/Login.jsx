@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+const ROLE_OPTIONS = [
+  { key: "admin", label: "Admin", emoji: "🧑‍💼" },
+  { key: "student", label: "Student", emoji: "🎓" },
+  { key: "faculty", label: "Faculty", emoji: "👨‍🏫" },
+];
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -9,23 +15,26 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    // Dummy credentials
-    const creds = {
-      admin: { email: "admin@gmail.com", password: "1234" },
-      student: { email: "student@gmail.com", password: "1234" },
-      faculty: { email: "faculty@gmail.com", password: "1234" },
-    };
+    // Normalize role to lowercase for comparison
+    const normalizedRole = role.toLowerCase();
     if (
-      email === creds[role].email &&
-      password === creds[role].password
+      email === "admin@gmail.com" &&
+      password === "1234" &&
+      normalizedRole === "admin"
     ) {
-      // Optionally store user in localStorage
-      localStorage.setItem(
-        "user",
-        JSON.stringify({ email, role })
-      );
-      setError("");
-      navigate("/dashboard");
+      navigate("/admin/dashboard");
+    } else if (
+      email === "student@gmail.com" &&
+      password === "1234" &&
+      normalizedRole === "student"
+    ) {
+      navigate("/student/dashboard");
+    } else if (
+      email === "faculty@gmail.com" &&
+      password === "1234" &&
+      normalizedRole === "faculty"
+    ) {
+      navigate("/faculty/dashboard");
     } else {
       setError("Invalid email, password, or role. Please try again.");
     }
@@ -33,18 +42,22 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-purple-100">
-      <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 space-y-6 border border-gray-200">
-        {/* 🔥 TITLE */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold text-blue-600 flex items-center justify-center gap-2">
-            👤 Login
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 space-y-8 border border-gray-200">
+        {/* Header */}
+        <div className="flex flex-col items-center space-y-3">
+          <span className="text-5xl mb-1">📊</span>
+          <h1 className="text-3xl font-extrabold text-blue-700 tracking-tight text-center">
+            Login
           </h1>
-          <p className="text-sm text-gray-500">
-            Welcome back! Please login to continue
+          <h2 className="text-lg font-semibold text-gray-700 text-center">
+            Attendance Management System
+          </h2>
+          <p className="text-sm text-gray-500 text-center max-w-xs">
+            Track, manage, and analyze attendance efficiently
           </p>
         </div>
 
-        {/* 🔥 EMAIL */}
+        {/* Email */}
         <div className="space-y-1">
           <label className="text-sm text-gray-600">Email</label>
           <div className="flex items-center bg-gray-100 px-3 py-2 rounded-xl focus-within:ring-2 focus-within:ring-blue-400">
@@ -55,11 +68,12 @@ const Login = () => {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="username"
             />
           </div>
         </div>
 
-        {/* 🔥 PASSWORD */}
+        {/* Password */}
         <div className="space-y-1">
           <label className="text-sm text-gray-600">Password</label>
           <div className="flex items-center bg-gray-100 px-3 py-2 rounded-xl focus-within:ring-2 focus-within:ring-blue-400">
@@ -70,53 +84,49 @@ const Login = () => {
               placeholder="Enter password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
             />
           </div>
         </div>
 
-        {/* 🔥 ROLE */}
+        {/* Role Selection */}
         <div className="space-y-2">
           <label className="text-sm text-gray-600">Role</label>
           <div className="flex gap-2">
-            {["admin", "student", "faculty"].map((r) => (
+            {ROLE_OPTIONS.map((r) => (
               <button
-                key={r}
+                key={r.key}
                 type="button"
-                onClick={() => setRole(r)}
-                className={`flex-1 px-3 py-2 rounded-xl text-sm font-medium transition ${
-                  role === r
-                    ? "bg-blue-600 text-white shadow"
-                    : "bg-gray-100 hover:bg-gray-200"
-                }`}
+                onClick={() => setRole(r.key)}
+                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200
+                  ${
+                    role === r.key
+                      ? "bg-blue-600 text-white shadow-lg scale-105"
+                      : "bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700"
+                  }`}
+                style={{ minWidth: 0 }}
               >
-                {r.charAt(0).toUpperCase() + r.slice(1)}
+                <span className="text-lg">{r.emoji}</span>
+                {r.label}
               </button>
             ))}
           </div>
         </div>
 
-        {/* 🔥 ERROR MESSAGE */}
+        {/* Error Message */}
         {error && (
           <div className="text-red-500 text-sm text-center">
             {error}
           </div>
         )}
 
-        {/* 🔥 LOGIN BUTTON */}
+        {/* Login Button */}
         <button
           onClick={handleLogin}
-          className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition shadow-md"
+          className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition shadow-md text-lg"
         >
           Login
         </button>
-
-        {/* 🔥 DEMO */}
-        <div className="text-xs text-gray-500 text-center space-y-1">
-          <p className="font-semibold text-gray-600">Demo credentials:</p>
-          <p>Admin: admin@gmail.com / 1234</p>
-          <p>Student: student@gmail.com / 1234</p>
-          <p>Faculty: faculty@gmail.com / 1234</p>
-        </div>
       </div>
     </div>
   );

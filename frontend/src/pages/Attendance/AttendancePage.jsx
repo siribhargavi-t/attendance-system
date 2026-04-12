@@ -30,14 +30,15 @@ const AttendancePage = () => {
   const [search, setSearch] = useState(""); // <-- Add this line
 
   // Filtered attendance (safe with useMemo)
-  const filteredAttendance = useMemo(() => {
-    return attendance.filter((rec) => {
-      const subjectMatch =
-        filter.subject === "All Subjects" || rec.subject === filter.subject;
-      const dateMatch = !filter.date || rec.date === filter.date;
-      return subjectMatch && dateMatch;
-    });
-  }, [attendance, filter]);
+  const filteredAttendance = useMemo(() =>
+    (attendance || []).filter(
+      (rec) =>
+        rec.subject.toLowerCase().includes(search.toLowerCase()) ||
+        rec.status.toLowerCase().includes(search.toLowerCase()) ||
+        rec.date.includes(search)
+    ),
+    [attendance, search]
+  );
 
   // Export handler (dummy)
   const handleExport = () => {
@@ -151,7 +152,7 @@ const AttendancePage = () => {
                   filteredAttendance.map((rec) => (
                     <tr
                       key={rec.id}
-                      className="border-b hover:bg-blue-50 transition"
+                      className="border-b hover:bg-blue-50 dark:hover:bg-gray-800 transition"
                     >
                       <td className="py-3 px-4 font-medium">{rec.date}</td>
                       <td className="py-3 px-4">{rec.subject}</td>

@@ -10,7 +10,7 @@ const DUMMY_KPI = {
   classes: 8,
 };
 
-// Dummy analytics data (could be chart data in future)
+// Dummy analytics data
 const DUMMY_ANALYTICS = [
   { label: "Avg Attendance %", value: "92%" },
   { label: "Best Performing Class", value: "CSE-A" },
@@ -31,8 +31,12 @@ const AdminDashboard = () => {
   const [activity] = useState(DUMMY_ACTIVITY);
   const [search, setSearch] = useState("");
 
-  const filteredData = activity.filter((item) =>
-    item.user.toLowerCase().includes(search.toLowerCase())
+  // Filter activity by search
+  const filteredActivity = (activity || []).filter(
+    (rec) =>
+      rec.user.toLowerCase().includes(search.toLowerCase()) ||
+      rec.role.toLowerCase().includes(search.toLowerCase()) ||
+      rec.action.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -85,6 +89,17 @@ const AdminDashboard = () => {
           </div>
         </Card>
 
+        {/* Search Bar */}
+        <div className="flex justify-end mb-2">
+          <input
+            type="text"
+            placeholder="Search activity..."
+            className="px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-200 dark:bg-gray-800 dark:text-white transition"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
         {/* Recent Activity Table */}
         <Card>
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
@@ -101,11 +116,11 @@ const AdminDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {(filteredData || []).length > 0 ? (
-                  filteredData.map((rec) => (
+                {filteredActivity.length > 0 ? (
+                  filteredActivity.map((rec) => (
                     <tr
                       key={rec.id}
-                      className="border-b hover:bg-blue-50 transition"
+                      className="border-b hover:bg-blue-50 dark:hover:bg-gray-800 transition"
                     >
                       <td className="py-3 px-4 font-medium">{rec.user}</td>
                       <td className="py-3 px-4">{rec.role}</td>
@@ -123,13 +138,6 @@ const AdminDashboard = () => {
               </tbody>
             </table>
           </div>
-          <input
-            type="text"
-            placeholder="Search..."
-            className="mb-4 px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-200 dark:bg-gray-800 dark:text-white"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
         </Card>
       </div>
     </MainLayout>

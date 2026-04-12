@@ -1,29 +1,31 @@
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
 
-// AUTH PAGES
 import Login from "./pages/Auth/Login";
-import Register from "./pages/Auth/Register";
+import AdminDashboard from "./pages/Admin/AdminDashBoard";
+import StudentDashboard from "./pages/Student/StudentDashBoard";
+import FacultyDashboard from "./pages/Faculty/FacultyDashboard";
 
-// DASHBOARD & ATTENDANCE PAGES
-import Dashboard from "./pages/Student/StudentDashBoard"; // Adjust the import path as needed
-import AttendancePage from "./pages/Attendance/AttendancePage"; // Adjust the import path as needed
+function NotFound() {
+  return <div>404 - Page Not Found</div>;
+}
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/attendance" element={<AttendancePage />} />
-        {/* Default route: redirect to /login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    </Router>
+    <div style={{ background: "#ffe", padding: 20 }}>
+      <h1>App is rendering</h1>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/student/dashboard" element={<StudentDashboard />} />
+          <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
+          <Route path="*" element={<NotFound />} /> {/* Fallback route */}
+        </Routes>
+      </BrowserRouter>
+    </div>
   );
 }
 
 export default App;
-

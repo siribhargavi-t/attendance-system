@@ -23,7 +23,6 @@ const DUMMY_ATTENDANCE = [
   { id: 5, date: "2024-05-28", subject: "Mathematics", status: "Present" },
 ];
 
-// Helper for attendance %
 const getPercentage = (present, total) =>
   total === 0 ? 0 : Math.round((present / total) * 100);
 
@@ -31,13 +30,8 @@ const StudentDashboard = () => {
   const [kpi] = useState(DUMMY_KPI);
   const [subjects] = useState(DUMMY_SUBJECTS);
   const [attendance] = useState(DUMMY_ATTENDANCE);
-  const [search, setSearch] = useState("");
 
   const attendancePercentage = getPercentage(kpi.present, kpi.total);
-
-  const filteredData = attendance.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase())
-  );
 
   return (
     <MainLayout>
@@ -103,13 +97,6 @@ const StudentDashboard = () => {
           <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
             <FiCalendar className="text-green-500" /> Recent Attendance
           </h2>
-          <input
-            type="text"
-            placeholder="Search..."
-            className="mb-4 px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-200 dark:bg-gray-800 dark:text-white"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -120,8 +107,8 @@ const StudentDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {(filteredData || []).length > 0 ? (
-                  filteredData.map((rec) => (
+                {(attendance || []).length > 0 ? (
+                  attendance.map((rec) => (
                     <tr
                       key={rec.id}
                       className="border-b hover:bg-blue-50 transition"

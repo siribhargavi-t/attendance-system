@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FiMail, FiLock } from "react-icons/fi";
 
 const ROLE_OPTIONS = [
   { key: "admin", label: "Admin", emoji: "🧑‍💼" },
@@ -15,26 +16,20 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleLogin = () => {
-    // Normalize role to lowercase for comparison
-    const normalizedRole = role.toLowerCase();
-    if (
-      email === "admin@gmail.com" &&
-      password === "1234" &&
-      normalizedRole === "admin"
-    ) {
+    const r = role.toLowerCase();
+
+    if (email === "admin@gmail.com" && password === "1234" && r === "admin") {
+      localStorage.setItem("role", "admin");
       navigate("/admin/dashboard");
-    } else if (
-      email === "student@gmail.com" &&
-      password === "1234" &&
-      normalizedRole === "student"
-    ) {
+      window.location.reload();
+    } else if (email === "student@gmail.com" && password === "1234" && r === "student") {
+      localStorage.setItem("role", "student");
       navigate("/student/dashboard");
-    } else if (
-      email === "faculty@gmail.com" &&
-      password === "1234" &&
-      normalizedRole === "faculty"
-    ) {
+      window.location.reload();
+    } else if (email === "faculty@gmail.com" && password === "1234" && r === "faculty") {
+      localStorage.setItem("role", "faculty");
       navigate("/faculty/dashboard");
+      window.location.reload();
     } else {
       setError("Invalid email, password, or role. Please try again.");
     }
@@ -42,91 +37,84 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-purple-100">
-      <div className="w-full max-w-md bg-white/80 backdrop-blur-xl shadow-2xl rounded-3xl p-8 space-y-8 border border-gray-200">
-        {/* Header */}
-        <div className="flex flex-col items-center space-y-3">
-          <span className="text-5xl mb-1">📊</span>
-          <h1 className="text-3xl font-extrabold text-blue-700 tracking-tight text-center">
-            Login
-          </h1>
-          <h2 className="text-lg font-semibold text-gray-700 text-center">
-            Attendance Management System
-          </h2>
-          <p className="text-sm text-gray-500 text-center max-w-xs">
-            Track, manage, and analyze attendance efficiently
-          </p>
-        </div>
+      <div className="w-full max-w-md bg-white shadow-xl rounded-3xl p-8 space-y-6">
+
+        <h1 className="text-3xl font-bold text-center text-blue-600">
+          Attendance Login
+        </h1>
 
         {/* Email */}
-        <div className="space-y-1">
-          <label className="text-sm text-gray-600">Email</label>
-          <div className="flex items-center bg-gray-100 px-3 py-2 rounded-xl focus-within:ring-2 focus-within:ring-blue-400">
-            <span className="text-gray-500">📧</span>
-            <input
-              type="email"
-              className="bg-transparent outline-none px-2 w-full"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="username"
-            />
-          </div>
+        <div className="relative">
+          <FiMail className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 text-lg" />
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none transition"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
 
         {/* Password */}
-        <div className="space-y-1">
-          <label className="text-sm text-gray-600">Password</label>
-          <div className="flex items-center bg-gray-100 px-3 py-2 rounded-xl focus-within:ring-2 focus-within:ring-blue-400">
-            <span className="text-gray-500">🔒</span>
-            <input
-              type="password"
-              className="bg-transparent outline-none px-2 w-full"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-            />
-          </div>
+        <div className="relative">
+          <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-400 text-lg" />
+          <input
+            type="password"
+            placeholder="Password"
+            className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none transition"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </div>
 
-        {/* Role Selection */}
-        <div className="space-y-2">
-          <label className="text-sm text-gray-600">Role</label>
-          <div className="flex gap-2">
-            {ROLE_OPTIONS.map((r) => (
-              <button
-                key={r.key}
-                type="button"
-                onClick={() => setRole(r.key)}
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200
-                  ${
-                    role === r.key
-                      ? "bg-blue-600 text-white shadow-lg scale-105"
-                      : "bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700"
-                  }`}
-                style={{ minWidth: 0 }}
-              >
-                <span className="text-lg">{r.emoji}</span>
-                {r.label}
-              </button>
-            ))}
-          </div>
+        {/* Forgot Password Link */}
+        <div className="text-right">
+          <button
+            className="text-blue-600 hover:underline text-sm transition"
+            type="button"
+            onClick={() => navigate("/forgot-password")}
+          >
+            Forgot Password?
+          </button>
         </div>
 
-        {/* Error Message */}
-        {error && (
-          <div className="text-red-500 text-sm text-center">
-            {error}
-          </div>
-        )}
+        {/* Role */}
+        <div className="flex gap-2">
+          {ROLE_OPTIONS.map((r) => (
+            <button
+              key={r.key}
+              onClick={() => setRole(r.key)}
+              className={`flex-1 p-2 rounded-xl transition-transform duration-200 ${
+                role === r.key
+                  ? "bg-blue-600 text-white scale-105 shadow"
+                  : "bg-gray-200 hover:scale-105"
+              }`}
+              type="button"
+            >
+              {r.emoji} {r.label}
+            </button>
+          ))}
+        </div>
 
-        {/* Login Button */}
+        {error && <p className="text-red-500 text-sm">{error}</p>}
+
         <button
           onClick={handleLogin}
-          className="w-full py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition shadow-md text-lg"
+          className="w-full bg-blue-600 text-white p-3 rounded-xl hover:scale-105 transition-transform duration-200 focus:ring-2 focus:ring-blue-400"
         >
           Login
         </button>
+
+        {/* Register Link */}
+        <div className="text-center">
+          <button
+            className="text-blue-600 hover:underline text-sm transition"
+            type="button"
+            onClick={() => navigate("/register")}
+          >
+            Don't have an account? Register
+          </button>
+        </div>
       </div>
     </div>
   );

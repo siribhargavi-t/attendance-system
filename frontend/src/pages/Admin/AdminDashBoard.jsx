@@ -1,147 +1,70 @@
-import React, { useState } from "react";
+import React from "react";
 import MainLayout from "../../components/Layout/MainLayout";
 import Card from "../../components/Card";
-import { FiUsers, FiUserCheck, FiBookOpen, FiBarChart2, FiActivity } from "react-icons/fi";
+import { FiUsers, FiUserCheck, FiUserX, FiBookOpen } from "react-icons/fi";
 
-// Dummy KPI data
-const DUMMY_KPI = {
-  students: 120,
-  faculty: 15,
-  classes: 8,
-};
-
-// Dummy analytics data
-const DUMMY_ANALYTICS = [
-  { label: "Avg Attendance %", value: "92%" },
-  { label: "Best Performing Class", value: "CSE-A" },
-  { label: "Most Absent Day", value: "Friday" },
+// Dummy data for stats
+const stats = [
+  {
+    label: "Total Students",
+    value: 120,
+    icon: <FiUsers className="text-blue-500 text-3xl mb-2" />,
+    color: "text-blue-500",
+  },
+  {
+    label: "Present Today",
+    value: 110,
+    icon: <FiUserCheck className="text-green-500 text-3xl mb-2" />,
+    color: "text-green-600",
+  },
+  {
+    label: "Absent Today",
+    value: 10,
+    icon: <FiUserX className="text-red-500 text-3xl mb-2" />,
+    color: "text-red-500",
+  },
+  {
+    label: "Subjects",
+    value: 8,
+    icon: <FiBookOpen className="text-indigo-500 text-3xl mb-2" />,
+    color: "text-indigo-600",
+  },
 ];
 
-// Dummy recent activity
-const DUMMY_ACTIVITY = [
-  { id: 1, user: "Siri Bhargavi", action: "Marked Present", role: "Student", date: "2024-06-01" },
-  { id: 2, user: "John Doe", action: "Marked Absent", role: "Student", date: "2024-06-01" },
-  { id: 3, user: "Prof. Smith", action: "Added Attendance", role: "Faculty", date: "2024-05-31" },
-  { id: 4, user: "Jane Smith", action: "Marked Present", role: "Student", date: "2024-05-31" },
-];
-
-const AdminDashboard = () => {
-  const [kpi] = useState(DUMMY_KPI);
-  const [analytics] = useState(DUMMY_ANALYTICS);
-  const [activity] = useState(DUMMY_ACTIVITY);
-  const [search, setSearch] = useState("");
-
-  // Filter activity by search
-  const filteredActivity = (activity || []).filter(
-    (rec) =>
-      rec.user.toLowerCase().includes(search.toLowerCase()) ||
-      rec.role.toLowerCase().includes(search.toLowerCase()) ||
-      rec.action.toLowerCase().includes(search.toLowerCase())
-  );
-
-  return (
-    <MainLayout>
-      <div className="max-w-6xl mx-auto px-2 py-8 space-y-10">
-        {/* Header */}
-        <div className="mb-4">
-          <h1 className="text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+const AdminDashboard = () => (
+  <MainLayout>
+    <div className="max-w-6xl mx-auto px-4 py-10">
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 mb-8 shadow flex flex-col sm:flex-row items-center justify-between transition-colors duration-300">
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-1 transition-colors duration-300">Welcome back, Admin 👋</h2>
+          <p className="text-white text-opacity-90">Here is your attendance overview</p>
         </div>
-
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          <Card className="flex flex-col items-center py-6">
-            <span className="text-gray-500 text-sm mb-1">Total Students</span>
-            <span className="text-3xl font-bold flex items-center gap-2">
-              <FiUsers className="text-blue-500" /> {kpi.students}
-            </span>
-          </Card>
-          <Card className="flex flex-col items-center py-6">
-            <span className="text-gray-500 text-sm mb-1">Total Faculty</span>
-            <span className="text-3xl font-bold flex items-center gap-2 text-green-600">
-              <FiUserCheck /> {kpi.faculty}
-            </span>
-          </Card>
-          <Card className="flex flex-col items-center py-6">
-            <span className="text-gray-500 text-sm mb-1">Total Classes</span>
-            <span className="text-3xl font-bold flex items-center gap-2 text-orange-600">
-              <FiBookOpen /> {kpi.classes}
-            </span>
-          </Card>
-        </div>
-
-        {/* Analytics Section */}
-        <Card>
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <FiBarChart2 className="text-blue-500" /> Analytics
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {analytics.map((item, idx) => (
-              <div
-                key={idx}
-                className="bg-blue-50 rounded-xl p-4 flex flex-col items-center shadow-sm"
-              >
-                <span className="font-medium text-gray-700">{item.label}</span>
-                <span className="text-xl font-bold text-blue-600 mt-2">
-                  {item.value}
-                </span>
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Search Bar */}
-        <div className="flex justify-end mb-2">
-          <input
-            type="text"
-            placeholder="Search activity..."
-            className="px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-200 dark:bg-gray-800 dark:text-white transition"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        {/* Recent Activity Table */}
-        <Card>
-          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <FiActivity className="text-green-500" /> Recent Activity
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-gray-500 border-b">
-                  <th className="py-3 px-4 text-left">User</th>
-                  <th className="py-3 px-4 text-left">Role</th>
-                  <th className="py-3 px-4 text-left">Action</th>
-                  <th className="py-3 px-4 text-left">Date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredActivity.length > 0 ? (
-                  filteredActivity.map((rec) => (
-                    <tr
-                      key={rec.id}
-                      className="border-b hover:bg-blue-50 dark:hover:bg-gray-800 transition"
-                    >
-                      <td className="py-3 px-4 font-medium">{rec.user}</td>
-                      <td className="py-3 px-4">{rec.role}</td>
-                      <td className="py-3 px-4">{rec.action}</td>
-                      <td className="py-3 px-4">{rec.date}</td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={4} className="text-center py-8 text-gray-400">
-                      No recent activity found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
       </div>
-    </MainLayout>
-  );
-};
+
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-1 transition-colors duration-300">Admin Dashboard</h1>
+        <p className="text-gray-500 dark:text-gray-300 text-base transition-colors duration-300">
+          Welcome! View overall attendance and system stats.
+        </p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        {stats.map((stat) => (
+          <Card
+            key={stat.label}
+            className="flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-lg transition-colors duration-300"
+          >
+            {stat.icon}
+            <span className={`text-3xl font-bold ${stat.color} dark:text-white transition-colors duration-300`}>{stat.value}</span>
+            <span className="text-gray-500 dark:text-gray-300 text-sm mt-1 transition-colors duration-300">{stat.label}</span>
+          </Card>
+        ))}
+      </div>
+    </div>
+  </MainLayout>
+);
 
 export default AdminDashboard;

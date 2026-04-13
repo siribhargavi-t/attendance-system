@@ -1,70 +1,80 @@
 import React, { useState } from "react";
 import MainLayout from "../../components/Layout/MainLayout";
-import { FiCalendar, FiBookOpen } from "react-icons/fi";
+import { FiSearch, FiBookOpen, FiCalendar } from "react-icons/fi";
 
 // Dummy data
 const SUBJECTS = ["All Subjects", "Mathematics", "Physics", "Chemistry", "English"];
 const DUMMY_ATTENDANCE = [
-  { id: 1, date: "2024-06-01", subject: "Mathematics", status: "Present" },
-  { id: 2, date: "2024-06-02", subject: "Physics", status: "Absent" },
-  { id: 3, date: "2024-06-03", subject: "Chemistry", status: "Present" },
-  { id: 4, date: "2024-06-04", subject: "English", status: "Present" },
-  { id: 5, date: "2024-06-05", subject: "Mathematics", status: "Absent" },
+  { id: 1, name: "Alice Johnson", subject: "Mathematics", date: "2024-06-01", status: "Present" },
+  { id: 2, name: "Bob Smith", subject: "Mathematics", date: "2024-06-01", status: "Absent" },
+  { id: 3, name: "Charlie Lee", subject: "Physics", date: "2024-06-02", status: "Present" },
+  { id: 4, name: "Diana Patel", subject: "Chemistry", date: "2024-06-03", status: "Present" },
+  { id: 5, name: "Ethan Brown", subject: "English", date: "2024-06-04", status: "Absent" },
 ];
 
 const getStats = (records) => {
   const total = records.length;
   const present = records.filter((a) => a.status === "Present").length;
   const absent = records.filter((a) => a.status === "Absent").length;
-  const percent = total ? Math.round((present / total) * 100) : 0;
-  return { total, present, absent, percent };
+  const presentPercent = total ? Math.round((present / total) * 100) : 0;
+  const absentPercent = total ? Math.round((absent / total) * 100) : 0;
+  return { total, presentPercent, absentPercent };
 };
 
-const StudentAttendance = () => {
+const AdminAttendance = () => {
   const [subject, setSubject] = useState("All Subjects");
   const [date, setDate] = useState("");
+  const [search, setSearch] = useState("");
   const [attendance] = useState(DUMMY_ATTENDANCE);
 
   const filtered = attendance.filter(
     (rec) =>
       (subject === "All Subjects" || rec.subject === subject) &&
-      (!date || rec.date === date)
+      (!date || rec.date === date) &&
+      (rec.name.toLowerCase().includes(search.toLowerCase()) ||
+        rec.subject.toLowerCase().includes(search.toLowerCase()))
   );
 
   const stats = getStats(attendance);
 
   return (
     <MainLayout>
-      <div className="max-w-4xl mx-auto px-2 py-8 space-y-8">
+      <div className="max-w-5xl mx-auto px-2 py-8 space-y-8">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold mb-1 flex items-center gap-2">
-            My Attendance
+            All Attendance Records
           </h1>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center">
-            <span className="text-gray-500 text-sm">Total Classes</span>
+            <span className="text-gray-500 text-sm">Total Students</span>
             <span className="text-xl font-bold">{stats.total}</span>
           </div>
           <div className="bg-green-50 rounded-xl shadow p-4 flex flex-col items-center">
-            <span className="text-green-700 text-sm">Present</span>
-            <span className="text-xl font-bold text-green-700">{stats.present}</span>
+            <span className="text-green-700 text-sm">Present %</span>
+            <span className="text-xl font-bold text-green-700">{stats.presentPercent}%</span>
           </div>
           <div className="bg-red-50 rounded-xl shadow p-4 flex flex-col items-center">
-            <span className="text-red-700 text-sm">Absent</span>
-            <span className="text-xl font-bold text-red-700">{stats.absent}</span>
-          </div>
-          <div className="bg-blue-50 rounded-xl shadow p-4 flex flex-col items-center">
-            <span className="text-blue-700 text-sm">Attendance %</span>
-            <span className="text-xl font-bold text-blue-700">{stats.percent}%</span>
+            <span className="text-red-700 text-sm">Absent %</span>
+            <span className="text-xl font-bold text-red-700">{stats.absentPercent}%</span>
           </div>
         </div>
 
-        {/* Filter Bar */}
+        {/* Search and Filters */}
         <div className="flex flex-col sm:flex-row gap-4 items-center bg-white rounded-xl shadow p-4">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <FiSearch className="text-blue-500" />
+            <input
+              type="text"
+              placeholder="Search by name or subject"
+              className="rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 w-full sm:w-48"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <FiBookOpen className="text-blue-500" />
             <select
@@ -95,8 +105,9 @@ const StudentAttendance = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-gray-500 border-b">
-                <th className="py-3 px-4 text-left">Date</th>
+                <th className="py-3 px-4 text-left">Name</th>
                 <th className="py-3 px-4 text-left">Subject</th>
+                <th className="py-3 px-4 text-left">Date</th>
                 <th className="py-3 px-4 text-center">Status</th>
               </tr>
             </thead>
@@ -107,8 +118,9 @@ const StudentAttendance = () => {
                     key={rec.id}
                     className="border-b hover:bg-blue-50 transition"
                   >
-                    <td className="py-3 px-4">{rec.date}</td>
+                    <td className="py-3 px-4 font-medium">{rec.name}</td>
                     <td className="py-3 px-4">{rec.subject}</td>
+                    <td className="py-3 px-4">{rec.date}</td>
                     <td className="py-3 px-4 text-center">
                       {rec.status === "Present" ? (
                         <span className="px-3 py-1 text-xs rounded-full font-medium bg-green-100 text-green-700">
@@ -124,7 +136,7 @@ const StudentAttendance = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={3} className="text-center text-gray-400 py-6">
+                  <td colSpan={4} className="text-center text-gray-400 py-6">
                     No records found
                   </td>
                 </tr>
@@ -137,4 +149,4 @@ const StudentAttendance = () => {
   );
 };
 
-export default StudentAttendance;
+export default AdminAttendance;

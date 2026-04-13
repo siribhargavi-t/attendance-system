@@ -1,130 +1,67 @@
 import React, { useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import api from "../../api/axios";
-import "./Auth.css";
+import { useNavigate } from "react-router-dom";
+import { FiMail } from "react-icons/fi";
 
 const ForgotPassword = () => {
-  const { role } = useParams();
-
-  const roleConfig = {
-    admin: {
-      title: "Admin Password Reset",
-      color: "#4f46e5",
-    },
-    student: {
-      title: "Student Password Reset",
-      color: "#16a34a",
-    },
-    faculty: {
-      title: "Faculty Password Reset",
-      color: "#f59e0b",
-    },
-  };
-
-  const current = roleConfig[role];
-
   const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
-  if (!role || !current) {
-    return <h2 style={{ textAlign: "center" }}>Invalid Role</h2>;
-  }
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setError("");
-    setMessage("");
     setLoading(true);
-
-    try {
-      const res = await api.post("/auth/forgot-password", { email });
-      setMessage(res.data.message || "Reset link sent to your email");
-    } catch (err) {
-      setError(err.response?.data?.message || "Something went wrong");
-    } finally {
+    setTimeout(() => {
+      setSent(true);
       setLoading(false);
-    }
+    }, 900);
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        
-        {/* 🔥 Header */}
-        <div style={{ textAlign: "center", marginBottom: "20px" }}>
-          <h1
-            style={{
-              fontSize: "26px",
-              fontWeight: "bold",
-              color: current.color,
-            }}
-          >
-            {current.title}
-          </h1>
-
-          <div style={{ marginTop: "10px" }}>
-            <span
-              style={{
-                background: current.color,
-                color: "#fff",
-                padding: "5px 12px",
-                borderRadius: "20px",
-                fontSize: "12px",
-                fontWeight: "bold",
-                letterSpacing: "1px",
-              }}
-            >
-              {role.toUpperCase()}
-            </span>
-
-            <p
-              style={{
-                marginTop: "8px",
-                fontSize: "13px",
-                color: "#666",
-              }}
-            >
-              Enter your email to receive reset link
-            </p>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-400 to-purple-500">
+      <div className="w-full max-w-md bg-white/80 backdrop-blur-lg rounded-3xl shadow-2xl p-10">
+        <h2 className="text-3xl font-bold text-center text-blue-700 mb-8 flex items-center justify-center gap-2">
+          <FiMail /> Forgot Password
+        </h2>
+        {sent ? (
+          <div className="bg-green-100 text-green-700 px-4 py-3 rounded-lg text-center mb-6">
+            Reset link sent to your email (dummy)
           </div>
-        </div>
-
-        {/* 🔥 Messages */}
-        {error && <p className="auth-error">{error}</p>}
-        {message && (
-          <p style={{ color: "green", textAlign: "center" }}>{message}</p>
+        ) : (
+          <form className="space-y-6" onSubmit={handleSubmit} autoComplete="off">
+            <div>
+              <label className="block text-gray-600 mb-1 font-medium">Email</label>
+              <div className="relative">
+                <FiMail className="absolute left-3 top-3 text-blue-400" />
+                <input
+                  type="email"
+                  name="email"
+                  className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  autoComplete="username"
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="w-full py-2.5 rounded-lg bg-blue-600 text-white font-semibold shadow hover:bg-blue-700 transition text-lg"
+              disabled={loading}
+            >
+              {loading ? "Sending..." : "Send Reset Link"}
+            </button>
+          </form>
         )}
-
-        {/* 🔥 Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="auth-form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-            />
-          </div>
-
+        <div className="mt-6 text-center text-gray-500 text-sm">
           <button
-            type="submit"
-            disabled={loading}
-            className="auth-button"
-            style={{
-              background: current.color,
-            }}
+            className="text-blue-600 hover:underline"
+            onClick={() => navigate("/login")}
+            type="button"
           >
-            {loading ? "Sending..." : "Send Reset Link"}
+            ← Back to Login
           </button>
-        </form>
-
-        {/* 🔥 Back to Login */}
-        <div className="auth-link">
-          <Link to={`/login/${role}`}>← Back to Login</Link>
         </div>
       </div>
     </div>

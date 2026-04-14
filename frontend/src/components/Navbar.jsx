@@ -1,43 +1,85 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { FiBell, FiSun, FiMoon } from "react-icons/fi";
 
-const notifications = [
-  { id: 1, text: "Attendance marked for today." },
-  { id: 2, text: "New student registered." },
-];
-
-const Navbar = ({ darkMode, toggleDarkMode }) => {
+const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
   const [showNotif, setShowNotif] = useState(false);
+  const notifRef = useRef();
+
+  // ✅ Close on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setShowNotif(false);
+      }
+    };
+
+    if (showNotif) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside);
+  }, [showNotif]);
 
   return (
-    <nav className="flex items-center justify-between px-6 py-3 bg-white dark:bg-gray-900 shadow transition">
-      <div className="text-xl font-bold text-blue-700 tracking-tight">Attendance System</div>
-      <div className="flex items-center gap-4 relative">
-        {/* Notifications */}
+    <nav className="flex items-center justify-between px-6 py-3 bg-white dark:bg-gray-900 shadow border-b dark:border-gray-700">
+
+      {/* LEFT */}
+      <div className="flex items-center gap-3">
         <button
-          onClick={() => setShowNotif((s) => !s)}
-          className="relative p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+          onClick={() => setOpen(true)}
+          className="text-2xl p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition"
         >
-          <FiBell className="text-xl" />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full"></span>
+          ☰
         </button>
+
+        <span className="text-xl font-bold text-gray-900 dark:text-white">
+          Attendance System
+        </span>
+      </div>
+
+      {/* RIGHT */}
+      <div className="flex items-center gap-4 relative" ref={notifRef}>
+
+        {/* 🔔 Notifications */}
+        <button
+          onClick={() => setShowNotif((prev) => !prev)}
+          className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+        >
+          <FiBell className="text-xl text-gray-700 dark:text-white" />
+        </button>
+
+        {/* Dropdown */}
         {showNotif && (
-          <div className="absolute right-0 mt-12 w-64 bg-white dark:bg-gray-800 shadow-lg rounded-xl p-4 z-50">
-            <h4 className="font-semibold mb-2">Notifications</h4>
-            <ul>
-              {notifications.map((n) => (
-                <li key={n.id} className="py-1 text-sm border-b last:border-b-0">{n.text}</li>
-              ))}
-            </ul>
+          <div className="absolute right-0 mt-12 w-64 bg-white dark:bg-gray-800 shadow-xl rounded-xl p-4 z-50 border dark:border-gray-700 transition-all duration-200">
+            <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
+              Notifications
+            </h4>
+
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              No new notifications
+            </p>
           </div>
         )}
-        {/* Dark Mode Toggle */}
+
+        {/* 🌙 Dark Mode */}
         <button
           onClick={toggleDarkMode}
           className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-          aria-label="Toggle dark mode"
         >
-          {darkMode ? <FiSun /> : <FiMoon />}
+          {darkMode ? (
+            <FiSun className="text-yellow-400" />
+          ) : (
+            <FiMoon className="text-gray-700 dark:text-white" />
+          )}
+        </button>
+
+        {/* 🚪 Logout */}
+        <button
+          onClick={onLogout}
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition"
+        >
+          Logout
         </button>
       </div>
     </nav>

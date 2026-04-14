@@ -40,32 +40,32 @@ const FacultyDashboard = () => {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-1">Faculty Dashboard</h1>
-          <p className="text-gray-500 text-base">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">Faculty Dashboard</h1>
+          <p className="text-gray-600 dark:text-gray-300 text-base">
             Welcome! View your class attendance overview and quick actions.
           </p>
         </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <Card className="flex flex-col items-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition">
+          <Card className="flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-lg transition">
             <FiUsers className="text-blue-500 text-3xl mb-2" />
-            <span className="text-3xl font-bold text-gray-800">{summary.total}</span>
-            <span className="text-gray-500 text-sm mt-1">Total Students</span>
+            <span className="text-3xl font-bold text-gray-900 dark:text-gray-100">{summary.total}</span>
+            <span className="text-gray-600 dark:text-gray-300 text-sm mt-1">Total Students</span>
           </Card>
-          <Card className="flex flex-col items-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition">
+          <Card className="flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-lg transition">
             <FiUserCheck className="text-green-500 text-3xl mb-2" />
-            <span className="text-3xl font-bold text-green-600">{summary.present}</span>
-            <span className="text-gray-500 text-sm mt-1">Present</span>
+            <span className="text-3xl font-bold text-green-600 dark:text-green-400">{summary.present}</span>
+            <span className="text-gray-600 dark:text-gray-300 text-sm mt-1">Present</span>
           </Card>
-          <Card className="flex flex-col items-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition">
+          <Card className="flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-lg transition">
             <FiUserX className="text-red-500 text-3xl mb-2" />
-            <span className="text-3xl font-bold text-red-500">{summary.absent}</span>
-            <span className="text-gray-500 text-sm mt-1">Absent</span>
+            <span className="text-3xl font-bold text-red-500 dark:text-red-400">{summary.absent}</span>
+            <span className="text-gray-600 dark:text-gray-300 text-sm mt-1">Absent</span>
           </Card>
-          <Card className="flex flex-col items-center p-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition">
+          <Card className="flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-2xl shadow-md hover:shadow-lg transition">
             <FiArrowRight className="text-indigo-500 text-3xl mb-2" />
-            <span className="text-xl font-semibold text-indigo-600 mb-1">Quick Action</span>
+            <span className="text-xl font-semibold text-indigo-600 dark:text-indigo-400 mb-1">Quick Action</span>
             <button
               className="bg-blue-600 text-white px-4 py-2 rounded-lg mt-2 hover:bg-blue-700 transition font-semibold flex items-center gap-2"
               onClick={() => navigate("/faculty/attendance")}

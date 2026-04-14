@@ -4,9 +4,11 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Check, X, Book, Calendar as CalendarIcon, AlertCircle } from 'lucide-react';
 
+const ROWS_PER_PAGE = 5;
+
 const MarkAttendance = () => {
   const [students, setStudents] = useState([]);
-  const [subjects, setSubjects] = useState([]); // Assuming subjects are also fetched
+  const [subjects, setSubjects] = useState([]);
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [attendance, setAttendance] = useState({});
@@ -14,17 +16,23 @@ const MarkAttendance = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Filtering states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterSubject, setFilterSubject] = useState('All');
+  const [filterDate, setFilterDate] = useState('');
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem('token');
       const config = { headers: { Authorization: `Bearer ${token}` } };
       try {
-        // 1. Fetch the list of all students from the backend
         const studentsRes = await axios.get('/api/admin/students', config);
         setStudents(studentsRes.data);
 
-        // You should also fetch subjects from a dedicated endpoint
-        // For now, using dummy data for subjects
+        // Dummy subjects
         const dummySubjects = [
           { _id: 'subj1', name: 'Computer Networks' },
           { _id: 'subj2', name: 'Database Systems' },
@@ -33,7 +41,6 @@ const MarkAttendance = () => {
         if (dummySubjects.length > 0) {
           setSelectedSubject(dummySubjects[0]._id);
         }
-
       } catch (error) {
         console.error("Failed to fetch data", error);
         setErrors({ form: 'Could not load student or subject data.' });
@@ -56,14 +63,13 @@ const MarkAttendance = () => {
     setSuccessMessage('');
 
     const attendancePromises = Object.entries(attendance).map(([studentId, status]) => {
-      // 2. The payload correctly uses studentId which is the student's _id
       const payload = {
-        studentId, // This is the ObjectId from the student object
+        studentId,
         subjectId: selectedSubject,
         date: selectedDate.toISOString(),
         status,
       };
-      const token = localStorage.getItem('token'); 
+      const token = localStorage.getItem('token');
       return axios.post('/api/attendance/mark', payload, {
         headers: { Authorization: `Bearer ${token}` }
       }).catch(err => ({
@@ -75,7 +81,7 @@ const MarkAttendance = () => {
     });
 
     const results = await Promise.allSettled(attendancePromises);
-    
+
     const newErrors = {};
     let successCount = 0;
     results.forEach(result => {
@@ -97,10 +103,34 @@ const MarkAttendance = () => {
     if (successCount > 0) {
       setSuccessMessage(`Successfully marked attendance for ${successCount} student(s).`);
     }
-    
+
     setIsLoading(false);
     setAttendance({}); // Reset for next marking
   };
+
+  // Filtering logic
+  const filteredData = students.filter(student => {
+    const matchesSearch =
+      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (subjects.find(s => s._id === selectedSubject)?.name.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+    const matchesSubject =
+      filterSubject === 'All' ||
+      (subjects.find(s => s._id === filterSubject) && selectedSubject === filterSubject);
+    const matchesDate =
+      !filterDate ||
+      (selectedDate && selectedDate.toISOString().slice(0, 10) === filterDate);
+    return matchesSearch && matchesSubject && matchesDate;
+  });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredData.length / ROWS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
+  const paginatedData = filteredData.slice(startIndex, startIndex + ROWS_PER_PAGE);
+
+  // Reset to first page if filter changes and current page is out of range
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
+  }, [filteredData, totalPages, currentPage]);
 
   return (
     <div className="p-6 md:p-8 bg-gray-100 min-h-screen">
@@ -131,6 +161,33 @@ const MarkAttendance = () => {
         </div>
       </div>
 
+      {/* --- Filtering Controls --- */}
+      <div className="flex flex-col md:flex-row gap-4 mb-6">
+        <input
+          type="text"
+          placeholder="Search by student name or subject"
+          className="w-full md:w-1/3 p-2 border border-gray-300 rounded-md"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <select
+          className="w-full md:w-1/4 p-2 border border-gray-300 rounded-md"
+          value={filterSubject}
+          onChange={(e) => setFilterSubject(e.target.value)}
+        >
+          <option value="All">All Subjects</option>
+          {subjects.map(subject => (
+            <option key={subject._id} value={subject._id}>{subject.name}</option>
+          ))}
+        </select>
+        <input
+          type="date"
+          className="w-full md:w-1/4 p-2 border border-gray-300 rounded-md"
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value)}
+        />
+      </div>
+
       {/* --- Student List --- */}
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <table className="w-full">
@@ -141,39 +198,67 @@ const MarkAttendance = () => {
             </tr>
           </thead>
           <tbody>
-            {/* 3. The student._id is passed to the button handler */}
-            {students.map(student => (
-              <tr key={student._id} className="border-b hover:bg-gray-50">
-                <td className="py-4 px-4 font-medium text-gray-800">{student.name}</td>
-                <td className="py-4 px-4">
-                  <div className="flex justify-center items-center space-x-2">
-                    <button
-                      onClick={() => handleStatusChange(student._id, 'present')}
-                      className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center transition ${
-                        attendance[student._id] === 'present' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-green-200'
-                      }`}
-                    >
-                      <Check size={16} className="mr-1" /> Present
-                    </button>
-                    <button
-                      onClick={() => handleStatusChange(student._id, 'absent')}
-                      className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center transition ${
-                        attendance[student._id] === 'absent' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-red-200'
-                      }`}
-                    >
-                      <X size={16} className="mr-1" /> Absent
-                    </button>
-                  </div>
-                  {errors[student._id] && (
-                    <p className="text-red-500 text-xs mt-1 text-center flex items-center justify-center">
-                      <AlertCircle size={14} className="mr-1" /> {errors[student._id]}
-                    </p>
-                  )}
+            {paginatedData.length > 0 ? (
+              paginatedData.map(student => (
+                <tr key={student._id} className="border-b hover:bg-gray-50">
+                  <td className="py-4 px-4 font-medium text-gray-800">{student.name}</td>
+                  <td className="py-4 px-4">
+                    <div className="flex justify-center items-center space-x-2">
+                      <button
+                        onClick={() => handleStatusChange(student._id, 'present')}
+                        className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center transition ${
+                          attendance[student._id] === 'present' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-green-200'
+                        }`}
+                      >
+                        <Check size={16} className="mr-1" /> Present
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange(student._id, 'absent')}
+                        className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center transition ${
+                          attendance[student._id] === 'absent' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-red-200'
+                        }`}
+                      >
+                        <X size={16} className="mr-1" /> Absent
+                      </button>
+                    </div>
+                    {errors[student._id] && (
+                      <p className="text-red-500 text-xs mt-1 text-center flex items-center justify-center">
+                        <AlertCircle size={14} className="mr-1" /> {errors[student._id]}
+                      </p>
+                    )}
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={2} className="text-center text-gray-400 py-6">
+                  No students found.
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
+      </div>
+
+      {/* --- Pagination Controls --- */}
+      <div className="flex justify-center items-center gap-4 mt-4">
+        <button
+          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          disabled={currentPage === 1}
+        >
+          Prev
+        </button>
+        <span className="text-gray-700">
+          Page {currentPage} of {totalPages || 1}
+        </span>
+        <button
+          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
+          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          disabled={currentPage === totalPages || totalPages === 0}
+        >
+          Next
+        </button>
       </div>
 
       {/* --- Submit Button and Messages --- */}

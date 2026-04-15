@@ -2,31 +2,25 @@ const express = require('express');
 const router = express.Router();
 const { 
   markAttendance, 
-  getStudentAttendance, 
-  getAttendancePercentage, 
-  getWeeklyAttendance,
-  getRecentAttendance,
-  getMyAttendance 
+  getAttendance, 
+  updateAttendance, 
+  deleteAttendance,
+  getAttendancePercentage
 } = require('../controllers/attendanceController');
-const { protect, authorize } = require('../middleware/authMiddleware'); // Assuming you have this middleware
 
-// POST /api/attendance/mark
-// FIX: Authorize both 'admin' and 'faculty' to mark attendance
-router.post('/mark', protect, authorize('admin', 'faculty'), markAttendance); 
+// POST /api/attendance/ → Mark attendance
+router.post('/', markAttendance);
 
-// GET /api/attendance/student/me
-router.get('/student/me', protect, authorize('student'), getMyAttendance);
+// GET /api/attendance/percentage/:studentEmail
+router.get('/percentage/:studentEmail', getAttendancePercentage);
 
-// GET /api/attendance/student/:id (Can be kept for admin/faculty use if needed)
-router.get('/student/:id', protect, authorize('admin', 'faculty'), getStudentAttendance);
+// GET /api/attendance/ → Get all attendance
+router.get('/', getAttendance);
 
-// GET /api/attendance/percentage/:id
-router.get('/percentage/:id', protect, authorize('admin', 'faculty'), getAttendancePercentage);
+// PUT /api/attendance/:id → Update attendance by ID
+router.put('/:id', updateAttendance);
 
-// GET /api/attendance/weekly
-router.get('/weekly', protect, authorize('admin', 'faculty'), getWeeklyAttendance);
-
-// GET /api/attendance/recent
-router.get('/recent', protect, authorize('admin', 'faculty'), getRecentAttendance);
+// DELETE /api/attendance/:id → Delete attendance by ID
+router.delete('/:id', deleteAttendance);
 
 module.exports = router;

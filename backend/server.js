@@ -17,6 +17,7 @@ require('dotenv').config();
 connectDB();
 
 const app = express();
+const leaveRoutes = require("./routes/leaveRoutes");
 
 // Body parser
 app.use(express.json({ limit: '10mb' }));
@@ -28,9 +29,11 @@ app.use(cors());
 // Mount routers
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/attendance', attendanceRoutes);
+app.use('/api/attendance', attendanceRoutes); // <-- Attendance routes connected here
+app.use('/api/leave', leaveRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/profile', profileRoutes);
+app.use("/api/notifications", require("./routes/notificationRoutes"));
 
 // =================== ADD THIS SECTION ===================
 // Serve static assets if in production

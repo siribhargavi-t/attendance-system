@@ -14,24 +14,20 @@ const Profile = () => {
   const [department, setDepartment] = useState("");
   const [adminRole, setAdminRole] = useState("");
 
-  // Fetch profile on mount
+  // Load profile from localStorage on mount
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    fetch("/api/profile", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then(res => res.json())
-      .then(data => {
-        setUser(data);
-        setName(data.name || "");
-        setEmail(data.email || "");
-        setImage(data.image || "");
-        setPreview(data.image || "");
-        setStudentClass(data.class || "");
-        setRollNo(data.rollNo || "");
-        setDepartment(data.department || "");
-        setAdminRole(data.adminRole || "");
-      });
+    const userData = JSON.parse(localStorage.getItem("userData"));
+    if (userData) {
+      setUser(userData);
+      setName(userData.name || "");
+      setEmail(userData.email || "");
+      setImage(userData.image || "");
+      setPreview(userData.image || "");
+      setStudentClass(userData.class || "");
+      setRollNo(userData.rollNo || "");
+      setDepartment(userData.department || "");
+      setAdminRole(userData.adminRole || "");
+    }
   }, [setUser]);
 
   // Handle image file selection
@@ -66,10 +62,9 @@ const Profile = () => {
     return Object.keys(errs).length === 0;
   };
 
-  // Save profile to backend
-  const handleSave = async () => {
+  // Save profile to localStorage and context
+  const handleSave = () => {
     if (!validate()) return;
-    const token = localStorage.getItem("token");
     const updatedUser = {
       ...user,
       name,
@@ -83,21 +78,45 @@ const Profile = () => {
         ? { adminRole }
         : {}),
     };
-    const res = await fetch("/api/profile", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(updatedUser),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setUser(data);
-      setEditing(false);
-    } else {
-      alert("Failed to update profile");
+    // Save to localStorage
+    localStorage.setItem("userData", JSON.stringify(updatedUser));
+    // Update context
+    setUser(updatedUser);
+    setEditing(false);
+  };
+
+  // College coordinates
+  const COLLEGE_LAT = 17.3850;
+  const COLLEGE_LON = 78.4867;
+
+  // Helper to check if within range
+  const isWithinCampus = (lat, lon) => {
+    return (
+      Math.abs(lat - COLLEGE_LAT) <= 0.01 &&
+      Math.abs(lon - COLLEGE_LON) <= 0.01
+    );
+  };
+
+  // Attendance handler
+  const handleAttendance = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser");
+      return;
     }
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        if (isWithinCampus(latitude, longitude)) {
+          alert("Attendance marked successfully!");
+          // Place your attendance logic here if needed
+        } else {
+          alert("You are not in campus");
+        }
+      },
+      () => {
+        alert("Unable to retrieve your location");
+      }
+    );
   };
 
   return (
@@ -260,6 +279,13 @@ const Profile = () => {
           Edit
         </button>
       )}
+      <button
+        type="button"
+        onClick={handleAttendance}
+        className="bg-green-600 text-white px-4 py-2 rounded ml-2"
+      >
+        Mark Attendance
+      </button>
     </div>
   );
 };

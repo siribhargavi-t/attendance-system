@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from "axios";
 import MainLayout from "../../components/Layout/MainLayout";
 import StatsCard from "../../components/StatsCard";
 import { FiBookOpen, FiUserCheck, FiUserX, FiPercent } from "react-icons/fi";
@@ -68,11 +69,47 @@ const DUMMY_ATTENDANCE_TREND = [
 ];
 
 const StudentDashboard = () => {
-  // Use state to allow future backend integration
-  const [stats] = useState(DUMMY_STATS);
+  const [stats, setStats] = useState(DUMMY_STATS);
   const [subjectAttendance] = useState(DUMMY_SUBJECT_ATTENDANCE);
   const [recentAttendance] = useState(DUMMY_RECENT_ATTENDANCE);
   const [attendanceTrend] = useState(DUMMY_ATTENDANCE_TREND);
+  const [notifications, setNotifications] = useState([]);
+  const [attendancePercent, setAttendancePercent] = useState(null);
+
+  const user = JSON.parse(localStorage.getItem("userData") || "{}");
+  const studentEmail = user.email || "";
+
+  // Fetch attendance percentage from backend
+  useEffect(() => {
+    if (studentEmail) {
+      axios
+        .get(`/api/attendance/percentage/${encodeURIComponent(studentEmail)}`)
+        .then((res) => {
+          setAttendancePercent(res.data.percentage);
+          // Update stats card for Attendance %
+          setStats((prev) =>
+            prev.map((stat) =>
+              stat.label === "Attendance %"
+                ? { ...stat, value: `${res.data.percentage}%` }
+                : stat
+            )
+          );
+        })
+        .catch(() => {
+          setAttendancePercent(null);
+        });
+    }
+  }, [studentEmail]);
+
+  // Fetch notifications in useEffect
+  useEffect(() => {
+    if (!studentEmail) return;
+    axios
+      .get(`/api/notifications/${encodeURIComponent(studentEmail)}`)
+      .then((res) => setNotifications(res.data));
+  }, [studentEmail]);
+
+  // Show bell icon with count: notifications.filter(n => !n.read).length
 
   // Attendance Insights calculation
   const bestSubject =
@@ -88,15 +125,11 @@ const StudentDashboard = () => {
         subjectAttendance[0])
       : null;
 
-  // Calculate overall attendance percent (from stats or trend)
-  let overallPercent = 0;
+  // Calculate overall attendance percent (from backend if available)
+  let overallPercent = attendancePercent !== null ? attendancePercent : 0;
   let totalClasses = 0;
   let presentClasses = 0;
   if (stats && stats.length > 0) {
-    const percentStat = stats.find((s) => s.label === "Attendance %");
-    if (percentStat && typeof percentStat.value === "string") {
-      overallPercent = parseInt(percentStat.value.replace("%", ""), 10);
-    }
     const totalStat = stats.find((s) => s.label === "Total Classes");
     if (totalStat && typeof totalStat.value === "number") {
       totalClasses = totalStat.value;
@@ -110,21 +143,31 @@ const StudentDashboard = () => {
   // Prediction logic: classes needed to reach 75%
   let needed = 0;
   if (totalClasses > 0 && presentClasses / totalClasses < 0.75) {
-    // (presentClasses + n) / (totalClasses + n) >= 0.75
-    // presentClasses + n >= 0.75 * (totalClasses + n)
-    // presentClasses + n >= 0.75*totalClasses + 0.75*n
-    // presentClasses + 0.25n >= 0.75*totalClasses
-    // 0.25n >= 0.75*totalClasses - presentClasses
-    // n >= (0.75*totalClasses - presentClasses) / 0.25
     needed = Math.ceil((0.75 * totalClasses - presentClasses) / 0.25);
     if (needed < 0) needed = 0;
   }
 
+  useEffect(() => {
+    const leaveRequests = JSON.parse(localStorage.getItem("leaveRequests") || "[]");
+    const notifiedIds = JSON.parse(localStorage.getItem("notifiedLeaveIds") || "[]");
+    const newNotifs = leaveRequests
+      .filter(req => req.status && req.status !== "Pending" && !notifiedIds.includes(req.id))
+      .map(req => ({
+        id: req.id,
+        message: `Your leave request is ${req.status}.`
+      }));
+    if (newNotifs.length > 0) {
+      setNotifications(newNotifs);
+      const updatedIds = [...notifiedIds, ...newNotifs.map(n => n.id)];
+      localStorage.setItem("notifiedLeaveIds", JSON.stringify(updatedIds));
+    }
+  }, []);
+
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
-        {/* Warning Alert */}
-        {overallPercent < 75 && (
+        {/* Warning Message */}
+        {attendancePercent !== null && attendancePercent < 75 && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2 font-semibold mb-4">
             <span className="text-xl">⚠</span>
             <span>Attendance below required level</span>
@@ -316,6 +359,21 @@ const StudentDashboard = () => {
             </div>
           ) : (
             <div className="text-gray-500 dark:text-gray-400">No data available</div>
+          )}
+        </div>
+
+        {/* Notifications */}
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Notifications</h2>
+          {notifications.length > 0 ? (
+            notifications.map((notif) => (
+              <div key={notif.id} className="flex items-center gap-2 mb-2">
+                <span className="text-xl">🔔</span>
+                <span>{notif.message}</span>
+              </div>
+            ))
+          ) : (
+            <div className="text-gray-500 dark:text-gray-400">No notifications</div>
           )}
         </div>
       </div>

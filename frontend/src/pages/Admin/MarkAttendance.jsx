@@ -1,280 +1,185 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
-import { Check, X, Book, Calendar as CalendarIcon, AlertCircle } from 'lucide-react';
+import React, { useState } from "react";
+import MainLayout from "../../components/Layout/MainLayout";
+import { FiSearch, FiBookOpen, FiCalendar, FiDownload } from "react-icons/fi";
 
-const ROWS_PER_PAGE = 5;
+// Dummy data
+const SUBJECTS = ["All Subjects", "Mathematics", "Physics", "Chemistry", "English"];
+const DUMMY_ATTENDANCE = [
+  { id: 1, name: "Alice Johnson", subject: "Mathematics", date: "2024-06-01", status: "Present" },
+  { id: 2, name: "Bob Smith", subject: "Mathematics", date: "2024-06-01", status: "Absent" },
+  { id: 3, name: "Charlie Lee", subject: "Physics", date: "2024-06-02", status: "Present" },
+  { id: 4, name: "Diana Patel", subject: "Chemistry", date: "2024-06-03", status: "Present" },
+  { id: 5, name: "Ethan Brown", subject: "English", date: "2024-06-04", status: "Absent" },
+];
 
-const MarkAttendance = () => {
-  const [students, setStudents] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [attendance, setAttendance] = useState({});
-  const [errors, setErrors] = useState({});
-  const [successMessage, setSuccessMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+const getStats = (records) => {
+  const total = records.length;
+  const present = records.filter((a) => a.status === "Present").length;
+  const absent = records.filter((a) => a.status === "Absent").length;
+  const presentPercent = total ? Math.round((present / total) * 100) : 0;
+  const absentPercent = total ? Math.round((absent / total) * 100) : 0;
+  return { total, presentPercent, absentPercent };
+};
 
-  // Filtering states
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterSubject, setFilterSubject] = useState('All');
-  const [filterDate, setFilterDate] = useState('');
+const AdminAttendance = () => {
+  const [subject, setSubject] = useState("All Subjects");
+  const [date, setDate] = useState("");
+  const [search, setSearch] = useState("");
+  const [attendance] = useState(DUMMY_ATTENDANCE);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
+  const filtered = attendance.filter(
+    (rec) =>
+      (subject === "All Subjects" || rec.subject === subject) &&
+      (!date || rec.date === date) &&
+      (rec.name.toLowerCase().includes(search.toLowerCase()) ||
+        rec.subject.toLowerCase().includes(search.toLowerCase()))
+  );
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const token = localStorage.getItem('token');
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-      try {
-        const studentsRes = await axios.get('/api/admin/students', config);
-        setStudents(studentsRes.data);
+  const stats = getStats(attendance);
 
-        // Dummy subjects
-        const dummySubjects = [
-          { _id: 'subj1', name: 'Computer Networks' },
-          { _id: 'subj2', name: 'Database Systems' },
-        ];
-        setSubjects(dummySubjects);
-        if (dummySubjects.length > 0) {
-          setSelectedSubject(dummySubjects[0]._id);
-        }
-      } catch (error) {
-        console.error("Failed to fetch data", error);
-        setErrors({ form: 'Could not load student or subject data.' });
-      }
-    };
-    fetchData();
-  }, []);
+  // Export to CSV function
+  const handleExportCSV = () => {
+    const headers = ["Name", "Subject", "Date", "Status"];
+    const rows = filtered.map((rec) => [
+      `"${rec.name}"`,
+      `"${rec.subject}"`,
+      `"${rec.date}"`,
+      `"${rec.status}"`,
+    ]);
+    const csvContent =
+      headers.join(",") +
+      "\n" +
+      rows.map((row) => row.join(",")).join("\n");
 
-  const handleStatusChange = (studentId, status) => {
-    setAttendance(prev => ({ ...prev, [studentId]: status }));
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "attendance_report.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
-
-  const handleSubmit = async () => {
-    if (Object.keys(attendance).length === 0) {
-      setErrors({ form: 'Please mark attendance for at least one student.' });
-      return;
-    }
-    setIsLoading(true);
-    setErrors({});
-    setSuccessMessage('');
-
-    const attendancePromises = Object.entries(attendance).map(([studentId, status]) => {
-      const payload = {
-        studentId,
-        subjectId: selectedSubject,
-        date: selectedDate.toISOString(),
-        status,
-      };
-      const token = localStorage.getItem('token');
-      return axios.post('/api/attendance/mark', payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      }).catch(err => ({
-          error: true,
-          studentId,
-          message: err.response?.data?.message || 'An error occurred.',
-          status: err.response?.status
-      }));
-    });
-
-    const results = await Promise.allSettled(attendancePromises);
-
-    const newErrors = {};
-    let successCount = 0;
-    results.forEach(result => {
-      if (result.status === 'fulfilled' && result.value && result.value.error) {
-        const studentName = students.find(s => s._id === result.value.studentId)?.name || 'A student';
-        if (result.value.status === 409) {
-          newErrors[result.value.studentId] = `${studentName}'s attendance is already marked for this date.`;
-        } else {
-          newErrors[result.value.studentId] = `${studentName}: ${result.value.message}`;
-        }
-      } else if (result.status === 'fulfilled') {
-        successCount++;
-      }
-    });
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-    }
-    if (successCount > 0) {
-      setSuccessMessage(`Successfully marked attendance for ${successCount} student(s).`);
-    }
-
-    setIsLoading(false);
-    setAttendance({}); // Reset for next marking
-  };
-
-  // Filtering logic
-  const filteredData = students.filter(student => {
-    const matchesSearch =
-      student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (subjects.find(s => s._id === selectedSubject)?.name.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-    const matchesSubject =
-      filterSubject === 'All' ||
-      (subjects.find(s => s._id === filterSubject) && selectedSubject === filterSubject);
-    const matchesDate =
-      !filterDate ||
-      (selectedDate && selectedDate.toISOString().slice(0, 10) === filterDate);
-    return matchesSearch && matchesSubject && matchesDate;
-  });
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredData.length / ROWS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
-  const paginatedData = filteredData.slice(startIndex, startIndex + ROWS_PER_PAGE);
-
-  // Reset to first page if filter changes and current page is out of range
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
-  }, [filteredData, totalPages, currentPage]);
 
   return (
-    <div className="p-6 md:p-8 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Mark Attendance</h1>
-
-      {/* --- Controls: Subject and Date --- */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 bg-white p-4 rounded-lg shadow">
-        <div className="flex items-center space-x-3">
-          <Book className="text-gray-500" />
-          <select
-            value={selectedSubject}
-            onChange={(e) => setSelectedSubject(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
+    <MainLayout>
+      <div className="max-w-5xl mx-auto px-2 py-8 space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold mb-1 flex items-center gap-2 text-gray-900 dark:text-white transition-colors duration-300">
+            All Attendance Records
+          </h1>
+          <button
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+            onClick={handleExportCSV}
           >
-            {subjects.map(subject => (
-              <option key={subject._id} value={subject._id}>{subject.name}</option>
-            ))}
-          </select>
+            <FiDownload className="text-lg" />
+            Download Report
+          </button>
         </div>
-        <div className="flex items-center space-x-3">
-          <CalendarIcon className="text-gray-500" />
-          <DatePicker
-            selected={selectedDate}
-            onChange={(date) => setSelectedDate(date)}
-            dateFormat="MMMM d, yyyy"
-            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-          />
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 flex flex-col items-center">
+            <span className="text-gray-600 dark:text-gray-300 text-sm">Total Students</span>
+            <span className="text-xl font-bold text-gray-900 dark:text-gray-100">{stats.total}</span>
+          </div>
+          <div className="bg-green-50 dark:bg-green-900 rounded-xl shadow p-4 flex flex-col items-center">
+            <span className="text-green-700 dark:text-green-300 text-sm">Present %</span>
+            <span className="text-xl font-bold text-green-700 dark:text-green-300">{stats.presentPercent}%</span>
+          </div>
+          <div className="bg-red-50 dark:bg-red-900 rounded-xl shadow p-4 flex flex-col items-center">
+            <span className="text-red-700 dark:text-red-300 text-sm">Absent %</span>
+            <span className="text-xl font-bold text-red-700 dark:text-red-300">{stats.absentPercent}%</span>
+          </div>
         </div>
-      </div>
 
-      {/* --- Filtering Controls --- */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
-        <input
-          type="text"
-          placeholder="Search by student name or subject"
-          className="w-full md:w-1/3 p-2 border border-gray-300 rounded-md"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <select
-          className="w-full md:w-1/4 p-2 border border-gray-300 rounded-md"
-          value={filterSubject}
-          onChange={(e) => setFilterSubject(e.target.value)}
-        >
-          <option value="All">All Subjects</option>
-          {subjects.map(subject => (
-            <option key={subject._id} value={subject._id}>{subject.name}</option>
-          ))}
-        </select>
-        <input
-          type="date"
-          className="w-full md:w-1/4 p-2 border border-gray-300 rounded-md"
-          value={filterDate}
-          onChange={(e) => setFilterDate(e.target.value)}
-        />
-      </div>
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4 items-center bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <FiSearch className="text-blue-500" />
+            <input
+              type="text"
+              placeholder="Search by name or subject"
+              className="rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 w-full sm:w-48 transition-colors duration-300"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <FiBookOpen className="text-blue-500" />
+            <select
+              className="rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 transition-colors duration-300"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+            >
+              {SUBJECTS.map((subj) => (
+                <option key={subj} value={subj}>
+                  {subj}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <FiCalendar className="text-blue-500" />
+            <input
+              type="date"
+              className="rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 transition-colors duration-300"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+        </div>
 
-      {/* --- Student List --- */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-600 uppercase">Student Name</th>
-              <th className="py-3 px-4 text-center text-sm font-medium text-gray-600 uppercase">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedData.length > 0 ? (
-              paginatedData.map(student => (
-                <tr key={student._id} className="border-b hover:bg-gray-50">
-                  <td className="py-4 px-4 font-medium text-gray-800">{student.name}</td>
-                  <td className="py-4 px-4">
-                    <div className="flex justify-center items-center space-x-2">
-                      <button
-                        onClick={() => handleStatusChange(student._id, 'present')}
-                        className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center transition ${
-                          attendance[student._id] === 'present' ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-green-200'
-                        }`}
-                      >
-                        <Check size={16} className="mr-1" /> Present
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange(student._id, 'absent')}
-                        className={`px-3 py-1 rounded-full text-sm font-semibold flex items-center transition ${
-                          attendance[student._id] === 'absent' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-red-200'
-                        }`}
-                      >
-                        <X size={16} className="mr-1" /> Absent
-                      </button>
-                    </div>
-                    {errors[student._id] && (
-                      <p className="text-red-500 text-xs mt-1 text-center flex items-center justify-center">
-                        <AlertCircle size={14} className="mr-1" /> {errors[student._id]}
-                      </p>
-                    )}
+        {/* Attendance Table */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-gray-600 dark:text-gray-300 border-b">
+                <th className="py-3 px-4 text-left">Name</th>
+                <th className="py-3 px-4 text-left">Subject</th>
+                <th className="py-3 px-4 text-left">Date</th>
+                <th className="py-3 px-4 text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length ? (
+                filtered.map((rec) => (
+                  <tr
+                    key={rec.id}
+                    className="border-b hover:bg-blue-50 dark:hover:bg-gray-700 transition"
+                  >
+                    <td className="py-3 px-4 font-medium text-gray-900 dark:text-gray-100">{rec.name}</td>
+                    <td className="py-3 px-4 text-gray-900 dark:text-gray-100">{rec.subject}</td>
+                    <td className="py-3 px-4 text-gray-900 dark:text-gray-100">{rec.date}</td>
+                    <td className="py-3 px-4 text-center">
+                      {rec.status === "Present" ? (
+                        <span className="px-3 py-1 text-xs rounded-full font-medium bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300">
+                          Present
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 text-xs rounded-full font-medium bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300">
+                          Absent
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="text-center text-gray-400 dark:text-gray-500 py-6">
+                    No records found
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={2} className="text-center text-gray-400 py-6">
-                  No students found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-
-      {/* --- Pagination Controls --- */}
-      <div className="flex justify-center items-center gap-4 mt-4">
-        <button
-          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
-          onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          disabled={currentPage === 1}
-        >
-          Prev
-        </button>
-        <span className="text-gray-700">
-          Page {currentPage} of {totalPages || 1}
-        </span>
-        <button
-          className="px-4 py-2 bg-gray-200 rounded disabled:opacity-50"
-          onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          disabled={currentPage === totalPages || totalPages === 0}
-        >
-          Next
-        </button>
-      </div>
-
-      {/* --- Submit Button and Messages --- */}
-      <div className="mt-6 text-center">
-        {errors.form && <p className="text-red-500 mb-2">{errors.form}</p>}
-        {successMessage && <p className="text-green-600 mb-2">{successMessage}</p>}
-        <button
-          onClick={handleSubmit}
-          disabled={isLoading}
-          className="w-full md:w-auto px-8 py-3 bg-blue-600 text-white font-bold rounded-lg shadow-md hover:bg-blue-700 disabled:bg-gray-400 transition"
-        >
-          {isLoading ? 'Submitting...' : 'Submit Attendance'}
-        </button>
-      </div>
-    </div>
+    </MainLayout>
   );
 };
 
-export default MarkAttendance;
+export default AdminAttendance;

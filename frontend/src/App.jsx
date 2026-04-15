@@ -8,10 +8,14 @@ import StudentDashboard from "./pages/Student/StudentDashBoard";
 import FacultyDashboard from "./pages/Faculty/FacultyDashboard";
 import Register from "./pages/Auth/Register";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
-import AdminAttendance from "./pages/Admin/Attendance";
+import MarkAttendance from "./pages/Admin/MarkAttendance"; // <-- fixed import
 import StudentAttendance from "./pages/Student/Attendance";
 import FacultyAttendance from "./pages/Faculty/Attendance";
 import Profile from "./pages/Profile/Profile";
+import LeaveRequest from "./pages/Student/LeaveList";
+import FacultyLeaveRequests from "./pages/Faculty/LeaveRequests";
+import LeaveList from "./pages/Student/LeaveList";
+import NewLeave from "./pages/Student/NewLeave";
 
 function NotFound() {
   return <h1>404 Page Not Found</h1>;
@@ -36,8 +40,8 @@ function ProtectedRoute({ allowedRoles, children }) {
   }
 
   const role = user?.role;
-console.log("Stored:", stored);
-console.log("Role:", role);
+  console.log("Stored:", stored);
+  console.log("Role:", role);
   // ❌ Role not valid
   if (!role || !allowedRoles.includes(role)) {
     return <Navigate to="/login" replace />;
@@ -70,7 +74,7 @@ function App() {
             path="/admin/attendance"
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
-                <AdminAttendance />
+                <MarkAttendance />
               </ProtectedRoute>
             }
           />
@@ -92,6 +96,30 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/student/leave-request"
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <LeaveRequest />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/leave-list"
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <LeaveList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/new-leave"
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <NewLeave />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Faculty */}
           <Route
@@ -109,6 +137,10 @@ function App() {
                 <FacultyAttendance />
               </ProtectedRoute>
             }
+          />
+          <Route
+            path="/faculty/leave-requests"
+            element={<FacultyLeaveRequests />}
           />
 
           {/* Profile */}

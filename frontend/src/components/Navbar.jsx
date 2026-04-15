@@ -5,11 +5,21 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
   const [showNotif, setShowNotif] = useState(false);
   const notifRef = useRef();
 
-  // Example notifications
-  const [notifications, setNotifications] = useState([
-    { id: 1, message: "Marked present today" },
-    { id: 2, message: "Low attendance warning" },
-  ]);
+  // Fetch leave approval notifications
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    // Fetch leave requests from localStorage (or use API if needed)
+    const leaveRequests = JSON.parse(localStorage.getItem("leaveRequests") || "[]");
+    // Filter requests where status changed from Pending
+    const leaveNotifs = leaveRequests
+      .filter(req => req.status && req.status !== "Pending")
+      .map(req => ({
+        id: req.id || req._id,
+        message: `Your leave is ${req.status}`,
+      }));
+    setNotifications(leaveNotifs);
+  }, []);
 
   // ✅ Close on outside click
   useEffect(() => {

@@ -15,38 +15,44 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
- const handleLogin = () => {
-  const selectedRole = role.toLowerCase();
+  const handleLogin = () => {
+    const selectedRole = role.toLowerCase();
 
-  let valid = false;
+    let valid = false;
+    let name = "";
 
-  if (email === "admin@gmail.com" && password === "1234" && selectedRole === "admin") {
-    valid = true;
-  } 
-  else if (email === "student@gmail.com" && password === "1234" && selectedRole === "student") {
-    valid = true;
-  } 
-  else if (email === "faculty@gmail.com" && password === "1234" && selectedRole === "faculty") {
-    valid = true;
-  }
+    if (email === "admin@gmail.com" && password === "1234" && selectedRole === "admin") {
+      valid = true;
+      name = "Admin User";
+    } 
+    else if (email === "student@gmail.com" && password === "1234" && selectedRole === "student") {
+      valid = true;
+      name = "Student User";
+    } 
+    else if (email === "faculty@gmail.com" && password === "1234" && selectedRole === "faculty") {
+      valid = true;
+      name = "Faculty User";
+    }
 
-  if (valid) {
-    // ✅ STORE CONSISTENT DATA
-    localStorage.setItem(
-      "userData",
-      JSON.stringify({
-        role: selectedRole,
-        email: email,
-      })
-    );
+    if (valid) {
+      // Store only userData (no other keys)
+      localStorage.setItem(
+        "userData",
+        JSON.stringify({
+          role: selectedRole,
+          email: email,
+          name: name,
+        })
+      );
+      // Remove any conflicting keys
+      localStorage.removeItem("role");
 
-    // ✅ NAVIGATE USING SAME ROLE
-    navigate(`/${selectedRole}/dashboard`, { replace: true });
-
-  } else {
-    setError("Invalid email, password, or role. Please try again.");
-  }
-};
+      // Navigate to correct dashboard
+      navigate(`/${selectedRole}/dashboard`, { replace: true });
+    } else {
+      setError("Invalid email, password, or role. Please try again.");
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-purple-100">

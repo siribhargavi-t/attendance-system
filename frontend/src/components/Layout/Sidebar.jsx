@@ -48,12 +48,16 @@ const Sidebar = ({ open, setOpen }) => {
       { name: "Dashboard", to: "/faculty/dashboard", icon: "🏠" },
       { name: "Profile", to: "/faculty/profile", icon: "👤" },
       { name: attendanceLabel, to: "/faculty/attendance", icon: "📋" },
+      // Add Leave Requests link for faculty
+      { name: "Leave Requests", to: "/faculty/leave-requests", icon: "🗂️" },
     ];
   } else if (role === "student") {
     navLinks = [
       { name: "Dashboard", to: "/student/dashboard", icon: "🏠" },
       { name: "Profile", to: "/student/profile", icon: "👤" },
       { name: attendanceLabel, to: "/student/attendance", icon: "📋" },
+      // Add Leave Request link for students
+      { name: "Leave Request", to: "/student/leave-request", icon: "📝" },
     ];
   }
 

@@ -47,11 +47,26 @@ const FacultyAttendance = () => {
     if (currentPage > totalPages) setCurrentPage(1);
   }, [filteredData, totalPages, currentPage]);
 
-  const handleMark = (id, status) => {
+  // Mark all present/absent
+  const handleMarkAll = (status) => {
+    const newAttendance = {};
+    filteredData.forEach((student) => {
+      newAttendance[student.id] = status;
+    });
+    setAttendance((prev) => ({ ...prev, ...newAttendance }));
+  };
+
+  // Toggle checkbox for each student
+  const handleCheckbox = (id) => {
     setAttendance((prev) => ({
       ...prev,
-      [id]: status,
+      [id]: prev[id] === "Present" ? "Absent" : "Present",
     }));
+  };
+
+  // Save handler (UI only)
+  const handleSave = () => {
+    alert("Attendance saved!");
   };
 
   return (
@@ -104,6 +119,22 @@ const FacultyAttendance = () => {
           </div>
         </div>
 
+        {/* Mark All Buttons */}
+        <div className="flex gap-4 mb-2">
+          <button
+            className="px-4 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+            onClick={() => handleMarkAll("Present")}
+          >
+            Mark All Present
+          </button>
+          <button
+            className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+            onClick={() => handleMarkAll("Absent")}
+          >
+            Mark All Absent
+          </button>
+        </div>
+
         {/* Attendance Table */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-4 transition-colors duration-300">
           <table className="w-full text-sm">
@@ -112,7 +143,7 @@ const FacultyAttendance = () => {
                 <th className="py-3 px-4 text-left">Name</th>
                 <th className="py-3 px-4 text-left">Roll No</th>
                 <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-center">Action</th>
+                <th className="py-3 px-4 text-center">Mark</th>
               </tr>
             </thead>
             <tbody>
@@ -141,19 +172,17 @@ const FacultyAttendance = () => {
                         </span>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-center flex gap-2 justify-center">
-                      <button
-                        className="px-3 py-1 text-xs rounded-lg font-semibold bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-700 transition"
-                        onClick={() => handleMark(student.id, "Present")}
-                      >
+                    <td className="py-3 px-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={attendance[student.id] === "Present"}
+                        onChange={() => handleCheckbox(student.id)}
+                        className="w-5 h-5 accent-green-600"
+                        id={`present-${student.id}`}
+                      />
+                      <label htmlFor={`present-${student.id}`} className="ml-2 text-sm text-gray-700 dark:text-gray-200">
                         Present
-                      </button>
-                      <button
-                        className="px-3 py-1 text-xs rounded-lg font-semibold bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-700 transition"
-                        onClick={() => handleMark(student.id, "Absent")}
-                      >
-                        Absent
-                      </button>
+                      </label>
                     </td>
                   </tr>
                 ))
@@ -166,6 +195,16 @@ const FacultyAttendance = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Save Button */}
+        <div className="flex justify-end mt-4">
+          <button
+            className="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
+            onClick={handleSave}
+          >
+            Save
+          </button>
         </div>
 
         {/* Pagination Controls */}

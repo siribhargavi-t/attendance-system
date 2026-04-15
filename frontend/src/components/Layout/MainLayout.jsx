@@ -27,13 +27,14 @@ const MainLayout = ({ children }) => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="relative min-h-screen bg-gray-50 dark:bg-gray-900">
 
       {/* Sidebar */}
       <Sidebar open={open} setOpen={setOpen} />
 
-      {/* Main */}
-      <div className="flex-1 flex flex-col w-full">
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+
         <Navbar
           darkMode={darkMode}
           toggleDarkMode={handleToggleTheme}
@@ -41,7 +42,11 @@ const MainLayout = ({ children }) => {
           onLogout={handleLogout}
         />
 
-        <main className="p-6">{children}</main>
+       <main className="p-6 relative z-[999] bg-white">
+  <div className="relative z-[999]">
+    {children}
+  </div>
+</main>
       </div>
     </div>
   );

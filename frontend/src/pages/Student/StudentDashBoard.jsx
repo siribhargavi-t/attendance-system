@@ -2,6 +2,14 @@ import React, { useState } from "react";
 import MainLayout from "../../components/Layout/MainLayout";
 import StatsCard from "../../components/StatsCard";
 import { FiBookOpen, FiUserCheck, FiUserX, FiPercent } from "react-icons/fi";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 // Dummy data for stats
 const DUMMY_STATS = [
@@ -48,13 +56,23 @@ const DUMMY_RECENT_ATTENDANCE = [
   { date: "2024-06-08", subject: "Mathematics", status: "Absent" },
 ];
 
-const StudentDashboard = () => {
-  console.log("StudentDashboard rendered");
+// Dummy attendance trend for last 7 days
+const DUMMY_ATTENDANCE_TREND = [
+  { date: "2024-06-04", percent: 100 },
+  { date: "2024-06-05", percent: 100 },
+  { date: "2024-06-06", percent: 80 },
+  { date: "2024-06-07", percent: 90 },
+  { date: "2024-06-08", percent: 80 },
+  { date: "2024-06-09", percent: 100 },
+  { date: "2024-06-10", percent: 90 },
+];
 
+const StudentDashboard = () => {
   // Use state to allow future backend integration
   const [stats] = useState(DUMMY_STATS);
   const [subjectAttendance] = useState(DUMMY_SUBJECT_ATTENDANCE);
   const [recentAttendance] = useState(DUMMY_RECENT_ATTENDANCE);
+  const [attendanceTrend] = useState(DUMMY_ATTENDANCE_TREND);
 
   // Attendance Insights calculation
   const bestSubject =
@@ -70,9 +88,49 @@ const StudentDashboard = () => {
         subjectAttendance[0])
       : null;
 
+  // Calculate overall attendance percent (from stats or trend)
+  let overallPercent = 0;
+  let totalClasses = 0;
+  let presentClasses = 0;
+  if (stats && stats.length > 0) {
+    const percentStat = stats.find((s) => s.label === "Attendance %");
+    if (percentStat && typeof percentStat.value === "string") {
+      overallPercent = parseInt(percentStat.value.replace("%", ""), 10);
+    }
+    const totalStat = stats.find((s) => s.label === "Total Classes");
+    if (totalStat && typeof totalStat.value === "number") {
+      totalClasses = totalStat.value;
+    }
+    const presentStat = stats.find((s) => s.label === "Present");
+    if (presentStat && typeof presentStat.value === "number") {
+      presentClasses = presentStat.value;
+    }
+  }
+
+  // Prediction logic: classes needed to reach 75%
+  let needed = 0;
+  if (totalClasses > 0 && presentClasses / totalClasses < 0.75) {
+    // (presentClasses + n) / (totalClasses + n) >= 0.75
+    // presentClasses + n >= 0.75 * (totalClasses + n)
+    // presentClasses + n >= 0.75*totalClasses + 0.75*n
+    // presentClasses + 0.25n >= 0.75*totalClasses
+    // 0.25n >= 0.75*totalClasses - presentClasses
+    // n >= (0.75*totalClasses - presentClasses) / 0.25
+    needed = Math.ceil((0.75 * totalClasses - presentClasses) / 0.25);
+    if (needed < 0) needed = 0;
+  }
+
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
+        {/* Warning Alert */}
+        {overallPercent < 75 && (
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2 font-semibold mb-4">
+            <span className="text-xl">⚠</span>
+            <span>Attendance below required level</span>
+          </div>
+        )}
+
         {/* Welcome Banner */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 shadow flex flex-col sm:flex-row items-center justify-between">
           <div>
@@ -106,6 +164,59 @@ const StudentDashboard = () => {
               No data available
             </div>
           )}
+        </div>
+
+        {/* Prediction Message */}
+        {needed > 0 && (
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-3 rounded-xl flex items-center gap-2 font-semibold mt-2 mb-2">
+            <span className="text-xl">📈</span>
+            <span>
+              You need {needed} more present classes to reach 75%
+            </span>
+          </div>
+        )}
+
+        {/* Attendance Trend Chart */}
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            Attendance Trend (Last 7 Days)
+          </h2>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={attendanceTrend}>
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 12, fill: "#64748b" }}
+                stroke="#cbd5e1"
+              />
+              <YAxis
+                domain={[0, 100]}
+                tickFormatter={(v) => `${v}%`}
+                tick={{ fontSize: 12, fill: "#64748b" }}
+                stroke="#cbd5e1"
+              />
+              <Tooltip
+                formatter={(value) => `${value}%`}
+                labelFormatter={(label) => `Date: ${label}`}
+                contentStyle={{
+                  background: "#fff",
+                  borderRadius: 8,
+                  border: "1px solid #e5e7eb",
+                  color: "#0f172a",
+                  fontWeight: 500,
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="percent"
+                stroke="#6366f1"
+                strokeWidth={3}
+                dot={{ r: 6, stroke: "#6366f1", strokeWidth: 2, fill: "#fff" }}
+                activeDot={{ r: 8, fill: "#6366f1", stroke: "#fff", strokeWidth: 2 }}
+                isAnimationActive={true}
+                animationDuration={800}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
 
         {/* Subject-wise Attendance Progress */}

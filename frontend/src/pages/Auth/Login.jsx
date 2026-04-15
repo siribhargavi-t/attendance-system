@@ -15,25 +15,38 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = () => {
-    const r = role.toLowerCase();
+ const handleLogin = () => {
+  const selectedRole = role.toLowerCase();
 
-    if (email === "admin@gmail.com" && password === "1234" && r === "admin") {
-      localStorage.setItem("role", "admin");
-      navigate("/admin/dashboard");
-      window.location.reload();
-    } else if (email === "student@gmail.com" && password === "1234" && r === "student") {
-      localStorage.setItem("role", "student");
-      navigate("/student/dashboard");
-      window.location.reload();
-    } else if (email === "faculty@gmail.com" && password === "1234" && r === "faculty") {
-      localStorage.setItem("role", "faculty");
-      navigate("/faculty/dashboard");
-      window.location.reload();
-    } else {
-      setError("Invalid email, password, or role. Please try again.");
-    }
-  };
+  let valid = false;
+
+  if (email === "admin@gmail.com" && password === "1234" && selectedRole === "admin") {
+    valid = true;
+  } 
+  else if (email === "student@gmail.com" && password === "1234" && selectedRole === "student") {
+    valid = true;
+  } 
+  else if (email === "faculty@gmail.com" && password === "1234" && selectedRole === "faculty") {
+    valid = true;
+  }
+
+  if (valid) {
+    // ✅ STORE CONSISTENT DATA
+    localStorage.setItem(
+      "userData",
+      JSON.stringify({
+        role: selectedRole,
+        email: email,
+      })
+    );
+
+    // ✅ NAVIGATE USING SAME ROLE
+    navigate(`/${selectedRole}/dashboard`, { replace: true });
+
+  } else {
+    setError("Invalid email, password, or role. Please try again.");
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 via-white to-purple-100">
@@ -49,7 +62,7 @@ const Login = () => {
           <input
             type="email"
             placeholder="Email"
-            className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none transition"
+            className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -61,17 +74,16 @@ const Login = () => {
           <input
             type="password"
             placeholder="Password"
-            className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none transition"
+            className="w-full pl-10 pr-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 outline-none"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
-        {/* Forgot Password Link */}
+        {/* Forgot Password */}
         <div className="text-right">
           <button
-            className="text-blue-600 hover:underline text-sm transition"
-            type="button"
+            className="text-blue-600 hover:underline text-sm"
             onClick={() => navigate("/forgot-password")}
           >
             Forgot Password?
@@ -84,12 +96,11 @@ const Login = () => {
             <button
               key={r.key}
               onClick={() => setRole(r.key)}
-              className={`flex-1 p-2 rounded-xl transition-transform duration-200 ${
+              className={`flex-1 p-2 rounded-xl ${
                 role === r.key
-                  ? "bg-blue-600 text-white scale-105 shadow"
-                  : "bg-gray-200 hover:scale-105"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-200"
               }`}
-              type="button"
             >
               {r.emoji} {r.label}
             </button>
@@ -100,16 +111,15 @@ const Login = () => {
 
         <button
           onClick={handleLogin}
-          className="w-full bg-blue-600 text-white p-3 rounded-xl hover:scale-105 transition-transform duration-200 focus:ring-2 focus:ring-blue-400"
+          className="w-full bg-blue-600 text-white p-3 rounded-xl"
         >
           Login
         </button>
 
-        {/* Register Link */}
+        {/* Register */}
         <div className="text-center">
           <button
-            className="text-blue-600 hover:underline text-sm transition"
-            type="button"
+            className="text-blue-600 hover:underline text-sm"
             onClick={() => navigate("/register")}
           >
             Don't have an account? Register

@@ -1,5 +1,6 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { UserProvider } from "./context/UserContext"; // <-- import context
 
 import Login from "./pages/Auth/Login";
 import AdminDashboard from "./pages/Admin/AdminDashBoard";
@@ -10,32 +11,121 @@ import ForgotPassword from "./pages/Auth/ForgotPassword";
 import AdminAttendance from "./pages/Admin/Attendance";
 import StudentAttendance from "./pages/Student/Attendance";
 import FacultyAttendance from "./pages/Faculty/Attendance";
+import Profile from "./pages/Profile/Profile";
 
 function NotFound() {
   return <h1>404 Page Not Found</h1>;
 }
 
+// ✅ Protected Route
+function ProtectedRoute({ allowedRoles, children }) {
+  const location = useLocation();
+
+  const stored = localStorage.getItem("userData");
+
+  // ❌ Not logged in
+  if (!stored) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  let user;
+  try {
+    user = JSON.parse(stored);
+  } catch {
+    return <Navigate to="/login" replace />;
+  }
+
+  const role = user?.role;
+console.log("Stored:", stored);
+console.log("Role:", role);
+  // ❌ Role not valid
+  if (!role || !allowedRoles.includes(role)) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // ✅ Allowed
+  return children;
+}
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/register" element={<Register />} />
-<Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<Login />} />
+    <UserProvider>
+      <BrowserRouter>
+        <Routes>
 
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/student/dashboard" element={<StudentDashboard />} />
-        <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
+          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
-        <Route path="/admin/attendance" element={<AdminAttendance />} />
-        <Route path="/student/attendance" element={<StudentAttendance />} />
-        <Route path="/faculty/attendance" element={<FacultyAttendance />} />
+          {/* Admin */}
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/attendance"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminAttendance />
+              </ProtectedRoute>
+            }
+          />
 
-        <Route path="*" element={<NotFound />} />
+          {/* Student */}
+          <Route
+            path="/student/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <StudentDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/attendance"
+            element={
+              <ProtectedRoute allowedRoles={["student"]}>
+                <StudentAttendance />
+              </ProtectedRoute>
+            }
+          />
 
-      </Routes>
-    </BrowserRouter>
+          {/* Faculty */}
+          <Route
+            path="/faculty/dashboard"
+            element={
+              <ProtectedRoute allowedRoles={["faculty"]}>
+                <FacultyDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/faculty/attendance"
+            element={
+              <ProtectedRoute allowedRoles={["faculty"]}>
+                <FacultyAttendance />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Profile */}
+          <Route
+            path="/:role/profile"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "student", "faculty"]}>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route path="*" element={<NotFound />} />
+
+        </Routes>
+      </BrowserRouter>
+    </UserProvider>
   );
 }
 

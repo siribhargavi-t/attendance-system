@@ -5,6 +5,12 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
   const [showNotif, setShowNotif] = useState(false);
   const notifRef = useRef();
 
+  // Example notifications
+  const [notifications, setNotifications] = useState([
+    { id: 1, message: "Marked present today" },
+    { id: 2, message: "Low attendance warning" },
+  ]);
+
   // ✅ Close on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -44,9 +50,14 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
         {/* 🔔 Notifications */}
         <button
           onClick={() => setShowNotif((prev) => !prev)}
-          className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+          className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition relative"
         >
           <FiBell className="text-xl text-gray-700 dark:text-white" />
+          {notifications.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold">
+              {notifications.length}
+            </span>
+          )}
         </button>
 
         {/* Dropdown */}
@@ -55,10 +66,22 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
             <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
               Notifications
             </h4>
-
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              No new notifications
-            </p>
+            {notifications.length === 0 ? (
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                No new notifications
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {notifications.map((notif) => (
+                  <li
+                    key={notif.id}
+                    className="text-sm text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded px-3 py-2"
+                  >
+                    {notif.message}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
 

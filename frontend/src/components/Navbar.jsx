@@ -1,27 +1,40 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FiBell, FiSun, FiMoon } from "react-icons/fi";
+import axios from "axios";
 
 const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
   const [showNotif, setShowNotif] = useState(false);
   const notifRef = useRef();
 
-  // Fetch leave approval notifications
   const [notifications, setNotifications] = useState([]);
 
+  // ✅ FETCH FROM BACKEND (IMPORTANT FIX)
   useEffect(() => {
-    // Fetch leave requests from localStorage (or use API if needed)
-    const leaveRequests = JSON.parse(localStorage.getItem("leaveRequests") || "[]");
-    // Filter requests where status changed from Pending
-    const leaveNotifs = leaveRequests
-      .filter(req => req.status && req.status !== "Pending")
-      .map(req => ({
-        id: req.id || req._id,
-        message: `Your leave is ${req.status}`,
-      }));
-    setNotifications(leaveNotifs);
+    const fetchNotifications = async () => {
+      try {
+        const user = JSON.parse(localStorage.getItem("userData"));
+
+        if (!user?.email) return;
+
+        const res = await axios.get(
+          `http://localhost:5000/api/notifications/${user.email}`
+        );
+
+        setNotifications(res.data);
+      } catch (err) {
+        console.error("Notification fetch error:", err);
+      }
+    };
+
+    fetchNotifications();
+
+    // 🔁 Optional: auto refresh every 5 sec
+    const interval = setInterval(fetchNotifications, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  // ✅ Close on outside click
+  // ✅ Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (notifRef.current && !notifRef.current.contains(e.target)) {
@@ -36,6 +49,9 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
     return () =>
       document.removeEventListener("mousedown", handleClickOutside);
   }, [showNotif]);
+
+  // ✅ Count unread
+  const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
     <nav className="flex items-center justify-between px-6 py-3 bg-white dark:bg-gray-900 shadow border-b dark:border-gray-700">
@@ -63,19 +79,21 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
           className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition relative"
         >
           <FiBell className="text-xl text-gray-700 dark:text-white" />
-          {notifications.length > 0 && (
+
+          {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold">
-              {notifications.length}
+              {unreadCount}
             </span>
           )}
         </button>
 
         {/* Dropdown */}
         {showNotif && (
-          <div className="absolute right-0 mt-12 w-64 bg-white dark:bg-gray-800 shadow-xl rounded-xl p-4 z-50 border dark:border-gray-700 transition-all duration-200">
+          <div className="absolute right-0 mt-12 w-64 bg-white dark:bg-gray-800 shadow-xl rounded-xl p-4 z-50 border dark:border-gray-700">
             <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
               Notifications
             </h4>
+
             {notifications.length === 0 ? (
               <p className="text-sm text-gray-600 dark:text-gray-300">
                 No new notifications
@@ -84,7 +102,7 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
               <ul className="space-y-2">
                 {notifications.map((notif) => (
                   <li
-                    key={notif.id}
+                    key={notif._id}
                     className="text-sm text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded px-3 py-2"
                   >
                     {notif.message}

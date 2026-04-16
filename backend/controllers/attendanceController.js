@@ -1,4 +1,5 @@
 const Attendance = require("../models/Attendance");
+const Notification = require("../models/Notification");
 
 // 1. Mark Attendance (Create)
 const markAttendance = async (req, res) => {
@@ -127,6 +128,16 @@ const getAttendancePercentage = async (req, res) => {
   }
 };
 
+// 6. Get Notifications
+const getNotifications = async (req, res) => {
+  try {
+    const { email } = req.params;
+    const notifs = await Notification.find({ studentEmail: email });
+    res.json(notifs);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch notifications" });
+  }
+};
 
 module.exports = {
   markAttendance,
@@ -134,4 +145,5 @@ module.exports = {
   updateAttendance,
   deleteAttendance,
   getAttendancePercentage,
+  getNotifications,
 };

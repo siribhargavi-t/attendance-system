@@ -9,6 +9,7 @@ const studentRoutes = require('./routes/student');
 const adminRoutes = require('./routes/adminRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const path = require('path');
+const notificationRoutes = require("./routes/notificationRoutes");
 
 // FIX: Remove the path to let dotenv find the .env file automatically
 require('dotenv').config();
@@ -16,7 +17,8 @@ require('dotenv').config();
 // Connect to database
 connectDB();
 
-const app = express();
+const app = express(); // <-- Move this line above all app.use() calls
+
 const leaveRoutes = require("./routes/leaveRoutes");
 
 // Body parser
@@ -33,7 +35,7 @@ app.use('/api/attendance', attendanceRoutes); // <-- Attendance routes connected
 app.use('/api/leave', leaveRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/profile', profileRoutes);
-app.use("/api/notifications", require("./routes/notificationRoutes"));
+app.use("/api/notifications", notificationRoutes);
 
 // =================== ADD THIS SECTION ===================
 // Serve static assets if in production

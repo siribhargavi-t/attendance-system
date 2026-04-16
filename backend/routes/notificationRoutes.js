@@ -1,5 +1,8 @@
-// backend/routes/notificationRoutes.js
-const router = require("express").Router();
+const express = require("express");
+const router = express.Router();
 const { getNotifications } = require("../controllers/notificationController");
+
+// Get notifications for student
 router.get("/:email", getNotifications);
+
 module.exports = router;

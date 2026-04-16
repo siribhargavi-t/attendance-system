@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { UserProvider } from "./context/UserContext"; // <-- import context
+import { UserProvider } from "./context/UserContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
 import Login from "./pages/Auth/Login";
 import AdminDashboard from "./pages/Admin/AdminDashBoard";
@@ -12,6 +13,7 @@ import MarkAttendance from "./pages/Admin/MarkAttendance"; // <-- fixed import
 import StudentAttendance from "./pages/Student/Attendance";
 import FacultyAttendance from "./pages/Faculty/Attendance";
 import Profile from "./pages/Profile/Profile";
+import Settings from "./pages/Common/Settings";
 import LeaveRequest from "./pages/Student/LeaveList";
 import FacultyLeaveRequests from "./pages/Faculty/LeaveRequests";
 import LeaveList from "./pages/Student/LeaveList";
@@ -52,6 +54,7 @@ function ProtectedRoute({ allowedRoles, children }) {
 }
 function App() {
   return (
+    <ThemeProvider>
     <UserProvider>
       <BrowserRouter>
         <Routes>
@@ -143,12 +146,20 @@ function App() {
             element={<FacultyLeaveRequests />}
           />
 
-          {/* Profile */}
+          {/* Profile & Settings */}
           <Route
             path="/:role/profile"
             element={
               <ProtectedRoute allowedRoles={["admin", "student", "faculty"]}>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/:role/settings"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "student", "faculty"]}>
+                <Settings />
               </ProtectedRoute>
             }
           />
@@ -158,6 +169,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </UserProvider>
+    </ThemeProvider>
   );
 }
 

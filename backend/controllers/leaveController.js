@@ -101,11 +101,11 @@ exports.updateLeaveStatus = async (req, res) => {
     );
 
     // After updating leave status:
-   // ✅ Save notification
-await Notification.create({
-  studentEmail: leave.studentEmail,
-  message: `Your leave from ${leave.fromDate} to ${leave.toDate} is ${status}`
-});
+    // ✅ Save notification
+    await Notification.create({
+      studentEmail: leave.studentEmail,
+      message: `Your leave from ${leave.fromDate} to ${leave.toDate} is ${status}`,
+    });
 
     res.json({
       message: `Leave ${status}`,

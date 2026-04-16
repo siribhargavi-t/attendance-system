@@ -85,39 +85,7 @@ const Profile = () => {
     setEditing(false);
   };
 
-  // College coordinates
-  const COLLEGE_LAT = 17.3850;
-  const COLLEGE_LON = 78.4867;
-
-  // Helper to check if within range
-  const isWithinCampus = (lat, lon) => {
-    return (
-      Math.abs(lat - COLLEGE_LAT) <= 0.01 &&
-      Math.abs(lon - COLLEGE_LON) <= 0.01
-    );
-  };
-
-  // Attendance handler
-  const handleAttendance = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        if (isWithinCampus(latitude, longitude)) {
-          alert("Attendance marked successfully!");
-          // Place your attendance logic here if needed
-        } else {
-          alert("You are not in campus");
-        }
-      },
-      () => {
-        alert("Unable to retrieve your location");
-      }
-    );
-  };
+  // Removed Geolocation logic as requested
 
   return (
     <div className="max-w-md mx-auto bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
@@ -279,13 +247,7 @@ const Profile = () => {
           Edit
         </button>
       )}
-      <button
-        type="button"
-        onClick={handleAttendance}
-        className="bg-green-600 text-white px-4 py-2 rounded ml-2"
-      >
-        Mark Attendance
-      </button>
+      {/* Mark attendance explicitly removed */}
     </div>
   );
 };

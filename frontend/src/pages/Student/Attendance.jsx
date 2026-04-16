@@ -1,24 +1,10 @@
 import React, { useState } from "react";
 import MainLayout from "../../components/Layout/MainLayout";
 
-// Dummy data for attendance records
-const allRecords = [
-  { date: "2024-06-10", subject: "Mathematics", name: "Alice Johnson", status: "Present" },
-  { date: "2024-06-10", subject: "Physics", name: "Bob Smith", status: "Absent" },
-  { date: "2024-06-09", subject: "Chemistry", name: "Charlie Lee", status: "Present" },
-  { date: "2024-06-09", subject: "English", name: "Diana Patel", status: "Present" },
-  { date: "2024-06-08", subject: "Mathematics", name: "Ethan Brown", status: "Absent" },
-  { date: "2024-06-08", subject: "Physics", name: "Alice Johnson", status: "Present" },
-  { date: "2024-06-07", subject: "Chemistry", name: "Bob Smith", status: "Present" },
-  { date: "2024-06-07", subject: "English", name: "Charlie Lee", status: "Absent" },
-  // ...add more records as needed
-];
+import axios from "axios";
 
-const subjects = ["All", ...Array.from(new Set(allRecords.map(r => r.subject)))];
+// Helper: get status by date
 const ROWS_PER_PAGE = 5;
-
-// Helper: get all unique dates in data (for calendar)
-const allDates = Array.from(new Set(allRecords.map(r => r.date))).sort();
 
 function getStatusByDate(date, userRecords) {
   // If any record for this date is Absent, show Absent, else Present
@@ -29,8 +15,12 @@ function getStatusByDate(date, userRecords) {
 }
 
 const StudentAttendance = () => {
-  const currentUser = localStorage.getItem("user");
-  const userRecords = allRecords.filter(item => item.name === currentUser);
+  const user = JSON.parse(localStorage.getItem("userData") || "{}");
+  const studentEmail = user.email || "";
+
+  const [userRecords, setUserRecords] = useState([]);
+  const [subjects, setSubjects] = useState(["All"]);
+  const [allDates, setAllDates] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("All");
@@ -39,7 +29,25 @@ const StudentAttendance = () => {
   const [view, setView] = useState("table"); // "table" or "calendar"
   const [calendarSelected, setCalendarSelected] = useState(""); // for calendar highlight
 
-  // Filtering logic (only for current user)
+  React.useEffect(() => {
+    if (!studentEmail) return;
+    axios.get(`/api/attendance?studentEmail=${encodeURIComponent(studentEmail)}`)
+      .then(res => {
+        const records = res.data.map(r => ({
+          id: r._id,
+          date: r.date.split("T")[0],
+          subject: r.subject,
+          name: r.studentName,
+          status: r.status
+        }));
+        setUserRecords(records);
+        setSubjects(["All", ...Array.from(new Set(records.map(r => r.subject)))]);
+        setAllDates(Array.from(new Set(records.map(r => r.date))).sort());
+      })
+      .catch(err => console.error("Failed to fetch attendance records", err));
+  }, [studentEmail]);
+
+  // Filtering logic
   const filteredData = userRecords.filter((rec) => {
     const matchesSearch =
       rec.subject.toLowerCase().includes(searchTerm.toLowerCase());
@@ -104,21 +112,19 @@ const StudentAttendance = () => {
           {/* Toggle View */}
           <div className="flex gap-2">
             <button
-              className={`px-4 py-2 rounded-lg font-semibold transition ${
-                view === "table"
+              className={`px-4 py-2 rounded-lg font-semibold transition ${view === "table"
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-              }`}
+                }`}
               onClick={() => setView("table")}
             >
               Table View
             </button>
             <button
-              className={`px-4 py-2 rounded-lg font-semibold transition ${
-                view === "calendar"
+              className={`px-4 py-2 rounded-lg font-semibold transition ${view === "calendar"
                   ? "bg-blue-600 text-white"
                   : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100"
-              }`}
+                }`}
               onClick={() => setView("calendar")}
             >
               Calendar View
@@ -224,19 +230,17 @@ const StudentAttendance = () => {
                     paginatedData.map((rec, idx) => (
                       <tr
                         key={startIndex + idx}
-                        className={`border-b transition hover:bg-blue-50 dark:hover:bg-gray-700 ${
-                          idx === paginatedData.length - 1 ? "border-b-0" : ""
-                        }`}
+                        className={`border-b transition hover:bg-blue-50 dark:hover:bg-gray-700 ${idx === paginatedData.length - 1 ? "border-b-0" : ""
+                          }`}
                       >
                         <td className="py-3 px-4 text-gray-900 dark:text-gray-100">{rec.date}</td>
                         <td className="py-3 px-4 text-gray-900 dark:text-gray-100">{rec.subject}</td>
                         <td className="py-3 px-4">
                           <span
-                            className={`px-3 py-1 text-xs rounded-full font-medium ${
-                              rec.status === "Present"
+                            className={`px-3 py-1 text-xs rounded-full font-medium ${rec.status === "Present"
                                 ? "bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300"
                                 : "bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300"
-                            }`}
+                              }`}
                           >
                             {rec.status}
                           </span>
@@ -334,11 +338,10 @@ const StudentAttendance = () => {
                           <td className="py-2 px-3 text-gray-900 dark:text-gray-100">{rec.subject}</td>
                           <td className="py-2 px-3">
                             <span
-                              className={`px-3 py-1 text-xs rounded-full font-medium ${
-                                rec.status === "Present"
+                              className={`px-3 py-1 text-xs rounded-full font-medium ${rec.status === "Present"
                                   ? "bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300"
                                   : "bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300"
-                              }`}
+                                }`}
                             >
                               {rec.status}
                             </span>

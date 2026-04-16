@@ -1,20 +1,30 @@
-import React, { useContext } from 'react';
-import { ThemeContext } from '../contexts/ThemeContext';
-import { Sun, Moon } from 'lucide-react';
+import React from 'react';
+import { useTheme } from '../context/ThemeContext';
+import './ThemeToggle.css';
 
 const ThemeToggle = ({ className = "" }) => {
-  const { theme, toggleTheme } = useContext(ThemeContext);
+  const { darkMode, toggleDarkMode } = useTheme();
+  const isDark = darkMode;
 
   return (
-    <button
-      onClick={toggleTheme}
-      className={`p-2 rounded-full transition-colors flex items-center justify-center focus:outline-none ${
-        theme === 'dark' ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700' : 'bg-gray-100 text-slate-800 hover:bg-gray-200'
-      } ${className}`}
-      aria-label="Toggle theme"
+    <div 
+      className={`theme-toggle-wrapper ${isDark ? 'dark' : ''} ${className}`} 
+      onClick={toggleDarkMode}
+      title="Toggle Theme"
     >
-      {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-    </button>
+      <div className="day-scenery">
+        <div className="cloud cloud-1"></div>
+        <div className="cloud cloud-2"></div>
+        <div className="cloud cloud-3"></div>
+      </div>
+      <div className="night-scenery">
+        <div className="star star-1"></div>
+        <div className="star star-2"></div>
+        <div className="star star-3"></div>
+        <div className="star star-4"></div>
+      </div>
+      <div className="theme-toggle-thumb"></div>
+    </div>
   );
 };
 

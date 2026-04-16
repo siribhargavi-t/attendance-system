@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const { 
-  markAttendance, 
-  getAttendance, 
-  updateAttendance, 
+const {
+  markAttendance,
+  getAttendance,
+  updateAttendance,
   deleteAttendance,
   getAttendancePercentage
 } = require('../controllers/attendanceController');
@@ -16,6 +16,7 @@ router.get('/percentage/:studentEmail', getAttendancePercentage);
 
 // GET /api/attendance/ → Get all attendance
 router.get('/', getAttendance);
+router.get('/all', getAttendance);
 
 // PUT /api/attendance/:id → Update attendance by ID
 router.put('/:id', updateAttendance);

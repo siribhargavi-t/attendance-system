@@ -7,7 +7,7 @@ const Sidebar = ({ open, setOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const user = JSON.parse(localStorage.getItem("userData") || "{}");
+  const { user } = useContext(UserContext);
   const role = user?.role;
 
   const [showProfile, setShowProfile] = useState(false);
@@ -41,12 +41,14 @@ const Sidebar = ({ open, setOpen }) => {
     navLinks = [
       { name: "Dashboard", to: "/admin/dashboard", icon: "🏠" },
       { name: "Profile", to: "/admin/profile", icon: "👤" },
+      { name: "Settings", to: "/admin/settings", icon: "⚙️" },
       { name: attendanceLabel, to: "/admin/attendance", icon: "📋" },
     ];
   } else if (role === "faculty") {
     navLinks = [
       { name: "Dashboard", to: "/faculty/dashboard", icon: "🏠" },
       { name: "Profile", to: "/faculty/profile", icon: "👤" },
+      { name: "Settings", to: "/faculty/settings", icon: "⚙️" },
       { name: attendanceLabel, to: "/faculty/attendance", icon: "📋" },
       // Add Leave Requests link for faculty
       { name: "Leave Requests", to: "/faculty/leave-requests", icon: "🗂️" },
@@ -55,6 +57,7 @@ const Sidebar = ({ open, setOpen }) => {
     navLinks = [
       { name: "Dashboard", to: "/student/dashboard", icon: "🏠" },
       { name: "Profile", to: "/student/profile", icon: "👤" },
+      { name: "Settings", to: "/student/settings", icon: "⚙️" },
       { name: attendanceLabel, to: "/student/attendance", icon: "📋" },
       // Add Leave Request link for students
       { name: "Leave Request", to: "/student/leave-request", icon: "📝" },
@@ -120,12 +123,16 @@ const Sidebar = ({ open, setOpen }) => {
           <div className="mt-auto pt-6 border-t relative" ref={profileRef}>
             <div
               onClick={() => setShowProfile((prev) => !prev)}
-              className="flex items-center gap-3 px-2 py-2 cursor-pointer rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+              className="flex items-center gap-3 px-2 py-2 cursor-pointer rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
             >
-              <div className="w-9 h-9 bg-blue-200 dark:bg-blue-900 rounded-full flex items-center justify-center">
-                👤
+              <div className="w-10 h-10 bg-gradient-to-tr from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-800 overflow-hidden">
+                {user?.image ? (
+                  <img src={user.image} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-xl text-white">👤</span>
+                )}
               </div>
-              <span className="capitalize text-gray-700 dark:text-white font-medium">
+              <span className="capitalize text-gray-800 dark:text-gray-100 font-bold tracking-wide">
                 {role}
               </span>
             </div>

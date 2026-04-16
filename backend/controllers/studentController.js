@@ -68,3 +68,14 @@ module.exports = {
     getMyAttendance,
     submitAttendanceRequest
 };
+
+// Example: Fetch student dashboard stats in useEffect
+useEffect(() => {
+  const fetchStats = async () => {
+    const res = await axios.get("/api/student/dashboard-stats", {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setStats(res.data.stats);
+  };
+  fetchStats();
+}, []);

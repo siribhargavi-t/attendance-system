@@ -3,12 +3,21 @@ const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { protect, admin } = require('../middleware/auth'); // <-- Add this line
+const { protect, admin } = require('../middleware/auth');
+const { getDashboardStats, getSubjectAttendanceStats } = require('../controllers/adminController'); // <-- Add getSubjectAttendanceStats here
 
-// Example protected admin route
-router.get('/students', protect, admin, async (req, res) => {
-  // ...fetch and return students...
+// Example protected admin route (modified to return real students)
+router.get('/students', async (req, res) => {
+  try {
+    const students = await User.find({ role: 'student' }).select('-password');
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error fetching students' });
+  }
 });
+
+// Dashboard stats route
+router.get('/dashboard', getDashboardStats); // <-- Modified line
 
 // Login route
 router.post('/login', async (req, res) => {
@@ -46,5 +55,8 @@ router.post('/login', async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
+
+// Subject attendance stats route
+router.get('/subject-attendance', protect, admin, getSubjectAttendanceStats);
 
 module.exports = router;

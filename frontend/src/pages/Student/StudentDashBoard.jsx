@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { motion } from "framer-motion";
 import MainLayout from "../../components/Layout/MainLayout";
 import StatsCard from "../../components/StatsCard";
 import { FiBookOpen, FiUserCheck, FiUserX, FiPercent } from "react-icons/fi";
@@ -12,104 +13,76 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// Dummy data for stats
-const DUMMY_STATS = [
-  {
-    label: "Total Classes",
-    value: 45,
-    icon: <FiBookOpen className="text-blue-500 text-3xl mb-2" />,
-    color: "blue",
-  },
-  {
-    label: "Present",
-    value: 41,
-    icon: <FiUserCheck className="text-green-500 text-3xl mb-2" />,
-    color: "green",
-  },
-  {
-    label: "Absent",
-    value: 4,
-    icon: <FiUserX className="text-red-500 text-3xl mb-2" />,
-    color: "red",
-  },
-  {
-    label: "Attendance %",
-    value: "91%",
-    icon: <FiPercent className="text-indigo-500 text-3xl mb-2" />,
-    color: "indigo",
-  },
-];
-
-// Dummy subject-wise attendance data
-const DUMMY_SUBJECT_ATTENDANCE = [
-  { subject: "Mathematics", percent: 85 },
-  { subject: "Physics", percent: 92 },
-  { subject: "Chemistry", percent: 78 },
-  { subject: "English", percent: 95 },
-];
-
-// Dummy recent attendance data (show only 5)
-const DUMMY_RECENT_ATTENDANCE = [
-  { date: "2024-06-10", subject: "Mathematics", status: "Present" },
-  { date: "2024-06-10", subject: "Physics", status: "Absent" },
-  { date: "2024-06-09", subject: "Chemistry", status: "Present" },
-  { date: "2024-06-09", subject: "English", status: "Present" },
-  { date: "2024-06-08", subject: "Mathematics", status: "Absent" },
-];
-
-// Dummy attendance trend for last 7 days
-const DUMMY_ATTENDANCE_TREND = [
-  { date: "2024-06-04", percent: 100 },
-  { date: "2024-06-05", percent: 100 },
-  { date: "2024-06-06", percent: 80 },
-  { date: "2024-06-07", percent: 90 },
-  { date: "2024-06-08", percent: 80 },
-  { date: "2024-06-09", percent: 100 },
-  { date: "2024-06-10", percent: 90 },
-];
-
 const StudentDashboard = () => {
-  const [stats, setStats] = useState(DUMMY_STATS);
-  const [subjectAttendance] = useState(DUMMY_SUBJECT_ATTENDANCE);
-  const [recentAttendance] = useState(DUMMY_RECENT_ATTENDANCE);
-  const [attendanceTrend] = useState(DUMMY_ATTENDANCE_TREND);
-  const [notifications, setNotifications] = useState([]);
+  const [stats, setStats] = useState([]);
+  const [subjectAttendance, setSubjectAttendance] = useState([]);
+  const [recentAttendance, setRecentAttendance] = useState([]);
+  const [attendanceTrend, setAttendanceTrend] = useState([]);
   const [attendancePercent, setAttendancePercent] = useState(null);
 
   const user = JSON.parse(localStorage.getItem("userData") || "{}");
   const studentEmail = user.email || "";
 
-  // Fetch attendance percentage from backend
-  useEffect(() => {
-    if (studentEmail) {
-      axios
-        .get(`/api/attendance/percentage/${encodeURIComponent(studentEmail)}`)
-        .then((res) => {
-          setAttendancePercent(res.data.percentage);
-          // Update stats card for Attendance %
-          setStats((prev) =>
-            prev.map((stat) =>
-              stat.label === "Attendance %"
-                ? { ...stat, value: `${res.data.percentage}%` }
-                : stat
-            )
-          );
-        })
-        .catch(() => {
-          setAttendancePercent(null);
-        });
-    }
-  }, [studentEmail]);
-
-  // Fetch notifications in useEffect
   useEffect(() => {
     if (!studentEmail) return;
-    axios
-      .get(`/api/notifications/${encodeURIComponent(studentEmail)}`)
-      .then((res) => setNotifications(res.data));
-  }, [studentEmail]);
 
-  // Show bell icon with count: notifications.filter(n => !n.read).length
+    axios.get(`/api/attendance?studentEmail=${encodeURIComponent(studentEmail)}`)
+      .then(res => {
+        const records = res.data;
+        const total = records.length;
+        const present = records.filter(r => r.status === "Present").length;
+        const absent = total - present;
+        const percentVal = total > 0 ? Math.round((present / total) * 100) : 0;
+
+        setStats([
+          { label: "Total Classes", value: total, icon: <FiBookOpen className="text-blue-500 text-3xl mb-2" />, color: "blue" },
+          { label: "Present", value: present, icon: <FiUserCheck className="text-green-500 text-3xl mb-2" />, color: "green" },
+          { label: "Absent", value: absent, icon: <FiUserX className="text-red-500 text-3xl mb-2" />, color: "red" },
+          { label: "Attendance %", value: `${percentVal}%`, icon: <FiPercent className="text-indigo-500 text-3xl mb-2" />, color: "indigo" }
+        ]);
+
+        setAttendancePercent(percentVal);
+
+        // Subject calculation
+        const subjMap = {};
+        records.forEach(r => {
+          if (!subjMap[r.subject]) subjMap[r.subject] = { total: 0, present: 0 };
+          subjMap[r.subject].total++;
+          if (r.status === "Present") subjMap[r.subject].present++;
+        });
+        const subjAtt = Object.keys(subjMap).map(subj => ({
+          subject: subj,
+          percent: Math.round((subjMap[subj].present / subjMap[subj].total) * 100)
+        }));
+        setSubjectAttendance(subjAtt);
+
+        // Recent calculation
+        const sorted = [...records].sort((a,b) => new Date(b.date) - new Date(a.date));
+        setRecentAttendance(sorted.slice(0, 5).map(r => ({
+          date: r.date.split("T")[0] || new Date(r.date).toLocaleDateString(),
+          subject: r.subject,
+          status: r.status
+        })));
+
+        // Trend calculation (last 7 days overall)
+        const dateMap = {};
+        records.forEach(r => {
+           const d = r.date.split("T")[0] || new Date(r.date).toLocaleDateString();
+           if (!dateMap[d]) dateMap[d] = { total: 0, present: 0 };
+           dateMap[d].total++;
+           if (r.status === "Present") dateMap[d].present++;
+        });
+        const trend = Object.keys(dateMap).sort().slice(-7).map(d => ({
+           date: d,
+           percent: Math.round((dateMap[d].present / dateMap[d].total) * 100)
+        }));
+        setAttendanceTrend(trend);
+      })
+      .catch(err => {
+        console.error("Failed to fetch attendance data", err);
+        setAttendancePercent(null);
+      });
+  }, [studentEmail]);
 
   // Attendance Insights calculation
   const bestSubject =
@@ -125,8 +98,7 @@ const StudentDashboard = () => {
         subjectAttendance[0])
       : null;
 
-  // Calculate overall attendance percent (from backend if available)
-  let overallPercent = attendancePercent !== null ? attendancePercent : 0;
+  // Calculate overall attendance percent
   let totalClasses = 0;
   let presentClasses = 0;
   if (stats && stats.length > 0) {
@@ -148,24 +120,17 @@ const StudentDashboard = () => {
   }
 
   useEffect(() => {
-    const leaveRequests = JSON.parse(localStorage.getItem("leaveRequests") || "[]");
-    const notifiedIds = JSON.parse(localStorage.getItem("notifiedLeaveIds") || "[]");
-    const newNotifs = leaveRequests
-      .filter(req => req.status && req.status !== "Pending" && !notifiedIds.includes(req.id))
-      .map(req => ({
-        id: req.id,
-        message: `Your leave request is ${req.status}.`
-      }));
-    if (newNotifs.length > 0) {
-      setNotifications(newNotifs);
-      const updatedIds = [...notifiedIds, ...newNotifs.map(n => n.id)];
-      localStorage.setItem("notifiedLeaveIds", JSON.stringify(updatedIds));
-    }
+    // Notify check if needed globally or locally
   }, []);
 
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto px-4 py-10 space-y-8">
+      <motion.div 
+        className="max-w-6xl mx-auto px-4 py-10 space-y-8"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+      >
         {/* Warning Message */}
         {attendancePercent !== null && attendancePercent < 75 && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-xl flex items-center gap-2 font-semibold mb-4">
@@ -362,21 +327,9 @@ const StudentDashboard = () => {
           )}
         </div>
 
-        {/* Notifications */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Notifications</h2>
-          {notifications.length > 0 ? (
-            notifications.map((notif) => (
-              <div key={notif.id} className="flex items-center gap-2 mb-2">
-                <span className="text-xl">🔔</span>
-                <span>{notif.message}</span>
-              </div>
-            ))
-          ) : (
-            <div className="text-gray-500 dark:text-gray-400">No notifications</div>
-          )}
-        </div>
-      </div>
+        {/* Removed notifications dashboard block as requested */}
+
+      </motion.div>
     </MainLayout>
   );
 };

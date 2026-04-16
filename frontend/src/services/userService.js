@@ -21,13 +21,4 @@ export const logout = () => {
   // You might want to redirect the user or reset application state here
 };
 
-// FIX: Added and exported the missing function
-export const getStudentsByBranchAndYear = async (branch, year) => {
-  // This is a placeholder. You'll need to implement the actual API call.
-  console.log(`Fetching students for branch: ${branch}, year: ${year}`);
-  // Returning dummy data to prevent runtime errors in the component.
-  return [
-    { id: '1', name: 'Student A', status: 'Present' },
-    { id: '2', name: 'Student B', status: 'Present' },
-  ];
-};
+// Unused function removed

@@ -1,6 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
-import { FiBell, FiSun, FiMoon } from "react-icons/fi";
 import axios from "axios";
+import ThemeToggle from "./ThemeToggle";
+
+const CustomBell = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="#FFC107" stroke="#1E3A8A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="animate-bounce-short">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    <path d="M5.5 3a10.9 10.9 0 0 1-2 1" stroke="#38BDF8" strokeWidth="2" />
+    <path d="M18.5 3a10.9 10.9 0 0 0 2 1" stroke="#38BDF8" strokeWidth="2" />
+  </svg>
+);
 
 const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
   const [showNotif, setShowNotif] = useState(false);
@@ -78,7 +87,7 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
           onClick={() => setShowNotif((prev) => !prev)}
           className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition relative"
         >
-          <FiBell className="text-xl text-gray-700 dark:text-white" />
+          <CustomBell />
 
           {unreadCount > 0 && (
             <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold">
@@ -114,16 +123,7 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
         )}
 
         {/* 🌙 Dark Mode */}
-        <button
-          onClick={toggleDarkMode}
-          className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-        >
-          {darkMode ? (
-            <FiSun className="text-yellow-400" />
-          ) : (
-            <FiMoon className="text-gray-700 dark:text-white" />
-          )}
-        </button>
+        <ThemeToggle />
 
         {/* 🚪 Logout */}
         <button

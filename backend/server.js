@@ -3,8 +3,8 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const connectDB = require('./config/db');
 // FIX: Correct the path to the attendance routes file
-const attendanceRoutes = require('./routes/attendanceRoutes'); 
-const authRoutes = require('./routes/authRoutes'); 
+const attendanceRoutes = require('./routes/attendanceRoutes');
+const authRoutes = require('./routes/authRoutes');
 const studentRoutes = require('./routes/student');
 const adminRoutes = require('./routes/adminRoutes');
 const profileRoutes = require('./routes/profileRoutes');
@@ -36,7 +36,9 @@ app.use('/api/leave', leaveRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/profile', profileRoutes);
 app.use("/api/notifications", notificationRoutes);
-
+app.get("/test", (req, res) => {
+  res.send("Server working");
+});
 // =================== ADD THIS SECTION ===================
 // Serve static assets if in production
 if (process.env.NODE_ENV === 'production') {

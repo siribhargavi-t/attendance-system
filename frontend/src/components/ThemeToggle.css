@@ -1,0 +1,75 @@
+.theme-toggle-wrapper {
+  position: relative;
+  width: 70px;
+  height: 34px;
+  border-radius: 34px;
+  background: linear-gradient(110deg, #7ad7ff 0%, #30A8DF 100%);
+  cursor: pointer;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.2), 0 2px 4px rgba(0,0,0,0.1);
+  transition: background 0.4s ease;
+}
+
+.theme-toggle-wrapper.dark {
+  background: linear-gradient(110deg, #091236 0%, #17336D 100%);
+}
+
+.theme-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #FFF176;
+  box-shadow: 0 0 10px rgba(255, 241, 118, 0.8), inset 0 -2px 5px rgba(255, 152, 0, 0.5);
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+.theme-toggle-wrapper.dark .theme-toggle-thumb {
+  transform: translateX(36px);
+  background: #E0E0E0;
+  box-shadow: 0 0 10px rgba(224, 224, 224, 0.8), inset -2px -2px 5px rgba(158, 158, 158, 0.5);
+}
+
+/* Day specific scenery */
+.day-scenery {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+.theme-toggle-wrapper.dark .day-scenery {
+  opacity: 0;
+}
+.cloud {
+  position: absolute;
+  background: white;
+  border-radius: 50px;
+  opacity: 0.8;
+}
+.cloud-1 { width: 14px; height: 6px; top: 10px; left: 35px; }
+.cloud-2 { width: 10px; height: 4px; top: 18px; left: 45px; }
+.cloud-3 { width: 18px; height: 8px; top: 6px; left: 50px; }
+
+/* Night specific scenery */
+.night-scenery {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.theme-toggle-wrapper.dark .night-scenery {
+  opacity: 1;
+}
+.star {
+  position: absolute;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 0 3px white;
+}
+.star-1 { width: 2px; height: 2px; top: 8px; left: 10px; }
+.star-2 { width: 1px; height: 1px; top: 15px; left: 18px; }
+.star-3 { width: 2px; height: 2px; top: 10px; left: 24px; }
+.star-4 { width: 1px; height: 1px; top: 22px; left: 14px; }

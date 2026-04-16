@@ -1,8 +1,8 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { login } = require('../controllers/authController');
+const { register, login } = require("../controllers/authController");
 
-// DO NOT CALL login(), just pass login
-router.post('/login', login);
+router.post("/register", register);
+router.post("/login", login);
 
 module.exports = router;

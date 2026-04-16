@@ -2,15 +2,7 @@ import React, { useState } from "react";
 import MainLayout from "../../components/Layout/MainLayout";
 import { FiSearch, FiBookOpen, FiCalendar, FiDownload } from "react-icons/fi";
 
-// Dummy data
-const SUBJECTS = ["All Subjects", "Mathematics", "Physics", "Chemistry", "English"];
-const DUMMY_ATTENDANCE = [
-  { id: 1, name: "Alice Johnson", subject: "Mathematics", date: "2024-06-01", status: "Present" },
-  { id: 2, name: "Bob Smith", subject: "Mathematics", date: "2024-06-01", status: "Absent" },
-  { id: 3, name: "Charlie Lee", subject: "Physics", date: "2024-06-02", status: "Present" },
-  { id: 4, name: "Diana Patel", subject: "Chemistry", date: "2024-06-03", status: "Present" },
-  { id: 5, name: "Ethan Brown", subject: "English", date: "2024-06-04", status: "Absent" },
-];
+import axios from "axios";
 
 const getStats = (records) => {
   const total = records.length;
@@ -25,7 +17,25 @@ const AdminAttendance = () => {
   const [subject, setSubject] = useState("All Subjects");
   const [date, setDate] = useState("");
   const [search, setSearch] = useState("");
-  const [attendance] = useState(DUMMY_ATTENDANCE);
+  const [attendance, setAttendance] = useState([]);
+  const [subjectsList, setSubjectsList] = useState(["All Subjects"]);
+
+  React.useEffect(() => {
+    axios.get("/api/attendance/all")
+      .then(res => {
+         const records = res.data.map(r => ({
+           id: r._id,
+           name: r.studentName,
+           subject: r.subject,
+           date: r.date.split("T")[0],
+           status: r.status
+         }));
+         setAttendance(records);
+         const uniqueSubjects = Array.from(new Set(records.map(r => r.subject)));
+         setSubjectsList(["All Subjects", ...uniqueSubjects]);
+      })
+      .catch(err => console.error("Error fetching attendance list", err));
+  }, []);
 
   const filtered = attendance.filter(
     (rec) =>
@@ -115,7 +125,7 @@ const AdminAttendance = () => {
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
             >
-              {SUBJECTS.map((subj) => (
+              {subjectsList.map((subj) => (
                 <option key={subj} value={subj}>
                   {subj}
                 </option>

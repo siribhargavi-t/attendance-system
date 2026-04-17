@@ -4,7 +4,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { protect, admin } = require('../middleware/auth');
-const { getDashboardStats, getSubjectAttendanceStats } = require('../controllers/adminController'); // <-- Add getSubjectAttendanceStats here
+const { getDashboardStats, getSubjectAttendanceStats, getStudents } = require('../controllers/adminController'); // <-- Add getSubjectAttendanceStats here
 
 // Fetch real faculty for leave requests
 router.get('/faculty', async (req, res) => {
@@ -15,6 +15,9 @@ router.get('/faculty', async (req, res) => {
     res.status(500).json({ message: 'Server Error fetching faculty' });
   }
 });
+
+// Fetch all students for attendance marking
+router.get('/students', getStudents);
 
 // Dashboard stats route
 router.get('/dashboard', getDashboardStats); // <-- Modified line

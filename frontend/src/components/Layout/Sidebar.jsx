@@ -42,6 +42,7 @@ const Sidebar = ({ open, setOpen }) => {
       { name: "Dashboard", to: "/admin/dashboard", icon: "🏠" },
       { name: "Profile", to: "/admin/profile", icon: "👤" },
       { name: "Settings", to: "/admin/settings", icon: "⚙️" },
+      { name: "Mail", to: "/admin/mail", icon: "📧" },
       { name: attendanceLabel, to: "/admin/attendance", icon: "📋" },
     ];
   } else if (role === "faculty") {
@@ -49,8 +50,8 @@ const Sidebar = ({ open, setOpen }) => {
       { name: "Dashboard", to: "/faculty/dashboard", icon: "🏠" },
       { name: "Profile", to: "/faculty/profile", icon: "👤" },
       { name: "Settings", to: "/faculty/settings", icon: "⚙️" },
+      { name: "Mail", to: "/faculty/mail", icon: "📧" },
       { name: attendanceLabel, to: "/faculty/attendance", icon: "📋" },
-      // Add Leave Requests link for faculty
       { name: "Leave Requests", to: "/faculty/leave-requests", icon: "🗂️" },
     ];
   } else if (role === "student") {
@@ -58,8 +59,8 @@ const Sidebar = ({ open, setOpen }) => {
       { name: "Dashboard", to: "/student/dashboard", icon: "🏠" },
       { name: "Profile", to: "/student/profile", icon: "👤" },
       { name: "Settings", to: "/student/settings", icon: "⚙️" },
+      { name: "Mail", to: "/student/mail", icon: "📧" },
       { name: attendanceLabel, to: "/student/attendance", icon: "📋" },
-      // Add Leave Request link for students
       { name: "Leave Request", to: "/student/leave-request", icon: "📝" },
     ];
   }

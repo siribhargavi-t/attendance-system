@@ -11,6 +11,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const path = require('path');
 const notificationRoutes = require("./routes/notificationRoutes");
+const mailRoutes = require('./routes/mailRoutes');
 
 // FIX: Remove the path to let dotenv find the .env file automatically
 require('dotenv').config();
@@ -32,6 +33,7 @@ app.use(cors());
 // Mount routers
 app.use('/api/auth', authRoutes);
 app.use('/api/faculty', facultyRoutes);
+app.use('/api/mail', mailRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/attendance', attendanceRoutes); // <-- Attendance routes connected here
 app.use('/api/leave', leaveRoutes);

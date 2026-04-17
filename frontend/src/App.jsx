@@ -18,6 +18,7 @@ import LeaveRequest from "./pages/Student/LeaveList";
 import FacultyLeaveRequests from "./pages/Faculty/LeaveRequests";
 import LeaveList from "./pages/Student/LeaveList";
 import NewLeave from "./pages/Student/NewLeave";
+import Mail from "./pages/Common/Mail";
 
 function NotFound() {
   return <h1>404 Page Not Found</h1>;
@@ -160,6 +161,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["admin", "student", "faculty"]}>
                 <Settings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/:role/mail"
+            element={
+              <ProtectedRoute allowedRoles={["admin", "student", "faculty"]}>
+                <Mail />
               </ProtectedRoute>
             }
           />

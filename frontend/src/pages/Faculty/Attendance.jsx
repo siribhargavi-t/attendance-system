@@ -52,6 +52,7 @@ const FacultyAttendance = () => {
           name: s.name || "Unknown",
           email: s.email || "",
           roll: s.rollNumber || "N/A",
+          className: s.class || "" // Capture class from backend
         }));
         setStudents(studentData);
         // Initialize attendance state
@@ -60,12 +61,16 @@ const FacultyAttendance = () => {
         setAttendance(initial);
       })
       .catch((err) => console.error("Error fetching students", err))
+
       .finally(() => setLoading(false));
   }, []);
 
   const filteredData = students.filter((student) => {
     const search = searchTerm.toLowerCase();
-    return student.name.toLowerCase().includes(search) || student.roll.toLowerCase().includes(search);
+    // Filter by class AND Search term
+    const matchesClass = student.className === className;
+    const matchesSearch = student.name.toLowerCase().includes(search) || student.roll.toLowerCase().includes(search);
+    return matchesClass && matchesSearch;
   });
 
   const totalPages = Math.ceil(filteredData.length / ROWS_PER_PAGE);

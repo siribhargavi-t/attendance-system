@@ -95,16 +95,34 @@ const login = async (req, res) => {
     // Find by email only — role is determined from DB, not client
     const user = await User.findOne({ email }).select("+password");
 
-    if (!user || !user.password) {
+    if (!user) {
+      console.log(`❌ Login Failed: User with email ${email} not found.`);
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    if (!user.password) {
+      console.log(`❌ Login Failed: Password field missing for user ${email}.`);
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    let isMatch = false;
+    try {
+      // bcrypt.compare will return false if the second arg is not a valid hash
+      // We wrap in try-catch to be safe
+      isMatch = await bcrypt.compare(password, user.password);
+    } catch (err) {
+      console.log(`ℹ️ Non-bcrypt password detected for ${email}, attempting plain-text match.`);
+      isMatch = false;
+    }
+
     const isPlainMatch = password === user.password; // Fallback for plain-text dev passwords
 
     if (!isMatch && !isPlainMatch) {
+      console.log(`❌ Login Failed: Password mismatch for user ${email}.`);
       return res.status(400).json({ message: "Invalid credentials" });
     }
+
+    console.log(`✅ Login Success: ${email} (${user.role})`);
 
     // Generate JWT
     const jwt = require("jsonwebtoken");
@@ -118,6 +136,12 @@ const login = async (req, res) => {
       email: user.email,
       name: user.name,
       _id: user._id,
+      rollNumber: user.rollNumber || "",
+      class: user.class || "",
+      department: user.department || "",
+      adminRole: user.adminRole || "",
+      image: user.image || "",
+      banner: user.banner || "",
       token, // <-- Critical fix: actually send the token!
     });
 
@@ -127,4 +151,41 @@ const login = async (req, res) => {
   }
 };
 
-module.exports = { register, login };
+// ================= UPDATE PASSWORD =================
+const updatePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Both current and new passwords are required." });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: "New password must be at least 6 characters." });
+    }
+
+    // Find user and include password field
+    const user = await User.findById(req.user.id).select("+password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Incorrect current password." });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password updated successfully!" });
+  } catch (err) {
+    console.error("UPDATE PASSWORD ERROR:", err);
+    res.status(500).json({ message: "Failed to update password." });
+  }
+};
+
+module.exports = { register, login, updatePassword };

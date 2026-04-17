@@ -58,6 +58,15 @@ const getDashboardStats = async (req, res) => {
 };
 
 // Add this function if missing
+const getStudents = async (req, res) => {
+  try {
+    const students = await User.find({ role: "student" }).select("name email rollNumber class");
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching students" });
+  }
+};
+
 const getSubjectAttendanceStats = async (req, res) => {
   // Your logic here
   res.json({ message: "Subject attendance stats" });
@@ -65,5 +74,6 @@ const getSubjectAttendanceStats = async (req, res) => {
 
 module.exports = {
   getDashboardStats,
-  getSubjectAttendanceStats, // <-- Add this line
+  getStudents,
+  getSubjectAttendanceStats,
 };

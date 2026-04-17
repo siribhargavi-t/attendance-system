@@ -6,13 +6,13 @@ const jwt = require('jsonwebtoken');
 const { protect, admin } = require('../middleware/auth');
 const { getDashboardStats, getSubjectAttendanceStats } = require('../controllers/adminController'); // <-- Add getSubjectAttendanceStats here
 
-// Example protected admin route (modified to return real students)
-router.get('/students', async (req, res) => {
+// Fetch real faculty for leave requests
+router.get('/faculty', async (req, res) => {
   try {
-    const students = await User.find({ role: 'student' }).select('-password');
-    res.json(students);
+    const faculty = await User.find({ role: 'faculty' }).select('name email');
+    res.json(faculty);
   } catch (error) {
-    res.status(500).json({ message: 'Server Error fetching students' });
+    res.status(500).json({ message: 'Server Error fetching faculty' });
   }
 });
 

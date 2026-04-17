@@ -24,7 +24,8 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate JWT
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+    const secret = process.env.JWT_SECRET || 'attendance_system_secret_key_2024';
+    const token = jwt.sign({ id: user._id, role: user.role }, secret, {
       expiresIn: '7d',
     });
 

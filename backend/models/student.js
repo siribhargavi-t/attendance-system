@@ -21,6 +21,24 @@ const studentSchema = new Schema({
         required: true,
         default: 'General'
     },
+    year: {
+        type: String,
+        required: true,
+        default: '1st Year'
+    },
+    section: {
+        type: String,
+        required: true,
+        default: 'A'
+    },
+    phone: {
+        type: String,
+        required: false
+    },
+    address: {
+        type: String,
+        required: false
+    },
     parentEmail: {
         type: String,
         required: false

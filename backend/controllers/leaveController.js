@@ -25,9 +25,9 @@ exports.createLeave = async (req, res) => {
 
     const leave = new Leave({
       studentName,
-      studentEmail,
+      studentEmail: studentEmail.toLowerCase().trim(),
       facultyName,
-      facultyEmail,
+      facultyEmail: facultyEmail.toLowerCase().trim(),
       fromDate,
       toDate,
       reason,
@@ -46,7 +46,7 @@ exports.createLeave = async (req, res) => {
 // 2. Get leaves by student
 exports.getLeavesByStudent = async (req, res) => {
   try {
-    const { studentEmail } = req.params;
+    const studentEmail = req.params.studentEmail.toLowerCase().trim();
 
     const leaves = await Leave.find({ studentEmail }).sort({ createdAt: -1 });
 
@@ -59,11 +59,16 @@ exports.getLeavesByStudent = async (req, res) => {
 };
 
 
-// 3. Get all leaves (faculty)
+// 3. Get all leaves (faculty view - filtered by their email)
 exports.getAllLeaves = async (req, res) => {
   try {
-    const leaves = await Leave.find().sort({ createdAt: -1 });
+    const { facultyEmail } = req.query;
+    const filter = {};
+    if (facultyEmail) {
+      filter.facultyEmail = facultyEmail.toLowerCase().trim();
+    }
 
+    const leaves = await Leave.find(filter).sort({ createdAt: -1 });
     res.json(leaves);
 
   } catch (err) {

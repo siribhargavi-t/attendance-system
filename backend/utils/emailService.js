@@ -2,32 +2,26 @@ const nodemailer = require('nodemailer');
 
 const sendEmail = async (to, subject, text) => {
     try {
-        // Mock sending using ethereal email
-        let testAccount = await nodemailer.createTestAccount();
-
-        let transporter = nodemailer.createTransport({
-            host: "smtp.ethereal.email",
-            port: 587,
-            secure: false, 
+        const transporter = nodemailer.createTransport({
+            service: process.env.EMAIL_SERVICE || 'gmail',
             auth: {
-                user: testAccount.user, // generated ethereal user
-                pass: testAccount.pass, // generated ethereal password
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS,
             },
         });
 
-        let info = await transporter.sendMail({
-            from: '"Attendance System" <no-reply@ethereal.email>',
-            to: to,
-            subject: subject,
-            text: text,
-        });
+        const mailOptions = {
+            from: `"Attendance System" <${process.env.EMAIL_USER}>`,
+            to,
+            subject,
+            text,
+        };
 
-        console.log("Message sent: %s", info.messageId);
-        // Preview only available when sending through an Ethereal account
-        console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+        const info = await transporter.sendMail(mailOptions);
+        console.log("Email sent successfully:", info.messageId);
         return true;
     } catch (err) {
-        console.error("Email error: ", err);
+        console.error("Real Email error: ", err);
         return false;
     }
 };

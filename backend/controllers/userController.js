@@ -26,7 +26,8 @@ const registerUser = async (req, res) => {
     });
 
     if (user) {
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      const secret = process.env.JWT_SECRET || 'attendance_system_secret_key_2024';
+      const token = jwt.sign({ id: user._id }, secret, {
         expiresIn: '30d',
       });
       res.status(201).json({

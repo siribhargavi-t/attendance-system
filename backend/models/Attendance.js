@@ -9,6 +9,18 @@ const AttendanceSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    rollNumber: {
+        type: String,
+        required: true
+    },
+    className: {
+        type: String,
+        required: true
+    },
+    time: {
+        type: String,
+        required: true
+    },
     subject: {
         type: String,
         required: true

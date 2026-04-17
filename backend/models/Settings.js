@@ -5,6 +5,18 @@ const settingsSchema = new Schema({
     lowAttendanceThreshold: {
         type: Number,
         default: 75 // 75% default
+    },
+    institutionName: {
+        type: String,
+        default: "My College/University"
+    },
+    academicYear: {
+        type: String,
+        default: "2023-24"
+    },
+    currentSemester: {
+        type: Number,
+        default: 1
     }
 });
 

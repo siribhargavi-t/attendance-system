@@ -6,6 +6,7 @@ const connectDB = require('./config/db');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const authRoutes = require('./routes/authRoutes');
 const studentRoutes = require('./routes/student');
+const facultyRoutes = require('./routes/facultyRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const path = require('path');
@@ -30,6 +31,7 @@ app.use(cors());
 
 // Mount routers
 app.use('/api/auth', authRoutes);
+app.use('/api/faculty', facultyRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/attendance', attendanceRoutes); // <-- Attendance routes connected here
 app.use('/api/leave', leaveRoutes);

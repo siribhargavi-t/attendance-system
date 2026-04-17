@@ -4,16 +4,19 @@ const Notification = require("../models/Notification");
 // 1. Mark Attendance (Create)
 const markAttendance = async (req, res) => {
   try {
-    const { studentName, studentEmail, subject, date, status } = req.body;
+    const { studentName, studentEmail, rollNumber, className, time, subject, date, status } = req.body;
 
-    // ✅ Validation (VERY IMPORTANT)
-    if (!studentName || !studentEmail || !subject || !date || !status) {
+    // ✅ Validation
+    if (!studentName || !studentEmail || !rollNumber || !className || !time || !subject || !date || !status) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     const attendance = new Attendance({
       studentName,
       studentEmail,
+      rollNumber,
+      className,
+      time,
       subject,
       date,
       status,

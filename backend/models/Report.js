@@ -10,6 +10,15 @@ const reportSchema = new Schema({
         type: String,
         required: true
     },
+    reportType: {
+        type: String,
+        enum: ['Monthly', 'Weekly', 'Subject-wise', 'Overall'],
+        default: 'Monthly'
+    },
+    parameters: {
+        type: mongoose.Schema.Types.Mixed, // Stores filters like startDate, endDate, subjectId
+        default: {}
+    },
     format: {
         type: String,
         enum: ['csv', 'pdf'],

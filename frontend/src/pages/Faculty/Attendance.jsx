@@ -1,222 +1,365 @@
 import React, { useState, useEffect } from "react";
 import MainLayout from "../../components/Layout/MainLayout";
-// No icons imported
+import { FiSearch, FiCheckCircle, FiXCircle, FiSave, FiClock, FiBook, FiUsers, FiFilter } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 
-const SUBJECTS = ["Mathematics", "Physics", "Chemistry", "English"];
-const ROWS_PER_PAGE = 5;
+const SUBJECTS = ["Mathematics", "Physics", "Chemistry", "English", "Computer Science", "Engineering Graphics"];
+const CLASSES = ["1st Year - SEC A", "1st Year - SEC B", "2nd Year - CS", "2nd Year - IT", "3rd Year - CS", "4th Year - CS"];
+const TIME_SLOTS = [
+  "09:00 AM - 10:00 AM",
+  "10:00 AM - 11:00 AM",
+  "11:00 AM - 12:00 PM",
+  "12:00 PM - 01:00 PM",
+  "01:00 PM - 02:00 PM",
+  "02:00 PM - 03:00 PM",
+  "03:00 PM - 04:00 PM",
+  "04:00 PM - 05:00 PM",
+];
+const ROWS_PER_PAGE = 8;
 
 const FacultyAttendance = () => {
-  const [subject] = useState(SUBJECTS[0]);
-  const [date] = useState(() => {
-    const today = new Date();
-    return today.toISOString().split("T")[0];
-  });
+  const [subject, setSubject] = useState(SUBJECTS[0]);
+  const [className, setClassName] = useState(CLASSES[0]);
+  const [time, setTime] = useState(TIME_SLOTS[0]);
+  const [date, setDate] = useState(() => new Date().toISOString().split("T")[0]);
+  
   const [attendance, setAttendance] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState("All");
-  const [selectedDate, setSelectedDate] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isDark, setIsDark] = useState(document.documentElement.classList.contains("dark"));
 
-  // ✅ Fetch students safely
+  // Detect dark mode
   useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
+
+  // Fetch students
+  useEffect(() => {
+    setLoading(true);
     axios
       .get("/api/admin/students")
       .then((res) => {
-        setStudents(
-          (res.data || []).map((s) => ({
-            id: s._id,
-            name: s.name || "",
-            email: s.email || "",
-            roll: s.rollNumber || "N/A",
-            subject: s.subject || ""
-          }))
-        );
+        const studentData = (res.data || []).map((s) => ({
+          id: s._id,
+          name: s.name || "Unknown",
+          email: s.email || "",
+          roll: s.rollNumber || "N/A",
+        }));
+        setStudents(studentData);
+        // Initialize attendance state
+        const initial = {};
+        studentData.forEach(s => initial[s.id] = "Present");
+        setAttendance(initial);
       })
-      .catch((err) => console.error("Error fetching students", err));
+      .catch((err) => console.error("Error fetching students", err))
+      .finally(() => setLoading(false));
   }, []);
 
-  // ✅ SAFE FILTERING (FIXED ERROR)
   const filteredData = students.filter((student) => {
-    const name = (student.name || "").toLowerCase();
-    const roll = (student.roll || "").toLowerCase();
-    const search = (searchTerm || "").toLowerCase();
-
-    const matchesSearch =
-      name.includes(search) || roll.includes(search);
-
-    const matchesSubject =
-      selectedSubject === "All" ||
-      subject === selectedSubject ||
-      (student.subject || "") === selectedSubject;
-
-    const matchesDate = !selectedDate || date === selectedDate;
-
-    return matchesSearch && matchesSubject && matchesDate;
+    const search = searchTerm.toLowerCase();
+    return student.name.toLowerCase().includes(search) || student.roll.toLowerCase().includes(search);
   });
 
-  // Pagination
   const totalPages = Math.ceil(filteredData.length / ROWS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ROWS_PER_PAGE;
-  const paginatedData = filteredData.slice(
-    startIndex,
-    startIndex + ROWS_PER_PAGE
-  );
+  const paginatedData = filteredData.slice((currentPage - 1) * ROWS_PER_PAGE, currentPage * ROWS_PER_PAGE);
 
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
-  }, [filteredData, totalPages, currentPage]);
-
-  // Mark all
   const handleMarkAll = (status) => {
-    const newAttendance = {};
-    filteredData.forEach((student) => {
-      newAttendance[student.id] = status;
-    });
-    setAttendance((prev) => ({ ...prev, ...newAttendance }));
+    const newAtt = { ...attendance };
+    filteredData.forEach(s => newAtt[s.id] = status);
+    setAttendance(newAtt);
   };
 
-  // Toggle
-  const handleCheckbox = (id) => {
-    setAttendance((prev) => ({
+  const toggleAttendance = (id) => {
+    setAttendance(prev => ({
       ...prev,
-      [id]: prev[id] === "Present" ? "Absent" : "Present",
+      [id]: prev[id] === "Present" ? "Absent" : "Present"
     }));
   };
 
-  // Save attendance
   const handleSave = async () => {
+    if (!subject || !className || !time || !date) {
+      return alert("Please fill in all session details");
+    }
+    setSaving(true);
     try {
-      if (!subject || subject === "All") {
-        return alert("Please select a subject");
-      }
-
-      const records = filteredData.map((student) => ({
-        studentName: student.name || "Unknown",
-        studentEmail: student.email,
+      const records = students.map((s) => ({
+        studentName: s.name,
+        studentEmail: s.email,
+        rollNumber: s.roll,
+        className,
+        time,
         subject,
         date,
-        status: attendance[student.id] || "Absent",
+        status: attendance[s.id] || "Absent",
       }));
 
-      await Promise.all(
-        records.map((rec) => axios.post("/api/attendance", rec))
-      );
-
-      alert("Attendance saved successfully!");
+      // In a real app, we'd have a bulk endpoint
+      await Promise.all(records.map(r => axios.post("/api/attendance", r)));
+      alert("Attendance records saved successfully!");
     } catch (err) {
       console.error(err);
       alert("Failed to save attendance");
+    } finally {
+      setSaving(false);
     }
   };
 
+  // UI Tokens - Refined for professional look
+  const cardBg = isDark 
+    ? "rgba(15, 23, 42, 0.82)" // Deep slate-indigo
+    : "rgba(255, 255, 255, 0.9)";
+  const cardBorder = isDark 
+    ? "rgba(102, 126, 234, 0.15)" // Subtle indigo glow
+    : "rgba(0, 0, 0, 0.08)";
+  const textColor = isDark ? "#f8fafc" : "#0f172a"; // Crisp light / True dark
+  const mutedText = isDark ? "#94a3b8" : "#64748b";
+
   return (
     <MainLayout>
-      <div className="max-w-4xl mx-auto px-2 py-8 space-y-8">
-
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Mark Attendance
-        </h1>
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 bg-white dark:bg-gray-800 p-4 rounded-xl">
-
-          <select
-            value={selectedSubject}
-            onChange={(e) => setSelectedSubject(e.target.value)}
-            className="p-2 rounded"
-          >
-            <option value="All">All Subjects</option>
-            {SUBJECTS.map((s) => (
-              <option key={s}>{s}</option>
-            ))}
-          </select>
-
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="p-2 rounded"
-          />
-
-          <input
-            type="text"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="p-2 rounded"
-          />
-        </div>
-
-        {/* Buttons */}
-        <div className="flex gap-4">
-          <button
-            onClick={() => handleMarkAll("Present")}
-            className="bg-green-600 text-white px-4 py-2 rounded"
-          >
-            Mark All Present
-          </button>
-          <button
-            onClick={() => handleMarkAll("Absent")}
-            className="bg-red-600 text-white px-4 py-2 rounded"
-          >
-            Mark All Absent
-          </button>
-        </div>
-
-        {/* Table */}
-        <table className="w-full text-sm bg-white dark:bg-gray-800 rounded">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Roll</th>
-              <th>Status</th>
-              <th>Mark</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {paginatedData.map((student) => (
-              <tr key={student.id}>
-                <td>{student.name}</td>
-                <td>{student.roll}</td>
-                <td>{attendance[student.id] || "Not Marked"}</td>
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={attendance[student.id] === "Present"}
-                    onChange={() => handleCheckbox(student.id)}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Save */}
-        <button
-          onClick={handleSave}
-          className="bg-blue-600 text-white px-6 py-2 rounded"
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-8"
         >
-          Save
-        </button>
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-purple-500">
+                Mark Attendance
+              </h1>
+              <p style={{ color: mutedText, fontWeight: 500 }} className="mt-1">
+                Establish and record session details with precision.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <motion.button 
+                whileHover={{ scale: 1.02, translateY: -2 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleSave}
+                disabled={saving || loading}
+                className="flex items-center gap-2 px-8 py-3 rounded-2xl font-black text-white shadow-2xl transition-all active:scale-95 disabled:opacity-50"
+                style={{ 
+                  background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+                  boxShadow: "0 10px 40px rgba(99, 102, 241, 0.3)"
+                }}
+              >
+                {saving ? "Saving..." : <><FiSave /> Publish Session</>}
+              </motion.button>
+            </div>
+          </div>
 
-        {/* Pagination */}
-        <div className="flex justify-center gap-4">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+          {/* Session Configuration Card */}
+          <div 
+            className="p-8 rounded-3xl border"
+            style={{ 
+              background: cardBg, 
+              borderColor: cardBorder,
+              backdropFilter: "blur(24px)",
+              boxShadow: isDark 
+                ? "0 20px 50px rgba(0,0,0,0.3)" 
+                : "0 20px 50px rgba(0,0,0,0.04)"
+            }}
           >
-            Prev
-          </button>
-          <span>{currentPage} / {totalPages || 1}</span>
-          <button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          >
-            Next
-          </button>
-        </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              <div className="space-y-3">
+                <label className="text-xs font-black uppercase tracking-widest flex items-center gap-2" style={{ color: mutedText }}>
+                  <FiBook size={14} className="text-indigo-500" /> Subject
+                </label>
+                <div className="relative">
+                  <select 
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border bg-black/5 dark:bg-white/5 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all appearance-none cursor-pointer"
+                    style={{ color: textColor, borderColor: cardBorder }}
+                  >
+                    {SUBJECTS.map(s => <option key={s} value={s} className="dark:bg-slate-900 bg-white">{s}</option>)}
+                  </select>
+                </div>
+              </div>
 
+              <div className="space-y-3">
+                <label className="text-xs font-black uppercase tracking-widest flex items-center gap-2" style={{ color: mutedText }}>
+                  <FiUsers size={14} className="text-indigo-500" /> Class Unit
+                </label>
+                <div className="relative">
+                  <select 
+                    value={className}
+                    onChange={(e) => setClassName(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border bg-black/5 dark:bg-white/5 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all appearance-none cursor-pointer"
+                    style={{ color: textColor, borderColor: cardBorder }}
+                  >
+                    {CLASSES.map(c => <option key={c} value={c} className="dark:bg-slate-900 bg-white">{c}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-xs font-black uppercase tracking-widest flex items-center gap-2" style={{ color: mutedText }}>
+                  <FiClock size={14} className="text-indigo-500" /> Schedule
+                </label>
+                <div className="relative">
+                  <select 
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                    className="w-full px-4 py-3 rounded-2xl border bg-black/5 dark:bg-white/5 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all appearance-none cursor-pointer"
+                    style={{ color: textColor, borderColor: cardBorder }}
+                  >
+                    {TIME_SLOTS.map(t => <option key={t} value={t} className="dark:bg-slate-900 bg-white">{t}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-xs font-black uppercase tracking-widest flex items-center gap-2" style={{ color: mutedText }}>
+                   Calendar Date
+                </label>
+                <input 
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl border bg-black/5 dark:bg-white/5 focus:ring-4 focus:ring-indigo-500/20 outline-none transition-all"
+                  style={{ color: textColor, borderColor: cardBorder }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Student List Section */}
+          <div 
+            className="overflow-hidden rounded-2xl border"
+            style={{ 
+              background: cardBg, 
+              borderColor: cardBorder,
+              backdropFilter: "blur(12px)"
+            }}
+          >
+            {/* Table Header / Toolbar */}
+            <div className="p-4 border-b flex flex-wrap items-center justify-between gap-4" style={{ borderColor: cardBorder }}>
+              <div className="relative flex-1 max-w-md">
+                <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <input 
+                  type="text"
+                  placeholder="Search student by name or roll number..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 rounded-lg bg-black/5 dark:bg-white/5 outline-none focus:ring-1 focus:ring-indigo-500"
+                  style={{ color: textColor }}
+                />
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => handleMarkAll("Present")}
+                  className="px-4 py-2 rounded-lg bg-green-500/10 text-green-500 text-sm font-bold hover:bg-green-500 hover:text-white transition-colors"
+                >
+                  Mark All Present
+                </button>
+                <button 
+                  onClick={() => handleMarkAll("Absent")}
+                  className="px-4 py-2 rounded-lg bg-red-500/10 text-red-500 text-sm font-bold hover:bg-red-500 hover:text-white transition-colors"
+                >
+                  Mark All Absent
+                </button>
+              </div>
+            </div>
+
+            {/* Table Body */}
+            <div className="overflow-x-auto">
+              {loading ? (
+                <div className="p-20 text-center space-y-4">
+                  <div className="w-12 h-12 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  <p style={{ color: mutedText }}>Loading student data...</p>
+                </div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr style={{ background: isDark ? "rgba(0,0,0,0.2)" : "rgba(0,0,0,0.02)" }}>
+                      <th className="px-6 py-4 font-bold text-xs uppercase" style={{ color: mutedText }}>Roll Number</th>
+                      <th className="px-6 py-4 font-bold text-xs uppercase" style={{ color: mutedText }}>Full Name</th>
+                      <th className="px-6 py-4 font-bold text-xs uppercase" style={{ color: mutedText }}>Email Address</th>
+                      <th className="px-6 py-4 font-bold text-xs uppercase text-center" style={{ color: mutedText }}>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <AnimatePresence mode="popLayout">
+                      {paginatedData.map((student) => (
+                        <motion.tr 
+                          layout
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          key={student.id} 
+                          className="hover:bg-indigo-500/5 transition-colors border-b"
+                          style={{ borderColor: cardBorder }}
+                        >
+                          <td className="px-6 py-4 font-mono font-bold" style={{ color: textColor }}>{student.roll}</td>
+                          <td className="px-6 py-4 font-medium" style={{ color: textColor }}>{student.name}</td>
+                          <td className="px-6 py-4 text-sm" style={{ color: mutedText }}>{student.email}</td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-center gap-4">
+                              <span 
+                                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                                  attendance[student.id] === "Present" 
+                                    ? "bg-green-500 text-white" 
+                                    : "bg-red-500 text-white"
+                                }`}
+                              >
+                                {attendance[student.id]}
+                              </span>
+                              <label className="relative inline-flex items-center cursor-pointer">
+                                <input 
+                                  type="checkbox" 
+                                  className="sr-only peer" 
+                                  checked={attendance[student.id] === "Present"}
+                                  onChange={() => toggleAttendance(student.id)}
+                                />
+                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                              </label>
+                            </div>
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </AnimatePresence>
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            {/* Footer / Pagination */}
+            {!loading && (
+              <div className="p-4 flex items-center justify-between border-t" style={{ borderColor: cardBorder }}>
+                <p className="text-sm" style={{ color: mutedText }}>
+                  Showing {paginatedData.length} of {filteredData.length} students
+                </p>
+                <div className="flex items-center gap-1">
+                  <button 
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => p - 1)}
+                    className="p-2 rounded hover:bg-black/5 disabled:opacity-30"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-4 text-sm font-bold">{currentPage} / {totalPages || 1}</span>
+                  <button 
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    onClick={() => setCurrentPage(p => p + 1)}
+                    className="p-2 rounded hover:bg-black/5 disabled:opacity-30"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
       </div>
     </MainLayout>
   );

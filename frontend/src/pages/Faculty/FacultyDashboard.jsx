@@ -1,13 +1,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import MainLayout from "../../components/Layout/MainLayout";
-import Card from "../../components/Card";
 import { FiUsers, FiUserCheck, FiUserX, FiArrowRight } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-
 import axios from "axios";
 
-// Helper for summary
 const getSummary = (students) => {
   const total = students.length;
   const present = students.filter((s) => s.status === "Present").length;
@@ -19,6 +16,12 @@ const FacultyDashboard = () => {
   const [students, setStudents] = useState([]);
   const navigate = useNavigate();
 
+  const isDark = document.documentElement.classList.contains("dark");
+  const textColor = isDark ? "#f8fafc" : "#0f172a";
+  const mutedColor = isDark ? "#94a3b8" : "#64748b";
+  const chartBg = isDark ? "rgba(15, 23, 42, 0.82)" : "rgba(255, 255, 255, 0.75)";
+  const cardBorder = isDark ? "rgba(102, 126, 234, 0.15)" : "rgba(0, 0, 0, 0.08)";
+
   React.useEffect(() => {
     Promise.all([
       axios.get("/api/admin/students"),
@@ -26,17 +29,17 @@ const FacultyDashboard = () => {
     ]).then(([studentsRes, attendanceRes]) => {
       const allStudents = studentsRes.data;
       const allAttendance = attendanceRes.data;
-      
+
       const today = new Date().toISOString().split("T")[0];
       const todayRecords = allAttendance.filter(r => r.date && r.date.startsWith(today));
 
       const mergedStudents = allStudents.map(student => {
-         const rec = todayRecords.find(r => r.studentEmail === student.email);
-         return {
-           id: student._id,
-           name: student.name,
-           status: rec ? rec.status : "Not Marked"
-         };
+        const rec = todayRecords.find(r => r.studentEmail === student.email);
+        return {
+          id: student._id,
+          name: student.name,
+          status: rec ? rec.status : "Not Marked"
+        };
       });
       setStudents(mergedStudents);
     }).catch(err => console.error(err));
@@ -44,77 +47,182 @@ const FacultyDashboard = () => {
 
   const summary = getSummary(students);
 
+  const cards = [
+    {
+      label: "Total Students",
+      value: summary.total,
+      icon: <FiUsers size={32} />,
+      emoji: "👥",
+      cardClass: "stat-card-blue",
+    },
+    {
+      label: "Present Today",
+      value: summary.present,
+      icon: <FiUserCheck size={32} />,
+      emoji: "✅",
+      cardClass: "stat-card-green",
+    },
+    {
+      label: "Absent Today",
+      value: summary.absent,
+      icon: <FiUserX size={32} />,
+      emoji: "❌",
+      cardClass: "stat-card-orange",
+    },
+  ];
+
   return (
     <MainLayout>
-      <motion.div 
-        className="max-w-6xl mx-auto px-4 py-10"
+      <motion.div
+        className="max-w-6xl mx-auto space-y-8"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 mb-8 shadow flex flex-col sm:flex-row items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-1">Welcome back, Faculty 👨‍🏫</h2>
-            <p className="text-white text-opacity-90">Here is your attendance overview</p>
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 }}
+          className="shimmer-border rounded-2xl"
+          style={{
+            background: "linear-gradient(135deg, rgba(102,126,234,0.18), rgba(118,75,162,0.15))",
+            backdropFilter: "blur(20px)",
+            border: "1px solid rgba(255,255,255,0.25)",
+            padding: "28px 32px",
+          }}
+        >
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="text-5xl">👨‍🏫</div>
+              <div>
+                <h1 className="text-2xl font-bold" style={{ color: textColor }}>
+                  Welcome back, <span className="gradient-text">Faculty!</span>
+                </h1>
+                <p style={{ color: mutedColor }} className="mt-1">
+                  Here is your today's attendance overview.
+                </p>
+              </div>
+            </div>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.97 }}
+              className="btn-glow-blue flex items-center gap-2"
+              onClick={() => navigate("/faculty/attendance")}
+            >
+              Mark Attendance <FiArrowRight />
+            </motion.button>
           </div>
-        </div>
-
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-1">Faculty Dashboard</h1>
-          <p className="text-gray-600 dark:text-gray-300 text-base">
-            Welcome! View your class attendance overview and quick actions.
-          </p>
-        </div>
+        </motion.div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <div className="flex flex-col items-center p-6 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl shadow-xl overflow-hidden border border-white/20 relative">
-              <FiUsers className="text-white opacity-20 text-6xl absolute top-2 right-4" />
-              <FiUsers className="text-white text-4xl mb-3 z-10" />
-              <span className="text-4xl font-extrabold text-white z-10">{summary.total}</span>
-              <span className="text-white/80 text-sm mt-1 uppercase tracking-wider font-semibold z-10">Total Students</span>
-            </div>
-          </motion.div>
-          
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <div className="flex flex-col items-center p-6 bg-gradient-to-br from-green-400 to-green-600 rounded-2xl shadow-xl overflow-hidden border border-white/20 relative">
-              <FiUserCheck className="text-white opacity-20 text-6xl absolute top-2 right-4" />
-              <FiUserCheck className="text-white text-4xl mb-3 z-10" />
-              <span className="text-4xl font-extrabold text-white z-10">{summary.present}</span>
-              <span className="text-white/80 text-sm mt-1 uppercase tracking-wider font-semibold z-10">Present</span>
-            </div>
-          </motion.div>
-          
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <div className="flex flex-col items-center p-6 bg-gradient-to-br from-red-400 to-red-600 rounded-2xl shadow-xl overflow-hidden border border-white/20 relative">
-              <FiUserX className="text-white opacity-20 text-6xl absolute top-2 right-4" />
-              <FiUserX className="text-white text-4xl mb-3 z-10" />
-              <span className="text-4xl font-extrabold text-white z-10">{summary.absent}</span>
-              <span className="text-white/80 text-sm mt-1 uppercase tracking-wider font-semibold z-10">Absent</span>
-            </div>
-          </motion.div>
-          
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <div className="flex flex-col items-center p-6 bg-gradient-to-br from-purple-400 to-indigo-600 rounded-2xl shadow-xl overflow-hidden border border-white/20 relative">
-              <FiArrowRight className="text-white opacity-20 text-6xl absolute top-2 right-4" />
-              <span className="text-xl font-bold text-white mb-2 z-10">Quick Action</span>
-              <button
-                className="bg-white/20 text-white px-5 py-2.5 rounded-lg mt-1 hover:bg-white/30 transition shadow font-bold flex items-center gap-2 z-10 backdrop-blur-sm"
-                onClick={() => navigate("/faculty/attendance")}
-              >
-                Mark Attendance <FiArrowRight />
-              </button>
-            </div>
-          </motion.div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {cards.map((card, idx) => (
+            <motion.div
+              key={card.label}
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.12 + 0.2 }}
+              whileHover={{ scale: 1.05, y: -4 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <div className={`${card.cardClass} p-7 flex flex-col items-center text-white`}>
+                <div className="text-5xl mb-2 z-10">{card.emoji}</div>
+                <div className="text-4xl font-extrabold tracking-tight z-10">{card.value}</div>
+                <div className="text-white/80 font-semibold uppercase tracking-widest mt-1 text-sm z-10">
+                  {card.label}
+                </div>
+              </div>
+            </motion.div>
+          ))}
         </div>
+
+        {/* Today's Student List */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+          className="glass-card p-6 border"
+          style={{ background: chartBg, borderColor: cardBorder, boxShadow: isDark ? "0 20px 50px rgba(0,0,0,0.3)" : "none" }}
+        >
+          <h2 className="font-bold text-lg mb-4 gradient-text">👨‍🎓 Today's Students</h2>
+          {students.length === 0 ? (
+            <p style={{ color: mutedColor }}>No students found.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm colorful-table rounded-xl overflow-hidden">
+                <thead>
+                  <tr>
+                    <th className="py-3 px-4 text-left">#</th>
+                    <th className="py-3 px-4 text-left">Student Name</th>
+                    <th className="py-3 px-4 text-left">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((s, idx) => (
+                    <tr
+                      key={s.id}
+                      className="border-b transition"
+                      style={{ borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)" }}
+                    >
+                      <td className="py-3 px-4 font-medium" style={{ color: mutedColor }}>{idx + 1}</td>
+                      <td className="py-3 px-4 font-semibold" style={{ color: textColor }}>{s.name}</td>
+                      <td className="py-3 px-4">
+                        <span
+                          className="px-3 py-1 text-xs rounded-full font-semibold text-white"
+                          style={{
+                            background:
+                              s.status === "Present"
+                                ? "linear-gradient(135deg, #11998e, #38ef7d)"
+                                : s.status === "Absent"
+                                ? "linear-gradient(135deg, #f093fb, #f5576c)"
+                                : "linear-gradient(135deg, #667eea, #764ba2)",
+                          }}
+                        >
+                          {s.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.75 }}
+          className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+        >
+            <div
+            className="glass-card p-5 flex items-center gap-4 cursor-pointer border hover:shadow-xl transition-all"
+            style={{ background: chartBg, borderColor: cardBorder }}
+            onClick={() => navigate("/faculty/attendance")}
+          >
+            <div className="text-4xl">📝</div>
+            <div>
+              <div className="font-bold" style={{ color: textColor }}>Mark Attendance</div>
+              <div className="text-sm" style={{ color: mutedColor }}>Record today's class attendance</div>
+            </div>
+          </div>
+          <div
+            className="glass-card p-5 flex items-center gap-4 cursor-pointer border hover:shadow-xl transition-all"
+            style={{ background: chartBg, borderColor: cardBorder }}
+            onClick={() => navigate("/faculty/leave-requests")}
+          >
+            <div className="text-4xl">📋</div>
+            <div>
+              <div className="font-bold" style={{ color: textColor }}>Leave Requests</div>
+              <div className="text-sm" style={{ color: mutedColor }}>View and manage student leaves</div>
+            </div>
+          </div>
+        </motion.div>
       </motion.div>
     </MainLayout>
   );
 };
 
 export default FacultyDashboard;
-
-

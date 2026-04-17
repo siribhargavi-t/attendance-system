@@ -43,6 +43,26 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
     return () => clearInterval(interval);
   }, []);
 
+  const handleDeleteNotif = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/api/notifications/${id}`);
+      setNotifications((prev) => prev.filter((n) => n._id !== id));
+    } catch (err) {
+      console.error("Delete notification error:", err);
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      const user = JSON.parse(localStorage.getItem("userData"));
+      if (!user?.email) return;
+      await axios.delete(`http://localhost:5000/api/notifications/clear/${user.email}`);
+      setNotifications([]);
+    } catch (err) {
+      console.error("Clear all error:", err);
+    }
+  };
+
   // ✅ Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -68,8 +88,8 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
       {/* LEFT */}
       <div className="flex items-center gap-3">
         <button
-          onClick={() => setOpen(true)}
-          className="text-2xl p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+          onClick={() => setOpen((prev) => !prev)}
+          className="text-2xl p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition relative z-20"
         >
           ☰
         </button>
@@ -98,23 +118,42 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
 
         {/* Dropdown */}
         {showNotif && (
-          <div className="absolute right-0 mt-12 w-64 bg-white dark:bg-gray-800 shadow-xl rounded-xl p-4 z-50 border dark:border-gray-700">
-            <h4 className="font-semibold text-gray-900 dark:text-white mb-2">
-              Notifications
-            </h4>
+          <div className="absolute right-0 top-full mt-2 w-72 bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-4 z-50 border dark:border-gray-700">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-bold text-gray-900 dark:text-white">
+                Notifications
+              </h4>
+              {notifications.length > 0 && (
+                <button 
+                  onClick={handleClearAll}
+                  className="text-xs text-blue-500 hover:text-blue-600 font-semibold"
+                >
+                  Clear All
+                </button>
+              )}
+            </div>
 
             {notifications.length === 0 ? (
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                No new notifications
-              </p>
+              <div className="py-8 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  All caught up! 
+                </p>
+              </div>
             ) : (
-              <ul className="space-y-2">
+              <ul className="space-y-2 max-h-64 overflow-y-auto pr-1">
                 {notifications.map((notif) => (
                   <li
                     key={notif._id}
-                    className="text-sm text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 rounded px-3 py-2"
+                    className="group relative text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700/50 rounded-xl px-4 py-3 border border-transparent hover:border-blue-200 dark:hover:border-blue-800 transition-all"
                   >
-                    {notif.message}
+                    <div className="pr-6">{notif.message}</div>
+                    <button
+                      onClick={() => handleDeleteNotif(notif._id)}
+                      className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition-all"
+                      title="Dismiss"
+                    >
+                      ✕
+                    </button>
                   </li>
                 ))}
               </ul>

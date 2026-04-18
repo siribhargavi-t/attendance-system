@@ -58,6 +58,43 @@ const getStudents = async (req, res) => {
     }
 };
 
+const updateStudent = async (req, res) => {
+    try {
+        const student = await Student.findById(req.params.id);
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+        
+        const { name, rollNumber, branch, parentEmail, password } = req.body;
+        
+        if (rollNumber && rollNumber !== student.rollNumber) {
+            let existingStudent = await Student.findOne({ rollNumber });
+            if (existingStudent) {
+                return res.status(400).json({ success: false, message: 'Roll number already exists' });
+            }
+        }
+
+        if (name) student.name = name;
+        if (rollNumber) student.rollNumber = rollNumber;
+        if (branch) student.branch = branch;
+        if (parentEmail !== undefined) student.parentEmail = parentEmail;
+        
+        await student.save();
+
+        if (password) {
+            const linkedUser = await User.findById(student.user);
+            if (linkedUser) {
+                linkedUser.password = password;
+                await linkedUser.save();
+            }
+        }
+        
+        res.status(200).json({ success: true, message: 'Student updated successfully', student });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 const deleteStudent = async (req, res) => {
     try {
         const student = await Student.findById(req.params.id);
@@ -342,6 +379,7 @@ const getStudentAttendanceById = async (req, res) => {
 module.exports = {
     addStudent,
     getStudents,
+    updateStudent,
     deleteStudent,
     addSubject,
     getSubjects,

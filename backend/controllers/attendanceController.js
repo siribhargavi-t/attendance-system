@@ -221,10 +221,72 @@ const markBulk = async (req, res) => {
     }
 };
 
+// ── Fetch all records for a specific session (date + subject + time) ─────────
+const getAttendanceBySession = async (req, res) => {
+    try {
+        const { date, subjectId, startTime, endTime } = req.query;
+        if (!date || !subjectId) {
+            return res.status(400).json({ success: false, message: 'date and subjectId are required' });
+        }
+
+        const markDate = new Date(date);
+        markDate.setUTCHours(0, 0, 0, 0);
+        const nextDay = new Date(markDate);
+        nextDay.setUTCDate(markDate.getUTCDate() + 1);
+
+        const query = { subjectId, date: { $gte: markDate, $lt: nextDay } };
+        if (startTime) query.startTime = startTime;
+        if (endTime)   query.endTime   = endTime;
+
+        const records = await Attendance.find(query)
+            .populate('studentId', 'name rollNumber branch')
+            .populate('subjectId', 'name code')
+            .sort({ 'studentId.name': 1 });
+
+        res.status(200).json({ success: true, data: records });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// ── Correct a single attendance record (flip status) ─────────────────────────
+const correctAttendance = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, correctionNote } = req.body;
+
+        if (!['present', 'absent'].includes(status)) {
+            return res.status(400).json({ success: false, message: 'status must be present or absent' });
+        }
+
+        const record = await Attendance.findById(id);
+        if (!record) {
+            return res.status(404).json({ success: false, message: 'Attendance record not found' });
+        }
+
+        const previousStatus = record.status;
+        record.status = status;
+        record.markedBy = req.user.id;
+        record.markedAt = new Date();
+        if (correctionNote) record.correctionNote = correctionNote;
+
+        await record.save();
+        res.status(200).json({
+            success: true,
+            message: `Attendance corrected from ${previousStatus} → ${status}`,
+            record
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 module.exports = {
   markAttendance,
   getAdminAllAttendance,
   getAdminStats,
   reviewAttendanceRequest,
-  markBulk
+  markBulk,
+  getAttendanceBySession,
+  correctAttendance
 };

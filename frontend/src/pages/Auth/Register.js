@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { UserPlus } from 'lucide-react';
+import { ThemeContext } from '../../contexts/ThemeContext';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -15,6 +16,11 @@ const Register = () => {
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { theme } = useContext(ThemeContext);
+  const isDark = theme === 'dark';
+
+  const inputCls = `w-full px-4 py-3 rounded-xl outline-none transition-all
+    ${isDark ? 'glass-input text-white' : 'glass-input-light text-slate-800'}`;
 
   useEffect(() => {
     const loadSubjects = async () => {
@@ -62,13 +68,14 @@ const Register = () => {
   };
 
   return (
-    <div className="max-w-2xl bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-8 transition-colors">
+    <div className={`w-full max-w-2xl rounded-[28px] shadow-2xl p-8 transition-all animate-fade-in-up ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
       <div className="flex flex-col items-center mb-8">
-        <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-indigo-200 dark:shadow-none">
-          <UserPlus className="w-8 h-8 text-white" />
+        <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4 text-white font-black flex-shrink-0"
+            style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}>
+          <UserPlus className="w-8 h-8" />
         </div>
-        <h2 className="text-3xl font-bold text-gray-800 dark:text-white">Create New Admin/Faculty</h2>
-        <p className="text-gray-500 dark:text-slate-400 mt-2 text-center text-sm">Register a new administrator or restricted faculty member.</p>
+        <h2 className={`text-3xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Create New Admin/Faculty</h2>
+        <p className={`mt-2 text-center text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Register a new administrator or restricted faculty member.</p>
       </div>
 
       {error && (
@@ -83,14 +90,14 @@ const Register = () => {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Username</label>
+            <label className={`block text-xs font-semibold mb-1.5 ml-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Username</label>
             <input
               type="text"
               required
-              className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+              className={inputCls}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="e.g. adoe123"
@@ -98,11 +105,11 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Email Address</label>
+            <label className={`block text-xs font-semibold mb-1.5 ml-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Email Address</label>
             <input
               type="email"
               required
-              className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+              className={inputCls}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@school.edu"
@@ -111,26 +118,26 @@ const Register = () => {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Password</label>
+          <label className={`block text-xs font-semibold mb-1.5 ml-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Password</label>
           <input
             type="password"
             required
-            className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+            className={inputCls}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Create a password"
           />
         </div>
 
-        <div className="pt-4 border-t dark:border-slate-700">
-          <h3 className="text-md font-semibold text-gray-800 dark:text-white mb-2">Faculty Restrictions (Optional)</h3>
-          <p className="text-xs text-gray-500 dark:text-slate-400 mb-4">Assigning subjects or branches will restrict this admin to only manage those subsets. Leave blank to create a Super Admin.</p>
+        <div className="pt-5 border-t" style={{ borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+          <h3 className={`text-sm font-bold mb-1 ${isDark ? 'text-white' : 'text-slate-800'}`}>Faculty Restrictions (Optional)</h3>
+          <p className={`text-xs mb-4 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Assigning subjects or branches will restrict this admin to only manage those subsets. Leave blank to create a Super Admin.</p>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Assigned Branches (comma separated)</label>
+            <label className={`block text-xs font-semibold mb-1.5 ml-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Assigned Branches (comma separated)</label>
             <input
               type="text"
-              className="w-full px-4 py-2 text-sm rounded-lg bg-gray-50 dark:bg-slate-700 border border-gray-200 dark:border-slate-600 focus:bg-white dark:focus:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
+              className={inputCls}
               value={assignedBranches}
               onChange={(e) => setAssignedBranches(e.target.value)}
               placeholder="e.g. CSE, ECE, General"
@@ -138,10 +145,10 @@ const Register = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Assigned Subjects</label>
-            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-2 border dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700">
+            <label className={`block text-xs font-semibold mb-1.5 ml-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Assigned Subjects</label>
+            <div className={`grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 rounded-xl ${isDark ? 'bg-slate-900/30' : 'bg-slate-50/50 border border-slate-200/50'}`}>
               {allSubjects.map(sub => (
-                <label key={sub._id} className="flex items-center space-x-2 text-sm text-gray-800 dark:text-slate-200 cursor-pointer">
+                <label key={sub._id} className={`flex items-center space-x-2 text-sm cursor-pointer ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
                   <input
                     type="checkbox"
                     checked={assignedSubjects.includes(sub._id)}
@@ -159,10 +166,11 @@ const Register = () => {
         <button
           type="submit"
           disabled={isLoading || !!message}
-          className="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition-all disabled:opacity-70 flex justify-center items-center mt-6"
+          className="w-full btn-shine flex justify-center items-center py-3.5 mt-6 rounded-xl text-white font-bold transition-all disabled:opacity-70 text-sm"
+          style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
         >
           {isLoading ? (
-            <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
           ) : (
             'Create Account'
           )}

@@ -29,14 +29,14 @@ const AdminLayout = () => {
   }, [location.pathname]);
 
   const navItems = [
-    { name: 'Dashboard', path: '/admin', icon: LayoutDashboard, color: '#6366f1' },
-    { name: 'Students', path: '/admin/students', icon: Users, color: '#06b6d4' },
-    { name: 'Subjects', path: '/admin/subjects', icon: FileText, color: '#8b5cf6' },
-    { name: 'Mark Attendance', path: '/admin/mark-attendance', icon: CheckSquare, color: '#10b981' },
-    { name: 'Review Requests', path: '/admin/requests', icon: ClipboardList, color: '#f59e0b', badge: pendingCount },
-    { name: 'Reports', path: '/admin/reports', icon: BarChart2, color: '#06b6d4' },
-    { name: 'Manage Admins', path: '/admin/manage-admins', icon: UserPlus, color: '#ec4899' },
-    { name: 'Settings', path: '/admin/settings', icon: Settings, color: '#64748b' },
+    { name: 'Dashboard',       path: '/admin',                icon: LayoutDashboard, color: '#818cf8' },
+    { name: 'Students',        path: '/admin/students',       icon: Users,           color: '#38bdf8' },
+    { name: 'Subjects',        path: '/admin/subjects',       icon: FileText,        color: '#a78bfa' },
+    { name: 'Mark Attendance', path: '/admin/mark-attendance',icon: CheckSquare,     color: '#34d399' },
+    { name: 'Review Requests', path: '/admin/requests',       icon: ClipboardList,   color: '#fbbf24', badge: pendingCount },
+    { name: 'Reports',         path: '/admin/reports',        icon: BarChart2,       color: '#38bdf8' },
+    { name: 'Manage Admins',   path: '/admin/manage-admins',  icon: UserPlus,        color: '#f472b6' },
+    { name: 'Settings',        path: '/admin/settings',       icon: Settings,        color: '#94a3b8' },
   ];
 
   const pageTitle = (() => {
@@ -48,34 +48,71 @@ const AdminLayout = () => {
   const avatarLetter = user?.username?.charAt(0).toUpperCase() || 'A';
 
   return (
-    <div className={`flex h-screen font-['Inter'] overflow-hidden transition-colors duration-300 ${isDark ? 'bg-slate-900' : 'bg-slate-50'}`}>
+    <div
+      className={`flex h-screen font-['Inter'] overflow-hidden transition-colors duration-500`}
+      style={{
+        background: isDark ? '#06060f' : '#f8fafc',
+      }}
+    >
+      {/* Ambient orbs — dark mode only */}
+      {isDark && (
+        <>
+          <div
+            className="ambient-orb"
+            style={{
+              width: 600, height: 600,
+              top: -100, left: -150,
+              background: 'radial-gradient(circle, rgba(99,102,241,0.22) 0%, transparent 70%)',
+              animationDelay: '0s',
+            }}
+          />
+          <div
+            className="ambient-orb"
+            style={{
+              width: 500, height: 500,
+              bottom: -100, right: 100,
+              background: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)',
+              animationDelay: '-6s',
+            }}
+          />
+        </>
+      )}
+
       {/* SIDEBAR */}
       <aside
-        className={`relative flex flex-col transition-all duration-300 ease-in-out sidebar-glow flex-shrink-0
+        className={`relative flex flex-col transition-all duration-300 ease-in-out flex-shrink-0 z-20
           ${collapsed ? 'w-[72px]' : 'w-64'}
-          ${isDark ? 'bg-slate-950 border-r border-slate-800/50' : 'bg-slate-900 border-r border-slate-800/80'}`}
+          ${isDark ? 'liquid-glass-sidebar' : 'liquid-glass-sidebar-light'}`}
       >
-        {/* Sidebar top gradient line */}
-        <div className="absolute top-0 left-0 right-0 h-0.5" style={{ background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4)' }} />
+        {/* Top rainbow accent line */}
+        <div
+          className="absolute top-0 left-0 right-0 h-[2px] z-10"
+          style={{ background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4, #10b981)' }}
+        />
 
         {/* Logo */}
         <div className={`flex items-center px-4 py-5 ${collapsed ? 'justify-center' : 'justify-between'}`}>
           {!collapsed && (
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}>
-                  <CheckSquare className="w-4 h-4 text-white" />
-                </div>
-                <div>
-                  <h1 className="text-sm font-bold text-white tracking-wide leading-tight">ADMIN</h1>
-                  <p className="text-[10px] text-indigo-400 leading-tight">PORTAL</p>
-                </div>
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-9 h-9 rounded-2xl flex items-center justify-center glass-icon-bubble"
+                style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.9), rgba(79,70,229,0.9))' }}
+              >
+                <CheckSquare className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xs font-black tracking-widest leading-tight text-white">
+                  ADMIN
+                </h1>
+                <p className="text-[9px] tracking-[0.25em] leading-tight font-semibold text-indigo-400/70">
+                  PORTAL
+                </p>
               </div>
             </div>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-slate-800 transition-all"
+            className="p-1.5 rounded-xl transition-all hover:scale-110 text-slate-500 hover:text-white hover:bg-white/10"
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
@@ -93,29 +130,61 @@ const AdminLayout = () => {
                 key={item.name}
                 to={item.path}
                 title={collapsed ? item.name : undefined}
-                className={`sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative overflow-hidden
+                className={`sidebar-item flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group relative
                   ${collapsed ? 'justify-center' : ''}
                   ${isActive
-                    ? 'nav-link-active text-white'
-                    : 'text-slate-400 hover:bg-slate-800/80 hover:text-white'
+                    ? 'liquid-glass-nav-active text-white'
+                    : 'text-slate-400 hover:bg-white/[0.06] hover:text-white'
                   }`}
               >
+                {/* Active background glow */}
                 {isActive && (
-                  <div className="absolute inset-0 rounded-xl opacity-20" style={{ background: item.color, filter: 'blur(8px)' }} />
+                  <div
+                    className="absolute inset-0 rounded-xl opacity-30 pointer-events-none"
+                    style={{ background: item.color, filter: 'blur(16px)', transform: 'scale(0.7)' }}
+                  />
                 )}
-                <Icon
-                  className="w-4.5 h-4.5 flex-shrink-0 transition-transform group-hover:scale-110"
-                  style={{ color: isActive ? 'white' : item.color, width: 18, height: 18 }}
-                />
+
+                {/* Icon bubble */}
+                <div
+                  className="flex-shrink-0 w-7 h-7 rounded-xl flex items-center justify-center transition-all group-hover:scale-110"
+                  style={{
+                    background: isActive
+                      ? `${item.color}22`
+                      : isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+                    boxShadow: isActive ? `inset 0 1px 0 rgba(255,255,255,0.15)` : 'none',
+                  }}
+                >
+                  <Icon
+                    style={{ color: isActive ? item.color : undefined, width: 15, height: 15 }}
+                  />
+                </div>
+
                 {!collapsed && (
-                  <span className="font-medium text-sm truncate">{item.name}</span>
+                  <span className={`font-medium text-sm truncate flex-1 relative z-10 ${
+                    isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'
+                  }`}>
+                    {item.name}
+                  </span>
                 )}
+
+                {/* Active dot */}
                 {isActive && !collapsed && (
-                  <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white/80" />
+                  <div
+                    className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                    style={{ background: item.color, boxShadow: `0 0 6px ${item.color}` }}
+                  />
                 )}
+
+                {/* Badge */}
                 {!isActive && item.badge > 0 && !collapsed && (
-                  <span className="ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center text-white"
-                    style={{ background: item.color }}>
+                  <span
+                    className="ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center text-white"
+                    style={{
+                      background: `linear-gradient(135deg, ${item.color}, ${item.color}cc)`,
+                      boxShadow: `0 2px 8px ${item.color}55`,
+                    }}
+                  >
                     {item.badge}
                   </span>
                 )}
@@ -125,26 +194,35 @@ const AdminLayout = () => {
         </nav>
 
         {/* User profile at bottom */}
-        <div className={`p-3 border-t border-slate-800/50`}>
-          <div className={`flex items-center gap-3 p-2 rounded-xl hover:bg-slate-800/50 transition-all cursor-default ${collapsed ? 'justify-center' : ''}`}>
+        <div className="p-3 border-t border-white/[0.06]">
+          <div className={`flex items-center gap-3 p-2 rounded-xl transition-all cursor-default hover:bg-white/[0.05] ${collapsed ? 'justify-center' : ''}`}>
             <div className="relative flex-shrink-0">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm text-white"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+              <div
+                className="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm text-white glass-icon-bubble"
+                style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.9), rgba(139,92,246,0.85))' }}
+              >
                 {avatarLetter}
               </div>
-              <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-slate-900" />
+              <div
+                className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full"
+                style={{
+                  border: isDark ? '2px solid #06060f' : '2px solid #f4f6ff',
+                  boxShadow: '0 0 6px rgba(52,211,153,0.6)',
+                }}
+              />
             </div>
             {!collapsed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">{user?.username}</p>
-                <p className="text-[10px] text-slate-500 truncate">{user?.isSuperAdmin ? 'Super Admin' : 'Administrator'}</p>
+                <p className="text-sm font-semibold truncate text-white">{user?.username}</p>
+                <p className="text-[10px] truncate font-medium text-indigo-400/70">
+                  {user?.isSuperAdmin ? 'Super Admin' : 'Administrator'}
+                </p>
               </div>
             )}
           </div>
           <button
             onClick={logout}
-            className={`mt-1.5 flex items-center gap-2 px-3 py-2 text-red-400 hover:bg-red-500/10 rounded-xl transition-all w-full text-sm font-medium group
-              ${collapsed ? 'justify-center' : ''}`}
+            className={`mt-1.5 flex items-center gap-2 px-3 py-2 rounded-xl transition-all w-full text-sm font-medium group text-red-400/80 hover:bg-red-500/10 hover:text-red-400 ${collapsed ? 'justify-center' : ''}`}
           >
             <LogOut className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             {!collapsed && 'Sign out'}
@@ -153,29 +231,41 @@ const AdminLayout = () => {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 overflow-hidden flex flex-col min-w-0">
-        {/* Header */}
-        <header className={`flex items-center justify-between px-8 py-4 border-b transition-colors flex-shrink-0
-          ${isDark ? 'bg-slate-900/95 border-slate-800 backdrop-blur' : 'bg-white/95 border-slate-200 backdrop-blur shadow-sm'}`}>
+      <main className="flex-1 overflow-hidden flex flex-col min-w-0 relative z-10">
+        {/* Floating glass header */}
+        <header
+          className={`flex items-center justify-between px-8 py-4 flex-shrink-0 relative
+            ${isDark ? 'liquid-glass-header' : 'liquid-glass-header-light'}`}
+        >
           <div>
-            <p className={`text-xs font-medium uppercase tracking-widest mb-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] mb-0.5 ${isDark ? 'text-indigo-400/60' : 'text-indigo-500'}`}>
               Admin Portal
             </p>
-            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>
+            <h2 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>
               {pageTitle}
             </h2>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             {/* Notification bell */}
-            <button className={`relative p-2 rounded-xl transition-all hover:scale-105 ${isDark ? 'bg-slate-800 text-slate-400 hover:text-white' : 'bg-slate-100 text-slate-500 hover:text-slate-700'}`}>
+            <button
+              className={`relative p-2.5 rounded-xl transition-all hover:scale-105
+                ${isDark ? 'liquid-glass text-slate-400 hover:text-white' : 'liquid-glass-card-light text-slate-500 hover:text-slate-700'}`}
+            >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-indigo-500 rounded-full" />
+              {pendingCount > 0 && (
+                <span
+                  className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full"
+                  style={{ background: '#818cf8', boxShadow: '0 0 6px rgba(129,140,248,0.8)' }}
+                />
+              )}
             </button>
+
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className={`p-2 rounded-xl transition-all hover:scale-105 ${isDark ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+              className={`p-2.5 rounded-xl transition-all hover:scale-105
+                ${isDark ? 'liquid-glass text-yellow-300 hover:text-yellow-200' : 'liquid-glass-card-light text-slate-600 hover:text-slate-800'}`}
             >
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </button>
@@ -183,7 +273,7 @@ const AdminLayout = () => {
         </header>
 
         {/* Page content */}
-        <div className={`flex-1 overflow-y-auto p-8 page-enter`}>
+        <div className="flex-1 overflow-y-auto p-8 page-enter">
           <Outlet />
         </div>
       </main>

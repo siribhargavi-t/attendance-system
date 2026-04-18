@@ -54,10 +54,10 @@ const AttendanceCorrectionTab = ({ isDark }) => {
         } finally { setSubmitting(false); }
     };
 
-    const inputCls = `w-full px-4 py-3 text-sm rounded-xl outline-none transition-all border
+    const inputCls = `w-full px-4 py-3 text-sm rounded-xl outline-none transition-all
         ${isDark
-            ? 'bg-slate-900/80 text-white placeholder-slate-500 border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30'
-            : 'bg-slate-50 text-slate-800 placeholder-slate-400 border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20'}`;
+            ? 'glass-input text-white'
+            : 'glass-input-light text-slate-800'}`;
 
     if (loading) return <div className="h-64 rounded-2xl skeleton" />;
 
@@ -72,7 +72,7 @@ const AttendanceCorrectionTab = ({ isDark }) => {
                     <p className="text-sm font-medium">{result.message}</p>
                 </div>
             )}
-            <div className={`rounded-2xl p-6 border transition-all ${isDark ? 'bg-slate-800/70 border-slate-700/50' : 'bg-white border-slate-100 shadow-sm'}`}>
+            <div className={`rounded-[24px] p-6 transition-all ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
                 {attendanceRecords.length === 0 ? (
                     <div className="py-12 text-center">
                         <CheckCircle className={`w-10 h-10 mx-auto mb-3 ${isDark ? 'text-green-500/50' : 'text-green-300'}`} />
@@ -174,10 +174,10 @@ const LeaveRequestTab = ({ isDark }) => {
         } finally { setCancelling(null); }
     };
 
-    const inputCls = `w-full px-4 py-3 text-sm rounded-xl outline-none transition-all border
+    const inputCls = `w-full px-4 py-3 text-sm rounded-xl outline-none transition-all
         ${isDark
-            ? 'bg-slate-900/80 text-white placeholder-slate-500 border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30'
-            : 'bg-slate-50 text-slate-800 placeholder-slate-400 border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20'}`;
+            ? 'glass-input text-white'
+            : 'glass-input-light text-slate-800'}`;
 
     return (
         <div className="space-y-5">
@@ -193,7 +193,7 @@ const LeaveRequestTab = ({ isDark }) => {
             )}
 
             {/* New Leave Form */}
-            <div className={`rounded-2xl border transition-all overflow-hidden ${isDark ? 'bg-slate-800/70 border-slate-700/50' : 'bg-white border-slate-100 shadow-sm'}`}>
+            <div className={`rounded-[24px] transition-all overflow-hidden ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
                 <button
                     onClick={() => setShowForm(v => !v)}
                     className="w-full flex items-center justify-between px-6 py-4 text-sm font-bold transition-all"
@@ -257,7 +257,7 @@ const LeaveRequestTab = ({ isDark }) => {
             </div>
 
             {/* My Leave History */}
-            <div className={`rounded-2xl border transition-all ${isDark ? 'bg-slate-800/70 border-slate-700/50' : 'bg-white border-slate-100 shadow-sm'}`}>
+            <div className={`rounded-[24px] transition-all ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
                 <div className={`px-6 py-4 border-b ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
                     <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>My Leave Requests</h3>
                 </div>
@@ -351,7 +351,7 @@ const Request = () => {
     return (
         <div className="max-w-2xl space-y-6 animate-fade-in-up">
             {/* Tab switcher */}
-            <div className={`rounded-2xl p-1.5 flex gap-1 ${isDark ? 'bg-slate-800/80 border border-slate-700' : 'bg-slate-100 border border-slate-200'}`}>
+            <div className={`rounded-[20px] p-1.5 flex gap-1.5 transition-all ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
                 {tabs.map(tab => (
                     <button
                         key={tab.id}

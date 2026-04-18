@@ -60,12 +60,12 @@ const AttendanceView = () => {
       {/* Summary pills */}
       <div className="flex flex-wrap gap-3">
         {[
-          { label: 'Total Records', value: attendance.length, color: '#6366f1', bg: isDark ? 'rgba(99,102,241,0.1)' : '#eef2ff', border: isDark ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.1)' },
-          { label: 'Present', value: presentCount, color: '#10b981', bg: isDark ? 'rgba(16,185,129,0.1)' : '#d1fae5', border: isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.15)' },
-          { label: 'Absent', value: absentCount, color: '#ef4444', bg: isDark ? 'rgba(239,68,68,0.1)' : '#fee2e2', border: isDark ? 'rgba(239,68,68,0.2)' : 'rgba(239,68,68,0.15)' },
+          { label: 'Total Records', value: attendance.length, color: '#6366f1', border: isDark ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.1)' },
+          { label: 'Present', value: presentCount, color: '#10b981', border: isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.15)' },
+          { label: 'Absent', value: absentCount, color: '#ef4444', border: isDark ? 'rgba(239,68,68,0.2)' : 'rgba(239,68,68,0.15)' },
         ].map(s => (
-          <div key={s.label} className="flex items-center gap-2.5 px-4 py-2 rounded-xl"
-            style={{ background: s.bg, border: `1px solid ${s.border}` }}>
+          <div key={s.label} className={`flex items-center gap-2.5 px-6 py-3 rounded-2xl transition-all ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}
+            style={{ border: `1px solid ${s.border}` }}>
             <span className="text-xl font-black" style={{ color: s.color }}>{s.value}</span>
             <span className="text-xs font-semibold" style={{ color: s.color }}>{s.label}</span>
           </div>
@@ -73,11 +73,11 @@ const AttendanceView = () => {
       </div>
 
       {/* Table card */}
-      <div className={`rounded-2xl border overflow-hidden transition-all
-        ${isDark ? 'bg-slate-800/70 border-slate-700/50' : 'bg-white border-slate-100 shadow-sm'}`}>
+      <div className={`rounded-[24px] overflow-hidden transition-all
+        ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
         {/* Header */}
         <div className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 border-b
-          ${isDark ? 'border-slate-700/50' : 'border-slate-100'}`}>
+          ${isDark ? 'border-white/10' : 'border-slate-200/50'}`}>
           <div>
             <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Attendance History</h3>
             <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Detailed log of all recorded classes</p>
@@ -122,15 +122,15 @@ const AttendanceView = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className={`border-b ${isDark ? 'border-slate-700/50' : 'border-slate-100'}`}>
+                <tr className={`border-b ${isDark ? 'border-white/10 bg-white/5 backdrop-blur-md' : 'border-slate-200/50 bg-slate-50/50 backdrop-blur-md'}`}>
                   {['Date', 'Subject', 'Class Time', 'Status', 'Request'].map(h => (
-                    <th key={h} className={`px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-slate-500 bg-slate-900/30' : 'text-slate-400 bg-slate-50'}`}>
+                    <th key={h} className={`px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                       {h}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y" style={{ borderColor: isDark ? 'rgba(51,65,85,0.4)' : 'rgba(241,245,249,1)' }}>
+              <tbody className="divide-y" style={{ borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
                 {filtered.map(record => {
                   const st = statusConfig[record.status] || statusConfig.absent;
                   const StatIcon = st.icon;

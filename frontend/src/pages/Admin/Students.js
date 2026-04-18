@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../../api/axios';
-import { UserPlus, Search, X, ChevronDown, Trash2, Eye, BookOpen } from 'lucide-react';
+import { UserPlus, Search, X, ChevronDown, Trash2, Eye, BookOpen, Edit } from 'lucide-react';
 import { ThemeContext } from '../../contexts/ThemeContext';
 
 const Students = () => {
@@ -13,6 +13,8 @@ const Students = () => {
     const [error, setError] = useState('');
     const [form, setForm] = useState({ email: '', password: '', name: '', rollNumber: '', parentEmail: '', branch: '' });
     const [profileModal, setProfileModal] = useState(null); // { student, data }
+    const [editModal, setEditModal] = useState(null); // student object to edit
+    const [editForm, setEditForm] = useState({});
     const [loadingProfile, setLoadingProfile] = useState(false);
     const { theme } = useContext(ThemeContext);
     const isDark = theme === 'dark';
@@ -62,6 +64,28 @@ const Students = () => {
         }
     };
 
+    const openEdit = (student) => {
+        setEditForm({ name: student.name, rollNumber: student.rollNumber, branch: student.branch, parentEmail: student.parentEmail || '', password: '' });
+        setEditModal(student);
+    };
+
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        setError('');
+        try {
+            await api.put(`/admin/students/${editModal._id}`, editForm);
+            setSuccess('Student updated successfully!');
+            setEditModal(null);
+            fetchStudents();
+            setTimeout(() => setSuccess(''), 4000);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Error updating student');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const handleDelete = async (studentId, studentName) => {
         if (!window.confirm(`Are you sure you want to permanently delete ${studentName}? This cannot be undone.`)) return;
         try {
@@ -80,10 +104,10 @@ const Students = () => {
         s.branch?.toLowerCase().includes(search.toLowerCase())
     );
 
-    const inputCls = `w-full px-4 py-2.5 text-sm rounded-xl outline-none transition-all border
+    const inputCls = `w-full px-4 py-2.5 text-sm rounded-xl outline-none transition-all
         ${isDark
-            ? 'bg-slate-900/80 text-white placeholder-slate-500 border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30'
-            : 'bg-slate-50 text-slate-800 placeholder-slate-400 border-slate-200 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400/20'}`;
+            ? 'glass-input text-white w-full'
+            : 'glass-input-light text-slate-800 w-full'}`;
 
     if (loading) return (
         <div className="space-y-6">
@@ -98,6 +122,7 @@ const Students = () => {
     };
 
     return (
+        <>
         <div className="space-y-6 animate-fade-in-up">
             {/* Success / Error toasts */}
             {success && (
@@ -123,19 +148,19 @@ const Students = () => {
                         placeholder="Search students..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        className={`pl-9 pr-4 py-2.5 text-sm rounded-xl outline-none w-full border transition-all
+                        className={`pl-9 pr-4 py-2.5 text-sm rounded-xl outline-none w-full transition-all
                             ${isDark
-                                ? 'bg-slate-800 text-white placeholder-slate-500 border-slate-700 focus:border-indigo-500'
-                                : 'bg-white text-slate-800 placeholder-slate-400 border-slate-200 focus:border-indigo-400 shadow-sm'}`}
+                                ? 'glass-input text-white'
+                                : 'glass-input-light text-slate-800'}`}
                     />
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className={`text-sm ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                    <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                         {filtered.length} student{filtered.length !== 1 ? 's' : ''}
                     </span>
                     <button
                         onClick={() => setShowForm(v => !v)}
-                        className="btn-shine flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-xl"
+                        className="btn-liquid btn-shine flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white rounded-xl"
                         style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}
                     >
                         <UserPlus className="w-4 h-4" />
@@ -145,10 +170,10 @@ const Students = () => {
                 </div>
             </div>
 
-            {/* Add Student Form (collapsible) */}
+            {/* Add Student Form */}
             {showForm && (
-                <div className={`rounded-2xl p-6 animate-fade-in-scale border transition-all
-                    ${isDark ? 'bg-slate-800/80 border-slate-700' : 'bg-white border-slate-100 shadow-sm'}`}>
+                <div className={`rounded-2xl p-6 animate-fade-in-scale transition-all
+                    ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
                     <h3 className={`text-base font-bold mb-5 ${isDark ? 'text-white' : 'text-slate-800'}`}>
                         New Student Registration
                     </h3>
@@ -194,8 +219,8 @@ const Students = () => {
             )}
 
             {/* Students table */}
-            <div className={`rounded-2xl overflow-hidden border transition-all
-                ${isDark ? 'bg-slate-800/70 border-slate-700/50' : 'bg-white border-slate-100 shadow-sm'}`}>
+            <div className={`rounded-2xl transition-all w-full
+                ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
                 {filtered.length === 0 ? (
                     <div className="py-20 text-center">
                         <div className={`text-4xl mb-3`}>🎓</div>
@@ -207,15 +232,15 @@ const Students = () => {
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className={isDark ? 'border-b border-slate-700' : 'border-b border-slate-100'}>
+                                <tr className={isDark ? 'border-b border-white/10' : 'border-b border-slate-200/50'}>
                                     {['Student', 'Roll No', 'Branch', 'Account', ''].map(h => (
-                                        <th key={h} className={`px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-slate-500 bg-slate-900/40' : 'text-slate-400 bg-slate-50'}`}>
+                                        <th key={h} className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-slate-400 bg-white/5 backdrop-blur-md' : 'text-slate-500 bg-slate-50/50 backdrop-blur-md'}`}>
                                             {h}
                                         </th>
                                     ))}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y" style={{ borderColor: isDark ? 'rgba(51,65,85,0.5)' : 'rgba(241,245,249,1)' }}>
+                            <tbody className="divide-y" style={{ borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
                                 {filtered.map(student => {
                                     const branchColor = branchColors[student.branch] || '#64748b';
                                     return (
@@ -268,6 +293,15 @@ const Students = () => {
                                                         <Eye className="w-4 h-4" />
                                                     </button>
                                                     <button
+                                                        onClick={() => openEdit(student)}
+                                                        className={`p-2 rounded-lg transition-all hover:scale-110 ${
+                                                            isDark ? 'text-blue-400 hover:bg-blue-500/10' : 'text-blue-500 hover:bg-blue-50 hover:text-blue-600'
+                                                        }`}
+                                                        title="Edit student"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </button>
+                                                    <button
                                                         onClick={() => handleDelete(student._id, student.name)}
                                                         className={`p-2 rounded-lg transition-all hover:scale-110 group ${
                                                             isDark ? 'text-red-500 hover:bg-red-500/10' : 'text-red-400 hover:bg-red-50 hover:text-red-600'
@@ -286,16 +320,14 @@ const Students = () => {
                     </div>
                 )}
             </div>
-
-            {/* Student Profile Modal */}
+        </div>
             {profileModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}
                     onClick={() => setProfileModal(null)}>
-                    <div className={`w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl`}
-                        style={{ background: isDark ? '#0f172a' : '#fff', border: `1px solid ${isDark ? 'rgba(99,102,241,0.2)' : '#e2e8f0'}` }}
+                    <div className={`w-full max-w-lg rounded-[28px] overflow-hidden shadow-2xl ${isDark ? 'liquid-glass-modal' : 'liquid-glass-modal-light'}`}
                         onClick={e => e.stopPropagation()}>
                         {/* Modal header */}
-                        <div className={`px-6 py-5 border-b flex items-center gap-4 ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
+                        <div className={`px-6 py-5 border-b flex items-center gap-4 ${isDark ? 'border-white/10' : 'border-slate-200/50'}`}>
                             <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-lg text-white flex-shrink-0"
                                 style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}>
                                 {profileModal.student?.name?.charAt(0)}
@@ -369,7 +401,61 @@ const Students = () => {
                     </div>
                 </div>
             )}
-        </div>
+
+            {/* Edit Student Modal */}
+            {editModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in-scale" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}
+                    onClick={() => setEditModal(null)}>
+                    <div className={`w-full max-w-md rounded-[28px] overflow-hidden shadow-2xl ${isDark ? 'liquid-glass-modal' : 'liquid-glass-modal-light'}`}
+                        onClick={e => e.stopPropagation()}>
+                        <div className={`px-6 py-5 border-b flex items-center gap-4 ${isDark ? 'border-white/10' : 'border-slate-200/50'}`}>
+                            <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-lg text-white flex-shrink-0"
+                                style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
+                                <Edit className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>Edit Student</h3>
+                                <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Update details for {editModal.name}</p>
+                            </div>
+                            <button onClick={() => setEditModal(null)} className={`p-2 rounded-lg transition-all hover:scale-110 ${isDark ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}`}>
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+                            {[
+                                { key: 'name', placeholder: 'Full Name', type: 'text' },
+                                { key: 'rollNumber', placeholder: 'Roll Number (Username)', type: 'text' },
+                                { key: 'branch', placeholder: 'Branch (e.g. CSE)', type: 'text' },
+                                { key: 'parentEmail', placeholder: 'Parent Email (Optional)', type: 'email' },
+                                { key: 'password', placeholder: 'New Password (leave blank to keep current)', type: 'password' },
+                            ].map(field => (
+                                <div key={field.key}>
+                                    <label className={`block text-xs font-semibold mb-1.5 ml-1 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{field.placeholder}</label>
+                                    <input
+                                        type={field.type}
+                                        value={editForm[field.key]}
+                                        onChange={e => setEditForm({ ...editForm, [field.key]: e.target.value })}
+                                        className={inputCls}
+                                        required={field.key !== 'parentEmail' && field.key !== 'password'}
+                                    />
+                                </div>
+                            ))}
+                            <div className="flex gap-3 pt-4 border-t" style={{ borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
+                                <button type="button" onClick={() => setEditModal(null)}
+                                    className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all ${isDark ? 'bg-slate-800 text-slate-300 hover:bg-slate-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                                    Cancel
+                                </button>
+                                <button type="submit" disabled={submitting}
+                                    className="flex-1 py-2.5 text-sm font-bold text-white rounded-xl btn-shine transition-all disabled:opacity-60"
+                                    style={{ background: 'linear-gradient(135deg, #3b82f6, #2563eb)' }}>
+                                    {submitting ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </>
     );
 };
 

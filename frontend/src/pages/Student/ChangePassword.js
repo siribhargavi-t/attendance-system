@@ -44,11 +44,8 @@ const ChangePassword = () => {
     }
   };
 
-  const inputCls = (key) => `w-full px-4 py-3 pr-11 text-sm rounded-xl outline-none transition-all border
-    ${isDark
-      ? 'bg-slate-900/80 text-white placeholder-slate-500 border-slate-700'
-      : 'bg-slate-50 text-slate-800 placeholder-slate-400 border-slate-200'}
-    ${focused === key ? 'border-indigo-500 ring-1 ring-indigo-500/30 shadow-lg shadow-indigo-500/10' : ''}`;
+  const inputCls = (key) => `w-full px-4 py-3 pr-11 text-sm rounded-xl outline-none transition-all border-none ${isDark ? 'glass-input text-white' : 'glass-input-light text-slate-800'}
+    ${focused === key ? 'ring-1 ring-indigo-500/50 shadow-lg shadow-indigo-500/10' : ''}`;
 
   const strengthScore = () => {
     const p = form.newPassword;
@@ -73,7 +70,7 @@ const ChangePassword = () => {
   return (
     <div className="max-w-lg space-y-6 animate-fade-in-up">
       {/* Info card */}
-      <div className={`rounded-2xl p-5 flex items-center gap-4 border ${isDark ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
+      <div className={`rounded-2xl p-5 flex items-center gap-4 transition-all ${isDark ? 'liquid-glass-card border border-indigo-500/10' : 'liquid-glass-card-light border border-indigo-100'}`}>
         <div className="p-3 rounded-xl flex-shrink-0" style={{ background: isDark ? 'rgba(99,102,241,0.15)' : '#e0e7ff' }}>
           <Shield className="w-5 h-5 text-indigo-500" />
         </div>
@@ -101,7 +98,7 @@ const ChangePassword = () => {
       )}
 
       {/* Form card */}
-      <div className={`rounded-2xl p-6 border transition-all ${isDark ? 'bg-slate-800/70 border-slate-700/50' : 'bg-white border-slate-100 shadow-sm'}`}>
+      <div className={`rounded-[24px] p-6 transition-all ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
         <form onSubmit={handleSubmit} className="space-y-5">
           {fields.map(field => (
             <div key={field.key}>

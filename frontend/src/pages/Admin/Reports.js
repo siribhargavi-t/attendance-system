@@ -38,8 +38,8 @@ const downloadCSV = (content, filename) => {
 };
 
 /* ─── Summary Pill ───────────────────────────────────────────────────────── */
-const SummaryPill = ({ label, value, color, bg, border }) => (
-    <div className="flex flex-col items-center px-6 py-3 rounded-xl" style={{ background: bg, border: `1px solid ${border}` }}>
+const SummaryPill = ({ label, value, color, bg, border, isDark }) => (
+    <div className={`flex flex-col items-center px-6 py-3 rounded-2xl transition-all ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`} style={{ border: `1px solid ${border}` }}>
         <span className="text-2xl font-black" style={{ color }}>{value}</span>
         <span className="text-xs font-semibold mt-0.5" style={{ color }}>{label}</span>
     </div>
@@ -103,13 +103,13 @@ const Reports = () => {
         downloadCSV(csvContent, `attendance_report_${from}_to_${to}.csv`);
     };
 
-    const selectCls = `w-full px-3 py-2 text-sm rounded-xl border outline-none transition-all
-        ${isDark ? 'bg-slate-900/80 text-white border-slate-700 focus:border-indigo-500' : 'bg-slate-50 text-slate-700 border-slate-200 focus:border-indigo-400'}`;
+    const selectCls = `w-full px-3 py-2 text-sm rounded-xl outline-none transition-all
+        ${isDark ? 'glass-input text-white' : 'glass-input-light text-slate-800'}`;
 
     return (
         <div className="space-y-6 animate-fade-in-up">
             {/* Filter Card */}
-            <div className={`rounded-2xl border p-6 transition-all ${isDark ? 'bg-slate-800/70 border-slate-700/50' : 'bg-white border-slate-100 shadow-sm'}`}>
+            <div className={`rounded-[24px] p-6 transition-all ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
                 <div className="flex items-center gap-2 mb-5">
                     <Filter className="w-4 h-4 text-indigo-500" />
                     <h3 className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>Filter Attendance Records</h3>
@@ -136,16 +136,16 @@ const Reports = () => {
                     <div>
                         <label className={`text-xs font-semibold uppercase tracking-wider mb-1.5 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Branch</label>
                         <select className={selectCls} value={filters.branch} onChange={e => setFilters(f => ({ ...f, branch: e.target.value }))}>
-                            <option value="">All Branches</option>
-                            {branches.map(b => <option key={b} value={b}>{b}</option>)}
+                            <option value="" className="bg-slate-800">All Branches</option>
+                            {branches.map(b => <option key={b} value={b} className="bg-slate-800">{b}</option>)}
                         </select>
                     </div>
                     <div>
                         <label className={`text-xs font-semibold uppercase tracking-wider mb-1.5 block ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Status</label>
                         <select className={selectCls} value={filters.status} onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}>
-                            <option value="">All Statuses</option>
-                            <option value="present">Present</option>
-                            <option value="absent">Absent</option>
+                            <option value="" className="bg-slate-800">All Statuses</option>
+                            <option value="present" className="bg-slate-800">Present</option>
+                            <option value="absent" className="bg-slate-800">Absent</option>
                         </select>
                     </div>
                     <div>
@@ -182,18 +182,18 @@ const Reports = () => {
             {hasFetched && (
                 <div className="flex flex-wrap gap-3">
                     {[
-                        { label: 'Total Records', value: summary.total, color: '#6366f1', bg: isDark ? 'rgba(99,102,241,0.1)' : '#eef2ff', border: 'rgba(99,102,241,0.2)' },
-                        { label: 'Present', value: summary.present, color: '#10b981', bg: isDark ? 'rgba(16,185,129,0.1)' : '#d1fae5', border: 'rgba(16,185,129,0.2)' },
-                        { label: 'Absent', value: summary.absent, color: '#ef4444', bg: isDark ? 'rgba(239,68,68,0.1)' : '#fee2e2', border: 'rgba(239,68,68,0.2)' },
-                        { label: 'Attendance %', value: `${summary.percentage}%`, color: '#f59e0b', bg: isDark ? 'rgba(245,158,11,0.1)' : '#fffbeb', border: 'rgba(245,158,11,0.2)' },
-                    ].map(s => <SummaryPill key={s.label} {...s} />)}
+                        { label: 'Total Records', value: summary.total, color: '#6366f1', border: isDark ? 'rgba(99,102,241,0.2)' : 'rgba(99,102,241,0.1)' },
+                        { label: 'Present', value: summary.present, color: '#10b981', border: isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.1)' },
+                        { label: 'Absent', value: summary.absent, color: '#ef4444', border: isDark ? 'rgba(239,68,68,0.2)' : 'rgba(239,68,68,0.1)' },
+                        { label: 'Attendance %', value: `${summary.percentage}%`, color: '#f59e0b', border: isDark ? 'rgba(245,158,11,0.2)' : 'rgba(245,158,11,0.1)' },
+                    ].map(s => <SummaryPill key={s.label} {...s} isDark={isDark} />)}
                 </div>
             )}
 
             {/* Results Table */}
             {hasFetched && (
-                <div className={`rounded-2xl border overflow-hidden transition-all ${isDark ? 'bg-slate-800/70 border-slate-700/50' : 'bg-white border-slate-100 shadow-sm'}`}>
-                    <div className={`px-6 py-4 flex items-center justify-between border-b ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
+                <div className={`rounded-[24px] overflow-hidden transition-all ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
+                    <div className={`px-6 py-4 flex items-center justify-between border-b ${isDark ? 'border-white/10' : 'border-slate-200/50'}`}>
                         <div className="flex items-center gap-2">
                             <BarChart2 className="w-4 h-4 text-indigo-500" />
                             <span className={`font-bold text-sm ${isDark ? 'text-white' : 'text-slate-800'}`}>
@@ -219,13 +219,13 @@ const Reports = () => {
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
-                                    <tr className={`border-b text-xs font-semibold uppercase tracking-wider ${isDark ? 'border-slate-700 bg-slate-900/30 text-slate-500' : 'border-slate-100 bg-slate-50 text-slate-400'}`}>
+                                    <tr className={`border-b text-xs font-semibold uppercase tracking-wider ${isDark ? 'border-white/10 bg-white/5 backdrop-blur-md text-slate-400' : 'border-slate-200/50 bg-slate-50/50 backdrop-blur-md text-slate-500'}`}>
                                         {['Date', 'Student', 'Branch', 'Subject', 'Time Slot', 'Status'].map(h => (
                                             <th key={h} className="px-5 py-3.5 text-left">{h}</th>
                                         ))}
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y" style={{ borderColor: isDark ? 'rgba(51,65,85,0.4)' : 'rgba(241,245,249,1)' }}>
+                                <tbody className="divide-y" style={{ borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
                                     {records.map(r => (
                                         <tr key={r._id} className="table-row-hover">
                                             <td className="px-5 py-3.5 whitespace-nowrap">
@@ -277,7 +277,7 @@ const Reports = () => {
             )}
 
             {!hasFetched && (
-                <div className={`rounded-2xl p-16 text-center border ${isDark ? 'bg-slate-800/30 border-slate-700/50' : 'bg-white border-slate-100 shadow-sm'}`}>
+                <div className={`rounded-[24px] p-16 text-center transition-all ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
                     <BarChart2 className={`w-12 h-12 mx-auto mb-4 ${isDark ? 'text-indigo-500/40' : 'text-indigo-300'}`} />
                     <p className={`font-semibold ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Set your filters and click "Apply Filters"</p>
                     <p className={`text-sm mt-1 ${isDark ? 'text-slate-600' : 'text-slate-400'}`}>Filter by date range, subject, branch, or student, then export to CSV.</p>

@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import api from '../../api/axios';
+import { ThemeContext } from '../../contexts/ThemeContext';
 
 const Subjects = () => {
     const [subjects, setSubjects] = useState([]);
     const [loading, setLoading] = useState(true);
     const [form, setForm] = useState({ name: '', code: '' });
+    const { theme } = useContext(ThemeContext);
+    const isDark = theme === 'dark';
 
     useEffect(() => {
         fetchSubjects();
@@ -32,34 +35,37 @@ const Subjects = () => {
         }
     };
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) return <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-20 rounded-2xl skeleton" />)}</div>;
+
+    const cardCls = isDark ? 'liquid-glass-card' : 'liquid-glass-card-light';
+    const inputCls = isDark ? 'glass-input text-white' : 'glass-input-light text-slate-800';
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 transition-colors">
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 lg:col-span-1 transition-colors">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Add New Subject</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 transition-all animate-fade-in-up">
+            <div className={`p-6 rounded-2xl transition-all lg:col-span-1 ${cardCls}`}>
+                <h3 className={`text-lg font-bold mb-5 ${isDark ? 'text-white' : 'text-slate-800'}`}>Add New Subject</h3>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <input className="w-full px-4 py-2 border dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-slate-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Subject Name" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
-                    <input className="w-full px-4 py-2 border dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-700 text-slate-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Subject Code" required value={form.code} onChange={e => setForm({...form, code: e.target.value})} />
-                    <button type="submit" className="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg hover:bg-indigo-700 transition-colors">Add Subject</button>
+                    <input className={`w-full px-4 py-3 rounded-xl outline-none transition-all ${inputCls}`} placeholder="Subject Name" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+                    <input className={`w-full px-4 py-3 rounded-xl outline-none transition-all ${inputCls}`} placeholder="Subject Code" required value={form.code} onChange={e => setForm({...form, code: e.target.value})} />
+                    <button type="submit" className="btn-liquid btn-shine w-full font-bold text-white py-3 rounded-xl transition-all" style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}>Add Subject</button>
                 </form>
             </div>
             
-            <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 lg:col-span-2 transition-colors">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Subjects List</h3>
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
-                        <thead className="bg-gray-50 dark:bg-slate-900/50">
+            <div className={`p-6 rounded-2xl transition-all lg:col-span-2 ${cardCls}`}>
+                <h3 className={`text-lg font-bold mb-5 ${isDark ? 'text-white' : 'text-slate-800'}`}>Subjects List</h3>
+                <div className="overflow-x-auto rounded-xl">
+                    <table className="w-full">
+                        <thead className={isDark ? 'border-b border-white/10' : 'border-b border-slate-200/50'}>
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Name</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-slate-400 uppercase tracking-wider">Code</th>
+                                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-slate-400 bg-white/5 backdrop-blur-md' : 'text-slate-500 bg-slate-50/50 backdrop-blur-md'}`}>Name</th>
+                                <th className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-slate-400 bg-white/5 backdrop-blur-md' : 'text-slate-500 bg-slate-50/50 backdrop-blur-md'}`}>Code</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700">
+                        <tbody className="divide-y" style={{ borderColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }}>
                             {subjects.map(subject => (
-                                <tr key={subject._id}>
-                                    <td className="px-6 py-4 whitespace-nowrap"><div className="font-medium text-gray-900 dark:text-white">{subject.name}</div></td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-slate-400">{subject.code}</td>
+                                <tr key={subject._id} className="table-row-hover">
+                                    <td className="px-6 py-4 whitespace-nowrap"><div className={`font-semibold text-sm ${isDark ? 'text-white' : 'text-slate-900'}`}>{subject.name}</div></td>
+                                    <td className="px-6 py-4 whitespace-nowrap"><div className={`text-sm font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{subject.code}</div></td>
                                 </tr>
                             ))}
                         </tbody>

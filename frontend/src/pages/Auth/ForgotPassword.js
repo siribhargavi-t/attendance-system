@@ -50,14 +50,8 @@ const ForgotPassword = () => {
       </div>
 
       {/* Card */}
-      <div className={`max-w-md w-full rounded-3xl overflow-hidden animate-fade-in-scale`}
-        style={{
-          background: isDark ? 'rgba(15,23,42,0.8)' : 'rgba(255,255,255,0.85)',
-          backdropFilter: 'blur(20px)',
-          border: isDark ? '1px solid rgba(99,102,241,0.15)' : '1px solid rgba(255,255,255,0.6)',
-          boxShadow: isDark ? '0 25px 80px rgba(0,0,0,0.5)' : '0 25px 80px rgba(99,102,241,0.1)',
-        }}>
-        <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4)', backgroundSize: '200%', animation: 'borderFlow 3s linear infinite' }} />
+      <div className={`max-w-md w-full rounded-[28px] overflow-hidden animate-fade-in-scale ${isDark ? 'liquid-glass-card' : 'liquid-glass-card-light'}`}>
+        <div className="h-1 w-full" style={{ background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #06b6d4)' }} />
         <div className="p-8">
           <h1 className={`text-2xl font-bold mb-1 text-center ${isDark ? 'text-white' : 'text-slate-800'}`}>
             Forgot Password?
@@ -93,9 +87,9 @@ const ForgotPassword = () => {
                 onFocus={() => setFocused(true)}
                 onBlur={() => setFocused(false)}
                 placeholder="Enter your email"
-                className={`w-full px-4 py-3.5 text-sm rounded-xl outline-none transition-all border
-                  ${isDark ? 'bg-slate-800/80 text-white placeholder-slate-500 border-slate-700' : 'bg-slate-50 text-slate-800 placeholder-slate-400 border-slate-200'}
-                  ${focused ? 'border-indigo-500 ring-1 ring-indigo-500/30 shadow-lg shadow-indigo-500/10' : ''}`}
+                className={`w-full px-4 py-3.5 text-sm rounded-xl outline-none transition-all
+                  ${isDark ? 'glass-input text-white' : 'glass-input-light text-slate-800'}
+                  ${focused ? 'ring-1 ring-indigo-500/50 shadow-lg shadow-indigo-500/10' : ''}`}
               />
             </div>
 

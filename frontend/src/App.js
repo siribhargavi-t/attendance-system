@@ -18,6 +18,7 @@ import Subjects from "./pages/Admin/Subjects";
 import MarkAttendance from "./pages/Admin/MarkAttendance";
 import Requests from "./pages/Admin/Requests";
 import Settings from "./pages/Admin/Settings";
+import Reports from "./pages/Admin/Reports";
 
 import StudentDashboard from "./pages/Student/Dashboard";
 import StudentAttendance from "./pages/Student/Attendance";
@@ -48,6 +49,7 @@ function App() {
              <Route path="settings" element={<Settings />} />
              <Route path="manage-admins" element={<ManageAdmins />} />
              <Route path="add-admin" element={<Register />} />
+             <Route path="reports" element={<Reports />} />
           </Route>
 
           {/* Student Routes */}

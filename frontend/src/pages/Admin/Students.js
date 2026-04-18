@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import api from '../../api/axios';
-import { UserPlus, Search, X, ChevronDown } from 'lucide-react';
+import { UserPlus, Search, X, ChevronDown, Trash2, Eye, BookOpen } from 'lucide-react';
 import { ThemeContext } from '../../contexts/ThemeContext';
 
 const Students = () => {
@@ -11,9 +11,25 @@ const Students = () => {
     const [showForm, setShowForm] = useState(false);
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
-    const [form, setForm] = useState({ username: '', email: '', password: '', name: '', rollNumber: '', parentEmail: '', branch: '' });
+    const [form, setForm] = useState({ email: '', password: '', name: '', rollNumber: '', parentEmail: '', branch: '' });
+    const [profileModal, setProfileModal] = useState(null); // { student, data }
+    const [loadingProfile, setLoadingProfile] = useState(false);
     const { theme } = useContext(ThemeContext);
     const isDark = theme === 'dark';
+
+    const openProfile = async (student) => {
+        setLoadingProfile(true);
+        setProfileModal({ student, data: null });
+        try {
+            const res = await api.get(`/admin/students/${student._id}/attendance`);
+            setProfileModal({ student, data: res.data });
+        } catch (err) {
+            console.error(err);
+            setProfileModal(null);
+        } finally {
+            setLoadingProfile(false);
+        }
+    };
 
     useEffect(() => { fetchStudents(); }, []);
 
@@ -34,7 +50,7 @@ const Students = () => {
         setError('');
         try {
             await api.post('/admin/students', form);
-            setForm({ username: '', email: '', password: '', name: '', rollNumber: '', parentEmail: '', branch: '' });
+            setForm({ email: '', password: '', name: '', rollNumber: '', parentEmail: '', branch: '' });
             setSuccess('Student added successfully!');
             setShowForm(false);
             fetchStudents();
@@ -43,6 +59,18 @@ const Students = () => {
             setError(err.response?.data?.message || 'Error adding student');
         } finally {
             setSubmitting(false);
+        }
+    };
+
+    const handleDelete = async (studentId, studentName) => {
+        if (!window.confirm(`Are you sure you want to permanently delete ${studentName}? This cannot be undone.`)) return;
+        try {
+            await api.delete(`/admin/students/${studentId}`);
+            setSuccess(`${studentName} deleted successfully.`);
+            setTimeout(() => setSuccess(''), 4000);
+            fetchStudents();
+        } catch (err) {
+            setError(err.response?.data?.message || 'Error deleting student');
         }
     };
 
@@ -127,9 +155,8 @@ const Students = () => {
                     <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {[
                             { key: 'name', placeholder: 'Full Name', required: true, type: 'text' },
-                            { key: 'rollNumber', placeholder: 'Roll Number', required: true, type: 'text' },
+                            { key: 'rollNumber', placeholder: 'Roll Number (used as Username)', required: true, type: 'text' },
                             { key: 'branch', placeholder: 'Branch (e.g. CSE, ECE)', required: true, type: 'text' },
-                            { key: 'username', placeholder: 'Username', required: true, type: 'text' },
                             { key: 'email', placeholder: 'Student Email', required: true, type: 'email' },
                             { key: 'password', placeholder: 'Password', required: true, type: 'password' },
                             { key: 'parentEmail', placeholder: 'Parent Email (Optional)', required: false, type: 'email' },
@@ -181,7 +208,7 @@ const Students = () => {
                         <table className="w-full">
                             <thead>
                                 <tr className={isDark ? 'border-b border-slate-700' : 'border-b border-slate-100'}>
-                                    {['Student', 'Roll No', 'Branch', 'Account'].map(h => (
+                                    {['Student', 'Roll No', 'Branch', 'Account', ''].map(h => (
                                         <th key={h} className={`px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-slate-500 bg-slate-900/40' : 'text-slate-400 bg-slate-50'}`}>
                                             {h}
                                         </th>
@@ -229,6 +256,28 @@ const Students = () => {
                                                     </p>
                                                 </div>
                                             </td>
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-1.5">
+                                                    <button
+                                                        onClick={() => openProfile(student)}
+                                                        className={`p-2 rounded-lg transition-all hover:scale-110 ${
+                                                            isDark ? 'text-indigo-400 hover:bg-indigo-500/10' : 'text-indigo-400 hover:bg-indigo-50 hover:text-indigo-600'
+                                                        }`}
+                                                        title="View attendance profile"
+                                                    >
+                                                        <Eye className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(student._id, student.name)}
+                                                        className={`p-2 rounded-lg transition-all hover:scale-110 group ${
+                                                            isDark ? 'text-red-500 hover:bg-red-500/10' : 'text-red-400 hover:bg-red-50 hover:text-red-600'
+                                                        }`}
+                                                        title="Delete student"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -237,6 +286,89 @@ const Students = () => {
                     </div>
                 )}
             </div>
+
+            {/* Student Profile Modal */}
+            {profileModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(6px)' }}
+                    onClick={() => setProfileModal(null)}>
+                    <div className={`w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl`}
+                        style={{ background: isDark ? '#0f172a' : '#fff', border: `1px solid ${isDark ? 'rgba(99,102,241,0.2)' : '#e2e8f0'}` }}
+                        onClick={e => e.stopPropagation()}>
+                        {/* Modal header */}
+                        <div className={`px-6 py-5 border-b flex items-center gap-4 ${isDark ? 'border-slate-700' : 'border-slate-100'}`}>
+                            <div className="w-11 h-11 rounded-xl flex items-center justify-center font-black text-lg text-white flex-shrink-0"
+                                style={{ background: 'linear-gradient(135deg, #6366f1, #4f46e5)' }}>
+                                {profileModal.student?.name?.charAt(0)}
+                            </div>
+                            <div className="flex-1">
+                                <h3 className={`font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{profileModal.student?.name}</h3>
+                                <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                                    {profileModal.student?.rollNumber} · {profileModal.student?.branch}
+                                </p>
+                            </div>
+                            <button onClick={() => setProfileModal(null)} className={`p-2 rounded-lg ${isDark ? 'text-slate-600 hover:text-slate-300 hover:bg-slate-800' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}>
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+                            {loadingProfile || !profileModal.data ? (
+                                <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-14 rounded-xl skeleton" />)}</div>
+                            ) : (
+                                <>
+                                    {/* Overall stats */}
+                                    <div className="grid grid-cols-4 gap-3">
+                                        {[
+                                            { label: 'Total', value: profileModal.data.overall.total, color: '#6366f1', bg: isDark ? 'rgba(99,102,241,0.1)' : '#eef2ff' },
+                                            { label: 'Present', value: profileModal.data.overall.present, color: '#10b981', bg: isDark ? 'rgba(16,185,129,0.1)' : '#d1fae5' },
+                                            { label: 'Absent', value: profileModal.data.overall.absent, color: '#ef4444', bg: isDark ? 'rgba(239,68,68,0.1)' : '#fee2e2' },
+                                            { label: 'Overall %', value: `${profileModal.data.overall.percentage}%`, color: '#f59e0b', bg: isDark ? 'rgba(245,158,11,0.1)' : '#fffbeb' },
+                                        ].map(s => (
+                                            <div key={s.label} className="text-center p-3 rounded-xl" style={{ background: s.bg }}>
+                                                <p className="text-lg font-black" style={{ color: s.color }}>{s.value}</p>
+                                                <p className="text-xs font-semibold mt-0.5" style={{ color: s.color }}>{s.label}</p>
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    {/* Subject breakdown */}
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <BookOpen className={`w-3.5 h-3.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+                                            <span className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Subject-wise Breakdown</span>
+                                        </div>
+                                        {profileModal.data.subjects.length === 0 ? (
+                                            <p className={`text-sm text-center py-6 ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>No attendance records found</p>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {profileModal.data.subjects.map(sub => {
+                                                    const pct = parseFloat(sub.percentage);
+                                                    const color = pct < 75 ? '#ef4444' : pct >= 90 ? '#10b981' : '#6366f1';
+                                                    return (
+                                                        <div key={sub.subjectId} className={`p-4 rounded-xl ${isDark ? 'bg-slate-900/50' : 'bg-slate-50'}`}>
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <div>
+                                                                    <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-800'}`}>{sub.subjectName}</p>
+                                                                    <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>{sub.subjectCode} · {sub.present}/{sub.total} classes</p>
+                                                                </div>
+                                                                <span className="text-sm font-black" style={{ color }}>{sub.percentage}%</span>
+                                                            </div>
+                                                            <div className={`h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
+                                                                <div className="h-full rounded-full transition-all duration-700" style={{ width: `${sub.percentage}%`, background: color }} />
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

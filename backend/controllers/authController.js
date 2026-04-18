@@ -17,10 +17,10 @@ const login = async (req, res) => {
         }
 
         const payload = {
-            user: {
-                id: user.id,
-                role: user.role
-            }
+            id: user.id,
+            role: user.role,
+            username: user.username,
+            isSuperAdmin: user.isSuperAdmin
         };
 
         jwt.sign(
@@ -56,16 +56,13 @@ const registerAdmin = async (req, res) => {
             return res.status(400).json({ success: false, message: 'User already exists' });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
         // If no subjects/branches are assigned, they are a superadmin
         const isSuperAdmin = (!assignedBranches || assignedBranches.length === 0) && (!assignedSubjects || assignedSubjects.length === 0);
 
         user = new User({
             username,
             email,
-            password: hashedPassword,
+            password,
             role: 'admin',
             isSuperAdmin,
             assignedBranches: assignedBranches || [],
@@ -118,8 +115,7 @@ const resetPassword = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Invalid or expired token' });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(req.body.password, salt);
+        user.password = req.body.password;
         user.resetPasswordToken = undefined;
         user.resetPasswordExpire = undefined;
 
@@ -152,8 +148,7 @@ const changePassword = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Current password is incorrect.' });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(newPassword, salt);
+        user.password = newPassword;
         await user.save();
 
         res.status(200).json({ success: true, message: 'Password changed successfully.' });

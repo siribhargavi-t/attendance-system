@@ -2,16 +2,17 @@ const User = require('../models/User');
 const Student = require('../models/student');
 const Subject = require('../models/Subject');
 const Settings = require('../models/Settings');
-const bcrypt = require('bcryptjs');
+const Attendance = require('../models/Attendance');
 
 const addStudent = async (req, res) => {
     try {
-        const { username, email, password, name, rollNumber, parentEmail, branch } = req.body;
+        const { email, password, name, rollNumber, parentEmail, branch } = req.body;
+        const username = req.body.username || rollNumber;
         
         // Ensure username and email don't exist
         let existingUser = await User.findOne({ $or: [{ username }, { email }] });
         if (existingUser) {
-            return res.status(400).json({ success: false, message: 'Username or email already exists in User record' });
+            return res.status(400).json({ success: false, message: 'Username (Roll Number) or email already exists in User record' });
         }
         
         let existingStudent = await Student.findOne({ rollNumber });
@@ -19,13 +20,10 @@ const addStudent = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Roll number already exists' });
         }
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
         const newUser = new User({
             username,
             email,
-            password: hashedPassword,
+            password,
             role: 'student'
         });
         await newUser.save();
@@ -55,6 +53,22 @@ const getStudents = async (req, res) => {
             students = await Student.find({ branch: { $in: user.assignedBranches || [] } }).populate('user', 'username email');
         }
         res.status(200).json({ success: true, data: students });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+const deleteStudent = async (req, res) => {
+    try {
+        const student = await Student.findById(req.params.id);
+        if (!student) {
+            return res.status(404).json({ success: false, message: 'Student not found' });
+        }
+        // Delete the linked User account
+        await User.findByIdAndDelete(student.user);
+        // Delete the Student profile
+        await Student.findByIdAndDelete(req.params.id);
+        res.status(200).json({ success: true, message: 'Student deleted successfully' });
     } catch (err) {
         res.status(500).json({ success: false, message: err.message });
     }
@@ -159,8 +173,7 @@ const updateAdmin = async (req, res) => {
         }
 
         if (password) {
-            const salt = await bcrypt.genSalt(10);
-            targetAdmin.password = await bcrypt.hash(password, salt);
+            targetAdmin.password = password;
         }
 
         await targetAdmin.save();
@@ -197,14 +210,147 @@ const deleteAdmin = async (req, res) => {
     }
 };
 
+
+// ── Get full attendance report with optional filters ──────────────────────────
+const getAttendanceReport = async (req, res) => {
+    try {
+        const { startDate, endDate, subjectId, branch, status, studentId } = req.query;
+        const query = {};
+
+        if (startDate || endDate) {
+            query.date = {};
+            if (startDate) {
+                const from = new Date(startDate); from.setUTCHours(0, 0, 0, 0);
+                query.date.$gte = from;
+            }
+            if (endDate) {
+                const to = new Date(endDate); to.setUTCHours(23, 59, 59, 999);
+                query.date.$lte = to;
+            }
+        }
+        if (subjectId) query.subjectId = subjectId;
+        if (status && ['present', 'absent'].includes(status)) query.status = status;
+
+        let records = await Attendance.find(query)
+            .populate({ path: 'studentId', select: 'name rollNumber branch' })
+            .populate('subjectId', 'name code')
+            .sort({ date: -1, 'studentId.name': 1 });
+
+        // Filter by branch and studentId after populate
+        if (branch) records = records.filter(r => r.studentId?.branch === branch);
+        if (studentId) records = records.filter(r => r.studentId?._id?.toString() === studentId);
+
+        const totalCount = records.length;
+        const presentCount = records.filter(r => r.status === 'present').length;
+        const absentCount = totalCount - presentCount;
+        const pct = totalCount > 0 ? ((presentCount / totalCount) * 100).toFixed(1) : 0;
+
+        res.status(200).json({
+            success: true,
+            summary: { total: totalCount, present: presentCount, absent: absentCount, percentage: pct },
+            data: records
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// ── Get students below attendance threshold ────────────────────────────────────
+const getLowAttendanceStudents = async (req, res) => {
+    try {
+        const settings = await Settings.findOne({});
+        const threshold = settings ? settings.lowAttendanceThreshold : 75;
+
+        const students = await Student.find({}).populate('user', 'username email');
+        const results = [];
+
+        for (const stu of students) {
+            const total = await Attendance.countDocuments({ studentId: stu._id });
+            const present = await Attendance.countDocuments({ studentId: stu._id, status: 'present' });
+            const pct = total > 0 ? (present / total) * 100 : 100;
+            if (pct < threshold) {
+                results.push({
+                    _id: stu._id,
+                    name: stu.name,
+                    rollNumber: stu.rollNumber,
+                    branch: stu.branch,
+                    total,
+                    present,
+                    absent: total - present,
+                    percentage: pct.toFixed(1)
+                });
+            }
+        }
+
+        results.sort((a, b) => parseFloat(a.percentage) - parseFloat(b.percentage));
+        res.status(200).json({ success: true, threshold, data: results });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+// ── Get a single student's subject-wise attendance breakdown ─────────────────
+const getStudentAttendanceById = async (req, res) => {
+    try {
+        const student = await Student.findById(req.params.id).populate('user', 'username email');
+        if (!student) return res.status(404).json({ success: false, message: 'Student not found.' });
+
+        const records = await Attendance.find({ studentId: student._id })
+            .populate('subjectId', 'name code');
+
+        // Group by subject
+        const subjectMap = {};
+        for (const r of records) {
+            const key = r.subjectId?._id?.toString() || 'unknown';
+            if (!subjectMap[key]) {
+                subjectMap[key] = {
+                    subjectId: key,
+                    subjectName: r.subjectId?.name || 'Unknown',
+                    subjectCode: r.subjectId?.code || '',
+                    total: 0, present: 0, absent: 0
+                };
+            }
+            subjectMap[key].total++;
+            if (r.status === 'present') subjectMap[key].present++;
+            else subjectMap[key].absent++;
+        }
+
+        const subjects = Object.values(subjectMap).map(s => ({
+            ...s,
+            percentage: s.total > 0 ? ((s.present / s.total) * 100).toFixed(1) : '100.0'
+        }));
+
+        const totalAll = records.length;
+        const presentAll = records.filter(r => r.status === 'present').length;
+
+        res.status(200).json({
+            success: true,
+            student: { _id: student._id, name: student.name, rollNumber: student.rollNumber, branch: student.branch, email: student.user?.email },
+            overall: {
+                total: totalAll,
+                present: presentAll,
+                absent: totalAll - presentAll,
+                percentage: totalAll > 0 ? ((presentAll / totalAll) * 100).toFixed(1) : '100.0'
+            },
+            subjects
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 module.exports = {
     addStudent,
     getStudents,
+    deleteStudent,
     addSubject,
     getSubjects,
     getSettings,
     updateSettings,
     getAdmins,
     updateAdmin,
-    deleteAdmin
+    deleteAdmin,
+    getAttendanceReport,
+    getLowAttendanceStudents,
+    getStudentAttendanceById
 };

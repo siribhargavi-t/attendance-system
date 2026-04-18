@@ -87,21 +87,25 @@ const markAttendance = async (req, res) => {
             await attendance.save();
         }
 
-        // Email logic
-        if (status === 'absent') {
+        // Email logic — only send if student's user account has an email
+        if (status === 'absent' && student.user?.email) {
             const toEmails = [student.user.email];
             if (student.parentEmail) toEmails.push(student.parentEmail);
-            await sendEmail(
+            // Fire-and-forget — don't block the response
+            sendEmail(
                 toEmails.join(','), 
                 'Absence Alert', 
                 `Dear ${student.name},\n\nYou were marked absent today for a subject.\nLog in to check your dashboard for details.\n\nRegards,\nAdmin`
-            );
+            ).catch(e => console.error('Email error:', e));
         }
 
-        // Check threshold
-        const settings = await Settings.findOne({});
-        const threshold = settings ? settings.lowAttendanceThreshold : 75;
-        await checkAndSendLowAttendanceEmail(student, subjectId, threshold);
+        // Check threshold (only if student user email exists)
+        if (student.user?.email) {
+            const settings = await Settings.findOne({});
+            const threshold = settings ? settings.lowAttendanceThreshold : 75;
+            checkAndSendLowAttendanceEmail(student, subjectId, threshold)
+                .catch(e => console.error('Low attendance email error:', e));
+        }
 
         return res.status(200).json({ success: true, message: 'Attendance processed', attendance });
     } catch (err) {

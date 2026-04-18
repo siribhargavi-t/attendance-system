@@ -21,8 +21,8 @@ module.exports = function(req, res, next) {
         // Verify token using the secret key
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret');
 
-        // Attach the decoded user payload (which contains the userId) to req.user
-        req.user = decoded.user;
+        // Attach the decoded payload correctly regardless of nested vs flat format
+        req.user = decoded.user ? decoded.user : decoded;
         
         // Allow the request to proceed to the next middleware or route handler
         next();

@@ -8,6 +8,13 @@ const UserSchema = new mongoose.Schema({
     unique: true,
     trim: true,
   },
+  email: {
+    type: String,
+    required: false,
+    sparse: true,   // allows multiple null values
+    unique: true,
+    trim: true,
+  },
   password: {
     type: String,
     required: true,
@@ -21,33 +28,28 @@ const UserSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  // Add any other fields you might need for a user
-  // For example:
-  // email: {
-  //   type: String,
-  //   required: true,
-  //   unique: true,
-  // },
-  // createdAt: {
-  //   type: Date,
-  //   default: Date.now,
-  // },
+  assignedBranches: {
+    type: [String],
+    default: [],
+  },
+  assignedSubjects: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'Subject',
+    default: [],
+  },
+  resetPasswordToken: String,
+  resetPasswordExpire: Date,
 });
 
 // Pre-save hook to hash password before saving a new user
-UserSchema.pre('save', async function (next) {
+UserSchema.pre('save', async function () {
   // Only hash the password if it has been modified (or is new)
   if (!this.isModified('password')) {
-    return next();
+    return;
   }
 
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (err) {
-    next(err);
-  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
 module.exports = mongoose.model('User', UserSchema);

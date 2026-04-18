@@ -22,12 +22,24 @@ mongoose.connect(MONGO_URI)
 
 // --- API Routes ---
 // Import your route files
-const authRoutes = require('./routes/auth');
+const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const studentRoutes = require('./routes/studentRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
+const leaveRoutes = require('./routes/leaveRoutes');
 
 // Use the routes with a base path
 app.use('/api/auth', authRoutes);
-// You will add other routes here later, e.g., app.use('/api/students', studentRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/student', studentRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/leave', leaveRoutes);
 
+
+// 404 handler for unknown routes — return JSON not HTML
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: `Cannot ${req.method} ${req.originalUrl}` });
+});
 
 // --- Server Initialization ---
 const PORT = process.env.PORT || 5000;

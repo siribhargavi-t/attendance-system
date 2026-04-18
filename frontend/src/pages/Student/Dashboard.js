@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useCallback, useContext, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
 import api from '../../api/axios';
-import { Percent, CheckCircle, XCircle, RefreshCw, Award, AlertTriangle, TrendingUp, Clock } from 'lucide-react';
+import { Percent, CheckCircle, XCircle, RefreshCw, Award, AlertTriangle, TrendingUp } from 'lucide-react';
 import { ThemeContext } from '../../contexts/ThemeContext';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Animated counter
 const useCountUp = (target, duration = 1000) => {
@@ -79,7 +79,6 @@ const StudentDashboard = () => {
   const [stats, setStats] = useState({ totalDays: 0, present: 0, absent: 0, percentage: 100 });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const { theme } = useContext(ThemeContext);
   const isDark = theme === 'dark';
 
@@ -89,7 +88,6 @@ const StudentDashboard = () => {
     try {
       const response = await api.get('/student/dashboard');
       setStats(response.data.stats);
-      setMounted(true);
     } catch (err) {
       console.error('Error fetching student stats', err);
     } finally {

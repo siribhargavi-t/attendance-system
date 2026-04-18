@@ -58,6 +58,9 @@ const getDashboardStats = async (req, res) => {
 const getMyAttendance = async (req, res) => {
     try {
         const student = await Student.findOne({ user: req.user.id });
+        if (!student) {
+            return res.status(200).json({ success: true, attendance: [] });
+        }
         const attendance = await Attendance.find({ studentId: student._id })
             .populate('subjectId', 'name code')
             .sort({ date: -1 });

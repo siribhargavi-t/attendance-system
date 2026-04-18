@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
 import api from '../../api/axios';
-import { RefreshCw, Calendar, BookOpen, CheckCircle2, XCircle, Clock, Filter } from 'lucide-react';
+import { RefreshCw, Calendar, BookOpen, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import { ThemeContext } from '../../contexts/ThemeContext';
 
 const statusConfig = {

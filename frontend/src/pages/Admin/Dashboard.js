@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useContext, useRef, useCallback } from 'react';
 import api from '../../api/axios';
-import { Users, CheckCircle, XCircle, TrendingUp, Activity, RefreshCw, ArrowRight, X, Clock, BookOpen, User, Calendar } from 'lucide-react';
+import { Users, CheckCircle, XCircle, TrendingUp, RefreshCw, ArrowRight, X, AlertTriangle, Clock } from 'lucide-react';
 import { ThemeContext } from '../../contexts/ThemeContext';
 import { Link } from 'react-router-dom';
 
@@ -29,6 +29,86 @@ const Sparkline = ({ data, color }) => {
     <svg width="60" height="24" viewBox="0 0 60 24">
       <polyline fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" points={points} opacity="0.7" />
     </svg>
+  );
+};
+
+/* ─────────── Low Attendance Panel ─────────── */
+const LowAttendancePanel = ({ isDark }) => {
+  const [data, setData] = useState([]);
+  const [threshold, setThreshold] = useState(75);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(true);
+
+  useEffect(() => {
+    api.get('/admin/low-attendance')
+      .then(res => { setData(res.data.data); setThreshold(res.data.threshold); })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="h-24 rounded-2xl skeleton" />;
+  if (data.length === 0) return null;
+
+  return (
+    <div className={`rounded-2xl border transition-all overflow-hidden animate-fade-in-up
+      ${isDark ? 'bg-slate-800/70 border-red-900/30' : 'bg-white border-red-100 shadow-sm'}`}>
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between px-6 py-4"
+      >
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl" style={{ background: isDark ? 'rgba(239,68,68,0.15)' : '#fee2e2' }}>
+            <AlertTriangle className="w-4 h-4 text-red-500" />
+          </div>
+          <div className="text-left">
+            <p className={`text-sm font-bold ${isDark ? 'text-red-400' : 'text-red-700'}`}>
+              {data.length} Student{data.length !== 1 ? 's' : ''} Below {threshold}% Attendance
+            </p>
+            <p className={`text-xs ${isDark ? 'text-red-500/70' : 'text-red-400'}`}>Immediate attention required</p>
+          </div>
+        </div>
+        <span className={`text-xs font-bold px-3 py-1 rounded-lg transition-all ${isDark ? 'bg-red-900/30 text-red-400' : 'bg-red-50 text-red-600'}`}>
+          {open ? 'Collapse' : 'Expand'}
+        </span>
+      </button>
+
+      {open && (
+        <div className={`border-t ${isDark ? 'border-red-900/30' : 'border-red-100'} overflow-x-auto`}>
+          <table className="w-full">
+            <thead>
+              <tr className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'bg-slate-900/40 text-slate-500' : 'bg-red-50/70 text-red-400'}`}>
+                {['Student', 'Roll No', 'Branch', 'Present', 'Absent', 'Percentage'].map(h => (
+                  <th key={h} className="px-5 py-3 text-left">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y" style={{ borderColor: isDark ? 'rgba(127,29,29,0.2)' : 'rgba(254,202,202,0.5)' }}>
+              {data.map(stu => (
+                <tr key={stu._id}>
+                  <td className={`px-5 py-3 text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-800'}`}>{stu.name}</td>
+                  <td className={`px-5 py-3 text-xs font-mono ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>{stu.rollNumber}</td>
+                  <td className="px-5 py-3">
+                    <span className={`text-xs px-2 py-0.5 rounded font-semibold ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-slate-100 text-slate-600'}`}>
+                      {stu.branch}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-sm font-bold text-emerald-500">{stu.present}</td>
+                  <td className="px-5 py-3 text-sm font-bold text-red-500">{stu.absent}</td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 max-w-[80px] h-1.5 rounded-full overflow-hidden bg-red-100 dark:bg-red-900/30">
+                        <div className="h-full rounded-full bg-red-500" style={{ width: `${stu.percentage}%` }} />
+                      </div>
+                      <span className="text-xs font-black text-red-500">{stu.percentage}%</span>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -316,9 +396,6 @@ const AdminDashboard = () => {
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
 
-  const attendanceRate = stats.totalStudents > 0
-    ? Math.round((stats.totalPresentToday / stats.totalStudents) * 100)
-    : 0;
 
   const statCards = [
     {
@@ -439,6 +516,9 @@ const AdminDashboard = () => {
           })}
         </div>
       </div>
+
+      {/* Low Attendance Panel */}
+      <LowAttendancePanel isDark={isDark} />
     </div>
   );
 };

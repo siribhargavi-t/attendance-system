@@ -1,22 +1,40 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import { ThemeContext } from '../../contexts/ThemeContext';
-import { LayoutDashboard, Users, CheckSquare, ClipboardList, Settings, LogOut, FileText, UserPlus, Sun, Moon, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
+import { LayoutDashboard, Users, CheckSquare, ClipboardList, Settings, LogOut, FileText, UserPlus, Sun, Moon, ChevronLeft, ChevronRight, Bell, BarChart2 } from 'lucide-react';
 
 const AdminLayout = () => {
   const { logout, user } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const isDark = theme === 'dark';
+
+  // Live badge count for pending requests
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const [leaveRes, attRes] = await Promise.all([
+          import('../../api/axios').then(m => m.default.get('/leave/all?status=pending')),
+          import('../../api/axios').then(m => m.default.get('/admin/attendance'))
+        ]);
+        const leavePending = leaveRes.data.leaves?.length || 0;
+        const attPending = attRes.data.data?.filter(a => a.changeRequest && a.requestStatus === 'pending').length || 0;
+        setPendingCount(leavePending + attPending);
+      } catch (e) { /* silent if auth fails before login */ }
+    };
+    fetchCounts();
+  }, [location.pathname]);
 
   const navItems = [
     { name: 'Dashboard', path: '/admin', icon: LayoutDashboard, color: '#6366f1' },
     { name: 'Students', path: '/admin/students', icon: Users, color: '#06b6d4' },
     { name: 'Subjects', path: '/admin/subjects', icon: FileText, color: '#8b5cf6' },
     { name: 'Mark Attendance', path: '/admin/mark-attendance', icon: CheckSquare, color: '#10b981' },
-    { name: 'Review Requests', path: '/admin/requests', icon: ClipboardList, color: '#f59e0b' },
+    { name: 'Review Requests', path: '/admin/requests', icon: ClipboardList, color: '#f59e0b', badge: pendingCount },
+    { name: 'Reports', path: '/admin/reports', icon: BarChart2, color: '#06b6d4' },
     { name: 'Manage Admins', path: '/admin/manage-admins', icon: UserPlus, color: '#ec4899' },
     { name: 'Settings', path: '/admin/settings', icon: Settings, color: '#64748b' },
   ];
@@ -94,6 +112,12 @@ const AdminLayout = () => {
                 )}
                 {isActive && !collapsed && (
                   <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white/80" />
+                )}
+                {!isActive && item.badge > 0 && !collapsed && (
+                  <span className="ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[20px] text-center text-white"
+                    style={{ background: item.color }}>
+                    {item.badge}
+                  </span>
                 )}
               </Link>
             );

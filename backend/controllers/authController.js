@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const Student = require("../models/student");
 const bcrypt = require("bcryptjs");
 
 // ================= REGISTER =================
@@ -20,12 +21,21 @@ const register = async (req, res) => {
     name = name.trim();
     email = email.toLowerCase().trim();
     role = role.toLowerCase().trim();
-    rollNumber = rollNumber ? rollNumber.trim() : "";
+    rollNumber = rollNumber ? rollNumber.trim().toUpperCase() : "";
+    password = password.trim(); 
 
     // Validate role
     const validRoles = ["student", "faculty", "admin"];
     if (!validRoles.includes(role)) {
       return res.status(400).json({ message: "Invalid role selected." });
+    }
+
+    // Role-specific roll number check
+    if (role === "student") {
+      const existingStudent = await Student.findOne({ rollNumber });
+      if (existingStudent) {
+        return res.status(400).json({ message: `Roll Number ${rollNumber} is already registered.` });
+      }
     }
 
     // Password length
@@ -35,7 +45,7 @@ const register = async (req, res) => {
 
     console.log("Register request:", { name, email, role, rollNumber });
 
-    // Check existing user
+    // Check existing user email
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "An account with this email already exists." });
@@ -49,13 +59,14 @@ const register = async (req, res) => {
       email,
       password: hashedPassword,
       role,
-      rollNumber
+      rollNumber,
+      department: branch || "",
+      class: year && section ? `${year} - ${section}` : year || section || ""
     });
     await user.save();
 
     // If student, also create a record in the Student collection
     if (role === "student") {
-      const Student = require("../models/student");
       try {
         await Student.create({
           user: user._id,
@@ -66,7 +77,23 @@ const register = async (req, res) => {
           section: section || "A"
         });
       } catch (studentErr) {
-        console.error("Student profile creation error:", studentErr);
+        if (studentErr.code === 11000) {
+          const field = Object.keys(studentErr.keyValue || {})[0] || "field";
+          const value = Object.values(studentErr.keyValue || {})[0] || rollNumber;
+          console.error(`Duplicate Student record on ${field}:`, value);
+          await User.findByIdAndDelete(user._id);
+          return res.status(400).json({ message: `Student registration failed: The ${field} '${value}' is already in use.` });
+        }
+        console.error("Student profile creation error DETAILS:", {
+          message: studentErr.message,
+          name: studentErr.name,
+          code: studentErr.code,
+          keyValue: studentErr.keyValue,
+          errors: studentErr.errors
+        });
+        // Rollback user creation if student profile fails
+        await User.findByIdAndDelete(user._id);
+        return res.status(500).json({ message: "Failed to create student profile. Please try again." });
       }
     }
 
@@ -87,8 +114,9 @@ const login = async (req, res) => {
   try {
     let { email, password } = req.body;
 
-    // Normalize email
+    // Normalize
     email = email.toLowerCase().trim();
+    password = password ? password.trim() : "";
 
     console.log("Login attempt:", { email });
 
@@ -106,23 +134,51 @@ const login = async (req, res) => {
     }
 
     let isMatch = false;
+    let isPlainMatch = false;
+    let authMethod = "none";
+
     try {
-      // bcrypt.compare will return false if the second arg is not a valid hash
-      // We wrap in try-catch to be safe
-      isMatch = await bcrypt.compare(password, user.password);
+      if (user.password && (user.password.startsWith("$2a$") || user.password.startsWith("$2b$") || user.password.startsWith("$2y$"))) {
+        authMethod = "bcrypt";
+        // Perform direct comparison to rule out Mongoose method issues
+        isMatch = await bcrypt.compare(password, user.password);
+      } else {
+        console.log(`ℹ️ Non-bcrypt password detected for ${email}, attempting plain-text match.`);
+        isPlainMatch = (password === user.password);
+        authMethod = "plain-text";
+      }
     } catch (err) {
-      console.log(`ℹ️ Non-bcrypt password detected for ${email}, attempting plain-text match.`);
+      console.error(`❌ Comparison error for ${email}:`, err.message);
       isMatch = false;
     }
 
-    const isPlainMatch = password === user.password; // Fallback for plain-text dev passwords
-
     if (!isMatch && !isPlainMatch) {
-      console.log(`❌ Login Failed: Password mismatch for user ${email}.`);
+      const hashPrefix = user.password ? user.password.substring(0, 7) : "none";
+      const hasHiddenChars = /[\s\u0000-\u001F\u007F-\u009F]/.test(password);
+      
+      // Masked input check
+      const inputFirst = password ? password[0] : "?";
+      const inputLast = password ? password[password.length - 1] : "?";
+
+      console.log(`❌ Login Failed: Password mismatch for user ${email}. (Auth: ${authMethod}, Len: ${password?.length}, HashLen: ${user.password?.length}, Prefix: ${hashPrefix}, Start: ${inputFirst}, End: ${inputLast}, Hidden: ${hasHiddenChars})`);
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
     console.log(`✅ Login Success: ${email} (${user.role})`);
+
+    // Fetch extra details if student
+    let extraData = {};
+    if (user.role === "student") {
+      const studentProfile = await Student.findOne({ user: user._id });
+      if (studentProfile) {
+        extraData = {
+          rollNumber: studentProfile.rollNumber,
+          branch: studentProfile.branch,
+          year: studentProfile.year,
+          section: studentProfile.section
+        };
+      }
+    }
 
     // Generate JWT
     const jwt = require("jsonwebtoken");
@@ -136,13 +192,16 @@ const login = async (req, res) => {
       email: user.email,
       name: user.name,
       _id: user._id,
-      rollNumber: user.rollNumber || "",
-      class: user.class || "",
-      department: user.department || "",
+      rollNumber: user.rollNumber || extraData.rollNumber || "",
+      class: user.class || (extraData.year ? `${extraData.year} - ${extraData.section}` : ""),
+      department: user.department || extraData.branch || "",
+      branch: extraData.branch || user.department || "",
+      year: extraData.year || "",
+      section: extraData.section || "",
       adminRole: user.adminRole || "",
       image: user.image || "",
       banner: user.banner || "",
-      token, // <-- Critical fix: actually send the token!
+      token,
     });
 
   } catch (err) {

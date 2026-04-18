@@ -3,12 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiBookOpen, FiArrowRight } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import { useTheme } from "../../context/ThemeContext";
 
 const ROLES = [
   { label: "Admin", emoji: "🛡️" },
   { label: "Student", emoji: "🎓" },
   { label: "Faculty", emoji: "👨‍🏫" },
 ];
+
+const BRANCHES = ["CSE", "IT", "ECE", "EEE", "MECH", "CIVIL", "AIDS", "AIML"];
+const YEARS = ["1st Year", "2nd Year", "3rd Year", "4th Year"];
+const SECTIONS = ["A", "B", "C", "D"];
 
 const Register = () => {
   const navigate = useNavigate();
@@ -19,30 +24,17 @@ const Register = () => {
     confirm: "",
     role: "student",
     rollNumber: "",
+    branch: "CSE",
+    year: "1st Year",
+    section: "A",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
-  const [isDark, setIsDark] = useState(document.documentElement.classList.contains("dark"));
-
-  // Night‑light / OS dark mode detection (reactive)
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    setIsDark(mq.matches);
-    const handler = (e) => setIsDark(e.matches);
-    mq.addEventListener("change", handler);
-    // Also watch class changes (in case app toggles a "dark" class)
-    const observer = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains("dark"));
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    return () => {
-      mq.removeEventListener("change", handler);
-      observer.disconnect();
-    };
-  }, []);
+  const { darkMode } = useTheme();
+  const isDark = darkMode;
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -62,8 +54,13 @@ const Register = () => {
     setSuccess("");
 
     // ---- Front‑end validation ----
-    if (!form.name || !form.email || !form.password || !form.confirm || (form.role === 'student' && !form.rollNumber)) {
-      setError("Please fill in all fields.");
+    if (!form.name || !form.email || !form.password || !form.confirm) {
+      setError("Please fill in all basic fields.");
+      return;
+    }
+
+    if (form.role === 'student' && (!form.rollNumber || !form.branch || !form.year || !form.section)) {
+      setError("Please fill in all student details.");
       return;
     }
     if (!/\S+@\S+\.\S+/.test(form.email)) {
@@ -88,7 +85,10 @@ const Register = () => {
         email: form.email.trim().toLowerCase(),
         password: form.password,
         role: form.role,
-        rollNumber: form.role === 'student' ? form.rollNumber.trim() : ""
+        rollNumber: form.role === 'student' ? form.rollNumber.trim() : "",
+        branch: form.role === 'student' ? form.branch : "",
+        year: form.role === 'student' ? form.year : "",
+        section: form.role === 'student' ? form.section : ""
       });
       setSuccess(res.data.message || "Registration successful! Redirecting...");
       setTimeout(() => navigate("/login"), 1500);
@@ -135,52 +135,8 @@ const Register = () => {
         justifyContent: "center",
         background: bg,
         padding: "24px 16px",
-        position: "relative",
-        overflow: "hidden",
       }}
     >
-      {/* Floating orbs – purely decorative */}
-      <div style={{
-        position: "fixed",
-        borderRadius: "50%",
-        filter: "blur(80px)",
-        opacity: isDark ? 0.25 : 0.2,
-        pointerEvents: "none",
-        width: 300,
-        height: 300,
-        background: "#7c3aed",
-        top: "8%",
-        left: "12%",
-        animation: "orbFloat 8s ease-in-out infinite",
-      }} />
-      <div style={{
-        position: "fixed",
-        borderRadius: "50%",
-        filter: "blur(80px)",
-        opacity: isDark ? 0.2 : 0.15,
-        pointerEvents: "none",
-        width: 250,
-        height: 250,
-        background: "#06b6d4",
-        top: "60%",
-        right: "10%",
-        animation: "orbFloat 8s ease-in-out infinite",
-        animationDelay: "-3s",
-      }} />
-      <div style={{
-        position: "fixed",
-        borderRadius: "50%",
-        filter: "blur(80px)",
-        opacity: isDark ? 0.18 : 0.12,
-        pointerEvents: "none",
-        width: 200,
-        height: 200,
-        background: "#f59e0b",
-        bottom: "12%",
-        left: "40%",
-        animation: "orbFloat 8s ease-in-out infinite",
-        animationDelay: "-6s",
-      }} />
 
       <motion.div
         initial={{ opacity: 0, y: 40, scale: 0.97 }}
@@ -399,24 +355,71 @@ const Register = () => {
                 exit={{ opacity: 0, height: 0, marginTop: 0 }}
                 style={{ overflow: "hidden" }}
               >
-                <div style={{ paddingTop: 18 }}>
-                  <label style={{ fontSize: 12, fontWeight: 600, color: labelColor, display: "block", marginBottom: 6, letterSpacing: "0.06em", textTransform: "uppercase" }}>
-                    Roll Number
-                  </label>
-                  <div style={{ position: "relative" }}>
-                    <FiArrowRight
-                      size={16}
-                      style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#667eea" }}
-                    />
-                    <input
-                      type="text"
-                      name="rollNumber"
-                      placeholder="e.g. 21CS101"
-                      value={form.rollNumber}
+                <div style={{ paddingTop: 18, display: "flex", flexDirection: "column", gap: 15 }}>
+                  {/* Roll Number */}
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: labelColor, display: "block", marginBottom: 6, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+                      Roll Number
+                    </label>
+                    <div style={{ position: "relative" }}>
+                      <FiArrowRight
+                        size={16}
+                        style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "#667eea" }}
+                      />
+                      <input
+                        type="text"
+                        name="rollNumber"
+                        placeholder="e.g. 21CS101"
+                        value={form.rollNumber}
+                        onChange={handleChange}
+                        style={inputStyle}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Branch, Year, Section Grid */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: labelColor, display: "block", marginBottom: 6, textTransform: "uppercase" }}>
+                        Branch
+                      </label>
+                      <select
+                        name="branch"
+                        value={form.branch}
+                        onChange={handleChange}
+                        style={{ ...inputStyle, paddingLeft: 12, appearance: "none" }}
+                      >
+                        {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: 11, fontWeight: 600, color: labelColor, display: "block", marginBottom: 6, textTransform: "uppercase" }}>
+                        Year
+                      </label>
+                      <select
+                        name="year"
+                        value={form.year}
+                        onChange={handleChange}
+                        style={{ ...inputStyle, paddingLeft: 12, appearance: "none" }}
+                      >
+                        {YEARS.map(y => <option key={y} value={y}>{y}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: 11, fontWeight: 600, color: labelColor, display: "block", marginBottom: 6, textTransform: "uppercase" }}>
+                      Section
+                    </label>
+                    <select
+                      name="section"
+                      value={form.section}
                       onChange={handleChange}
-                      style={inputStyle}
-                      required
-                    />
+                      style={{ ...inputStyle, paddingLeft: 12, appearance: "none" }}
+                    >
+                      {SECTIONS.map(s => <option key={s} value={s}>Section {s}</option>)}
+                    </select>
                   </div>
                 </div>
               </motion.div>

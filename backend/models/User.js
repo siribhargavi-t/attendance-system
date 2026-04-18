@@ -62,4 +62,10 @@ const UserSchema = new mongoose.Schema({
     }
 });
 
+// Compare Password Method
+UserSchema.methods.comparePassword = async function(enteredPassword) {
+    const bcrypt = require('bcryptjs');
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
 module.exports = mongoose.model('User', UserSchema);

@@ -200,48 +200,6 @@ body {
   box-shadow: 0 8px 30px rgba(17, 153, 142, 0.7);
 }
 
-/* ===================== FLOATING ORBS ===================== */
-.orb {
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.25;
-  pointer-events: none;
-  z-index: 0;
-  animation: orbFloat 8s ease-in-out infinite;
-}
-
-.orb-1 {
-  width: 350px;
-  height: 350px;
-  background: #7c3aed;
-  top: 5%;
-  left: 10%;
-  animation-delay: 0s;
-}
-
-.orb-2 {
-  width: 250px;
-  height: 250px;
-  background: #06b6d4;
-  top: 60%;
-  right: 10%;
-  animation-delay: -3s;
-}
-
-.orb-3 {
-  width: 200px;
-  height: 200px;
-  background: #f59e0b;
-  bottom: 10%;
-  left: 40%;
-  animation-delay: -6s;
-}
-
-@keyframes orbFloat {
-  0%, 100% { transform: translateY(0px) scale(1); }
-  50% { transform: translateY(-30px) scale(1.05); }
-}
 
 /* ===================== GRADIENT TEXT ===================== */
 .gradient-text {

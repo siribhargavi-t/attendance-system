@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import axios from "axios";
+import API from "../services/api";
 import ThemeToggle from "./ThemeToggle";
 
 const CustomBell = () => (
@@ -25,8 +25,7 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
 
         if (!user?.email) return;
 
-        const res = await axios.get(
-          `http://localhost:5000/api/notifications/${user.email}`
+        const res = await API.get(`/api/notifications/${user.email}`
         );
 
         setNotifications(res.data);
@@ -45,7 +44,7 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
 
   const handleDeleteNotif = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/notifications/${id}`);
+      await API.delete(`/api/notifications/${id}`);
       setNotifications((prev) => prev.filter((n) => n._id !== id));
     } catch (err) {
       console.error("Delete notification error:", err);
@@ -56,8 +55,7 @@ const Navbar = ({ darkMode, toggleDarkMode, setOpen, onLogout }) => {
     try {
       const user = JSON.parse(localStorage.getItem("userData"));
       if (!user?.email) return;
-      await axios.delete(`http://localhost:5000/api/notifications/clear/${user.email}`);
-      setNotifications([]);
+await API.delete(`/api/notifications/clear/${user.email}`);      setNotifications([]);
     } catch (err) {
       console.error("Clear all error:", err);
     }

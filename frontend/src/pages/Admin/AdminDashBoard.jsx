@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../services/api";   // adjust path
 import { motion } from "framer-motion";
 import MainLayout from "../../components/Layout/MainLayout";
 import Loader from "../../components/Loader";
@@ -13,7 +13,6 @@ import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
   BarChart, Bar, PieChart, Pie, Cell
 } from "recharts";
-
 const AdminDashboard = () => {
   const [dashboardStats, setDashboardStats] = useState({
     totalStudents: 0,
@@ -27,8 +26,8 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchDashboardStats = async () => {
       try {
-        const res = await axios.get("/api/admin/dashboard");
-        setDashboardStats(res.data);
+const res = await API.get("/api/admin/dashboard");        
+setDashboardStats(res.data);
       } catch (err) {
         console.error("Failed to fetch dashboard stats", err);
       }
@@ -36,7 +35,7 @@ const AdminDashboard = () => {
 
     const fetchAttendanceData = async () => {
       try {
-        const res = await axios.get("/api/attendance/all");
+        const res = await API.get("/api/attendance/all");
         setAttendanceData(res.data);
       } catch (err) {
         console.error("Failed to fetch attendance data", err);

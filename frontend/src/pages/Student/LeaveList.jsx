@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import API from "../../services/api";   // adjust path
 import { motion } from "framer-motion";
 import MainLayout from "../../components/Layout/MainLayout";
 import { FiPlus, FiCalendar, FiFileText } from "react-icons/fi";
@@ -19,8 +19,7 @@ const LeaveList = () => {
 
   useEffect(() => {
     if (!studentEmail) return;
-    axios
-      .get(`/api/leave/student/${encodeURIComponent(studentEmail)}`)
+    API.get(`/api/leave/student/${encodeURIComponent(studentEmail)}`)
       .then((res) => setLeaveRequests(res.data))
       .catch(() => setLeaveRequests([]))
       .finally(() => setLoading(false));

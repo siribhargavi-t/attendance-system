@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import API from "../../services/api";   // adjust path
 import { motion } from "framer-motion";
 import MainLayout from "../../components/Layout/MainLayout";
 import { FiCheck, FiX, FiCalendar, FiUser, FiFileText, FiMail } from "react-icons/fi";
@@ -23,8 +23,7 @@ const FacultyLeaveRequests = () => {
     const userData = JSON.parse(localStorage.getItem("userData") || "{}");
     const facultyEmail = userData.email || "";
 
-    axios
-      .get(`/api/leave?facultyEmail=${facultyEmail}`)
+    API.get(`/api/leave?facultyEmail=${facultyEmail}`)
       .then((res) => setRequests(res.data))
       .catch(() => setRequests([]))
       .finally(() => setLoading(false));
@@ -32,7 +31,7 @@ const FacultyLeaveRequests = () => {
 
   const handleDecision = async (id, status) => {
     try {
-      await axios.put(`/api/leave/${id}`, { status });
+      await API.put(`/api/leave/${id}`, { status });
       setRequests((prev) =>
         prev.map((req) => (req._id === id ? { ...req, status } : req))
       );
@@ -51,7 +50,7 @@ const FacultyLeaveRequests = () => {
       const userData = JSON.parse(localStorage.getItem("userData") || "{}");
       const token = userData.token;
 
-      await axios.post("/api/faculty/send-email", {
+      await API.post("/api/faculty/send-email", {
         studentEmail: selectedStudent.studentEmail,
         subject: emailSubject,
         message: emailMessage

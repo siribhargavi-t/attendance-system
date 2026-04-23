@@ -3,8 +3,7 @@ import { motion } from "framer-motion";
 import MainLayout from "../../components/Layout/MainLayout";
 import { FiUsers, FiUserCheck, FiUserX, FiArrowRight } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-
+import API from "../../services/api";   // adjust path
 const getSummary = (students) => {
   const total = students.length;
   const present = students.filter((s) => s.status === "Present").length;
@@ -24,8 +23,8 @@ const FacultyDashboard = () => {
 
   React.useEffect(() => {
     Promise.all([
-      axios.get("/api/admin/students"),
-      axios.get("/api/attendance/all")
+      API.get("/api/admin/students"),
+      API.get("/api/attendance/all")
     ]).then(([studentsRes, attendanceRes]) => {
       const allStudents = studentsRes.data;
       const allAttendance = attendanceRes.data;

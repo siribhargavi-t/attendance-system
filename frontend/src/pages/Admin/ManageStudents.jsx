@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import API from "../../services/api";   // adjust path
 import { motion } from "framer-motion";
 import { UserPlus, Trash2, AlertTriangle } from 'lucide-react';
 import MainLayout from '../../components/Layout/MainLayout';
@@ -20,7 +20,7 @@ const ManageStudents = () => {
     const fetchStudents = async () => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get('/api/admin/students', {
+            const res = await API.get('/api/admin/students', {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setStudents(res.data);

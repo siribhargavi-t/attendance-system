@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from '../../api/axios'; // use your axios config
+import API from "../../services/api";   // adjust path
 
 const Report = () => {
   const [attendanceData, setAttendanceData] = useState([]);

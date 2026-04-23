@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import MainLayout from "../../components/Layout/MainLayout";
 
-import axios from "axios";
-
+import API from "../../services/api";   // adjust path
 // Helper: get status by date
 const ROWS_PER_PAGE = 5;
 
@@ -31,8 +30,7 @@ const StudentAttendance = () => {
 
   React.useEffect(() => {
     if (!studentEmail) return;
-    axios.get(`/api/attendance?studentEmail=${encodeURIComponent(studentEmail)}`)
-      .then(res => {
+API.get(`/api/attendance?studentEmail=${encodeURIComponent(studentEmail)}`)      .then(res => {
         const records = res.data.map(r => ({
           id: r._id,
           date: r.date.split("T")[0],

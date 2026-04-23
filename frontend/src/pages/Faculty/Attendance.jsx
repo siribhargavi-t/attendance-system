@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import MainLayout from "../../components/Layout/MainLayout";
 import { FiSearch, FiCheckCircle, FiXCircle, FiSave, FiClock, FiBook, FiUsers, FiFilter } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import API from "../../services/api";   // adjust path
 import axios from "axios";
-
 const SUBJECTS = ["Mathematics", "Physics", "Chemistry", "English", "Computer Science", "Engineering Graphics"];
 const CLASSES = ["1st Year - SEC A", "1st Year - SEC B", "2nd Year - CS", "2nd Year - IT", "3rd Year - CS", "4th Year - CS"];
 const TIME_SLOTS = [
@@ -44,8 +44,7 @@ const FacultyAttendance = () => {
   // Fetch students
   useEffect(() => {
     setLoading(true);
-    axios
-      .get("/api/admin/students")
+    API.get("/api/admin/students")
       .then((res) => {
         const studentData = (res.data || []).map((s) => ({
           id: s._id,
@@ -107,7 +106,7 @@ const FacultyAttendance = () => {
       }));
 
       // In a real app, we'd have a bulk endpoint
-      await Promise.all(records.map(r => axios.post("/api/attendance", r)));
+      await Promise.all(records.map(r => API.post("/api/attendance", r)));
       alert("Attendance records saved successfully!");
     } catch (err) {
       console.error(err);

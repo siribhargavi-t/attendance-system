@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../services/api";   // adjust path
 import { motion } from "framer-motion";
 import MainLayout from "../../components/Layout/MainLayout";
 import { FiBookOpen, FiUserCheck, FiUserX, FiPercent, FiTrendingUp } from "react-icons/fi";
@@ -11,6 +11,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+
 
 const STAT_CONFIGS = [
   {
@@ -61,8 +62,7 @@ const StudentDashboard = () => {
   useEffect(() => {
     if (!studentEmail) return;
 
-    axios.get(`/api/attendance?studentEmail=${encodeURIComponent(studentEmail)}`)
-      .then(res => {
+API.get(`/api/attendance?studentEmail=${encodeURIComponent(studentEmail)}`)      .then(res => {
         const records = res.data;
         const total = records.length;
         const present = records.filter(r => r.status === "Present").length;

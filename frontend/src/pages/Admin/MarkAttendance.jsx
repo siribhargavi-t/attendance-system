@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import MainLayout from "../../components/Layout/MainLayout";
 import { FiSearch, FiBookOpen, FiCalendar, FiDownload } from "react-icons/fi";
-
-import axios from "axios";
+import API from "../../services/api";
 
 const getStats = (records) => {
   const total = records.length;
@@ -21,7 +20,7 @@ const AdminAttendance = () => {
   const [subjectsList, setSubjectsList] = useState(["All Subjects"]);
 
   React.useEffect(() => {
-    axios.get("/api/attendance/all")
+    API.get("/api/attendance/all")
       .then(res => {
          const records = res.data.map(r => ({
            id: r._id,

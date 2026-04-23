@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from "react";
-import axios from "axios";
+import API from "../../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { UserContext } from "../../context/UserContext";
 import MainLayout from "../../components/Layout/MainLayout";
@@ -33,7 +33,7 @@ const Mail = () => {
       try {
         const userData = JSON.parse(localStorage.getItem("userData") || "{}");
         const token = userData?.token;
-        const res = await axios.get("/api/mail/recipients", {
+        const res = await API.get("/api/mail/recipients", {
           headers: { Authorization: `Bearer ${token}` }
         });
         setRecipients(Array.isArray(res.data) ? res.data : []);
@@ -57,7 +57,7 @@ const Mail = () => {
       const userData = JSON.parse(localStorage.getItem("userData") || "{}");
       const token = userData?.token;
 
-      await axios.post("/api/mail/send", {
+      await API.post("/api/mail/send", {
         toEmail: selectedRecipient?.email,
         subject,
         message

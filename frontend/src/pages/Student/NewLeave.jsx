@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import API from "../../services/api";   // adjust path
 import { motion } from "framer-motion";
 import { FiCalendar, FiFileText, FiUser, FiSend } from "react-icons/fi";
 import MainLayout from "../../components/Layout/MainLayout";
@@ -40,8 +40,7 @@ const NewLeave = () => {
 
   useEffect(() => {
     setLoading(true);
-    axios
-      .get("/api/admin/faculty")
+    API.get("/api/admin/faculty")
       .then((res) => {
         const list = res?.data || [];
         setFacultyList(list);
@@ -93,7 +92,7 @@ const NewLeave = () => {
     setSubmitting(true);
 
     try {
-      await axios.post("/api/leave", {
+      await API.post("/api/leave", {
         studentName,
         studentEmail: studentEmail.toLowerCase().trim(),
         facultyName: faculty.name,

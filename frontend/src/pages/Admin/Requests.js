@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../api/axios';
+import API from "../../services/api";   // adjust path
 import { Check, X } from 'lucide-react';
 
 const Requests = () => {

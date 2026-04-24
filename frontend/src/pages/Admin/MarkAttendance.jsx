@@ -20,8 +20,7 @@ const AdminAttendance = () => {
   const [subjectsList, setSubjectsList] = useState(["All Subjects"]);
 
   React.useEffect(() => {
-    API.get("/api/attendance/all")
-      .then(res => {
+    API.get("/api/attendance/all").then(res => {
          const records = res.data.map(r => ({
            id: r._id,
            name: r.studentName,

@@ -30,7 +30,7 @@ const StudentAttendance = () => {
 
   React.useEffect(() => {
     if (!studentEmail) return;
-API.get(`/api/attendance?studentEmail=${encodeURIComponent(studentEmail)}`)      .then(res => {
+API.get(`/api/attendance?studentEmail=${encodeURIComponent(studentEmail)}`).then(res => {
         const records = res.data.map(r => ({
           id: r._id,
           date: r.date.split("T")[0],

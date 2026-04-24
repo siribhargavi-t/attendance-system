@@ -44,8 +44,7 @@ const FacultyAttendance = () => {
   // Fetch students
   useEffect(() => {
     setLoading(true);
-    API.get("/api/admin/students")
-      .then((res) => {
+    API.get("/api/admin/students").then((res) => {
         const studentData = (res.data || []).map((s) => ({
           id: s._id,
           name: s.name || "Unknown",

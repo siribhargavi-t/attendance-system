@@ -40,8 +40,7 @@ const NewLeave = () => {
 
   useEffect(() => {
     setLoading(true);
-    API.get("/api/admin/faculty")
-      .then((res) => {
+    API.get("/api/admin/faculty").then((res) => {
         const list = res?.data || [];
         setFacultyList(list);
         if (list.length > 0) {

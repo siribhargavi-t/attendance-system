@@ -62,7 +62,7 @@ const StudentDashboard = () => {
   useEffect(() => {
     if (!studentEmail) return;
 
-API.get(`/api/attendance?studentEmail=${encodeURIComponent(studentEmail)}`)      .then(res => {
+API.get(`/api/attendance?studentEmail=${encodeURIComponent(studentEmail)}`).then(res => {
         const records = res.data;
         const total = records.length;
         const present = records.filter(r => r.status === "Present").length;

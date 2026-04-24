@@ -19,8 +19,7 @@ const LeaveList = () => {
 
   useEffect(() => {
     if (!studentEmail) return;
-    API.get(`/api/leave/student/${encodeURIComponent(studentEmail)}`)
-      .then((res) => setLeaveRequests(res.data))
+    API.get(`/api/leave/student/${encodeURIComponent(studentEmail)}`).then((res) => setLeaveRequests(res.data))
       .catch(() => setLeaveRequests([]))
       .finally(() => setLoading(false));
   }, [studentEmail]);

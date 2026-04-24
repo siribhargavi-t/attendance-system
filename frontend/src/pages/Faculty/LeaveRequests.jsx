@@ -23,8 +23,7 @@ const FacultyLeaveRequests = () => {
     const userData = JSON.parse(localStorage.getItem("userData") || "{}");
     const facultyEmail = userData.email || "";
 
-    API.get(`/api/leave?facultyEmail=${facultyEmail}`)
-      .then((res) => setRequests(res.data))
+    API.get(`/api/leave?facultyEmail=${facultyEmail}`).then((res) => setRequests(res.data))
       .catch(() => setRequests([]))
       .finally(() => setLoading(false));
   }, []);

@@ -25,40 +25,22 @@ const Login = () => {
 
   const isDark = darkMode;
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    if (!email.trim() || !password.trim()) {
-      setError("Please enter your email and password.");
-      return;
-    }
 
-    setLoading(true);
-    setError("");
-
-    try {
-      const res =await axios.post(
-  "https://attendance-system-cb8z.onrender.com/api/auth/login",
-  data
-);
-
-      localStorage.setItem("userData", JSON.stringify(res.data));
-      const userRole = res.data.role;
-
-      if (userRole === "admin") {
-        navigate("/admin/dashboard");
-      } else if (userRole === "student") {
-        navigate("/student/dashboard");
-      } else {
-        navigate("/faculty/dashboard");
+const handleLogin = async () => {
+  try {
+    const res = await axios.post(
+      "https://attendance-system-cb8z.onrender.com/api/auth/login",
+      {
+        email,
+        password
       }
-    } catch (err) {
-      setError(
-        err.response?.data?.message || "Invalid credentials. Please try again."
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+    );
+
+    console.log(res.data);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   const bg = isDark
     ? "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)"

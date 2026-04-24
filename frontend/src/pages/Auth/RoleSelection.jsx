@@ -18,7 +18,7 @@ const RoleSelection = () => {
 
         try {
             const payload = { email, password };
-            const { data } = await axios.post('/api/auth/login', payload);
+            const { data } = await API.post('/api/auth/login', payload);
 
             // Save the token to localStorage
             localStorage.setItem('token', data.token);

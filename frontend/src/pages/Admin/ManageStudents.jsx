@@ -46,7 +46,7 @@ const ManageStudents = () => {
         }
         try {
             const token = localStorage.getItem('token');
-            await axios.post('/api/admin/students', newStudent, {
+            await API.post('/api/admin/students', newStudent, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setNewStudent({ name: '', email: '', password: '' });
@@ -60,7 +60,7 @@ const ManageStudents = () => {
         if (window.confirm('Are you sure you want to delete this student?')) {
             try {
                 const token = localStorage.getItem('token');
-                await axios.delete(`/api/admin/students/${studentId}`, {
+                await API.delete(`/api/admin/students/${studentId}`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 fetchStudents();

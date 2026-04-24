@@ -4,7 +4,7 @@ import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiBookOpen, FiArrowRight } fro
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { useTheme } from "../../context/ThemeContext";
-
+import API from "../../services/api";
 const ROLES = [
   { label: "Admin", emoji: "🛡️" },
   { label: "Student", emoji: "🎓" },
@@ -80,7 +80,7 @@ const Register = () => {
 
     setLoading(true);
     try {
-      const res = await axios.post("/api/auth/register", {
+      const res = await API.post("/api/auth/register", {
         name: form.name.trim(),
         email: form.email.trim().toLowerCase(),
         password: form.password,

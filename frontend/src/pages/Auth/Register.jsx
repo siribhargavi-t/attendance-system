@@ -4,7 +4,6 @@ import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiBookOpen, FiArrowRight } fro
 import { motion, AnimatePresence } from "framer-motion";
 import API from "../../services/api";
 import { useTheme } from "../../context/ThemeContext";
-import API from "../../services/api";
 const ROLES = [
   { label: "Admin", emoji: "🛡️" },
   { label: "Student", emoji: "🎓" },

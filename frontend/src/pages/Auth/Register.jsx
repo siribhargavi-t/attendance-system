@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiBookOpen, FiArrowRight } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
+import API from "../../services/api";
 import { useTheme } from "../../context/ThemeContext";
 import API from "../../services/api";
 const ROLES = [

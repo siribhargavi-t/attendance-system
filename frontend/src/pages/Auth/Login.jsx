@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiMail, FiLock, FiEye, FiEyeOff, FiBookOpen, FiArrowRight } from "react-icons/fi";
-import API from "../../services/api";
+// import API from "../../services/api";
+import axios from "axios";
 import { useTheme } from "../../context/ThemeContext";
 
 const ROLES = [
@@ -35,10 +36,10 @@ const Login = () => {
     setError("");
 
     try {
-      const res = await API.post("/api/auth/login", {
-        email: email.trim().toLowerCase(),
-        password,
-      });
+      const res =await axios.post(
+  "https://attendance-system-cb8z.onrender.com/api/auth/login",
+  data
+);
 
       localStorage.setItem("userData", JSON.stringify(res.data));
       const userRole = res.data.role;

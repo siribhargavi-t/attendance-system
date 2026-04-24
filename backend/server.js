@@ -28,7 +28,13 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Enable CORS
-app.use(cors());
+app.use(cors({
+  origin: [
+    "http://localhost:3000",
+    "https://attendance-system-4he7dhdhr-siribhargavi-ts-projects.vercel.app"
+  ],
+  credentials: true
+}));
 
 // Mount routers
 app.use('/api/auth', authRoutes);

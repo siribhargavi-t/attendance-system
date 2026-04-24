@@ -3,7 +3,6 @@ import MainLayout from "../../components/Layout/MainLayout";
 import { FiSearch, FiCheckCircle, FiXCircle, FiSave, FiClock, FiBook, FiUsers, FiFilter } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import API from "../../services/api";   // adjust path
-import axios from "axios";
 const SUBJECTS = ["Mathematics", "Physics", "Chemistry", "English", "Computer Science", "Engineering Graphics"];
 const CLASSES = ["1st Year - SEC A", "1st Year - SEC B", "2nd Year - CS", "2nd Year - IT", "3rd Year - CS", "4th Year - CS"];
 const TIME_SLOTS = [

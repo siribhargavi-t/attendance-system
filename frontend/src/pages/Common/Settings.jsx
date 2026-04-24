@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
+import API from "../../services/api";
 import { useTheme } from "../../context/ThemeContext";
 import ThemeToggle from "../../components/ThemeToggle";
 import MainLayout from "../../components/Layout/MainLayout";
@@ -53,7 +53,7 @@ const Settings = () => {
         const userData = JSON.parse(localStorage.getItem("userData") || "{}");
         const token = userData.token;
 
-        await axios.put("/api/auth/update-password", {
+        await API.put("/api/auth/update-password", {
             currentPassword: passwords.current,
             newPassword: passwords.new
         }, {

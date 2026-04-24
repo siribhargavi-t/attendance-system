@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import axios from 'axios';
+import API from "../../services/api";
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext'; // Assuming you use an AuthContext
 import { jwtDecode } from 'jwt-decode'; // You will need this package

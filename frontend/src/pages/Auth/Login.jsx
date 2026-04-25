@@ -27,50 +27,40 @@ const Login = () => {
 
 
 const handleLogin = async (e) => {
-  e.preventDefault(); // ✅ VERY IMPORTANT (fixes reload issue)
-
-  console.log("LOGIN CLICKED");
-
-  setLoading(true);
-  setError("");
+  e.preventDefault();
 
   try {
-   const res = await axios.post(
-  "https://attendance-system-cb8z.onrender.com/api/auth/login",
-  { email, password, role }
-);
+    const res = await axios.post(
+      "https://attendance-system-cb8z.onrender.com/api/auth/login",
+      {
+        email,
+        password,
+        role,
+      }
+    );
 
-console.log("FULL RESPONSE:", res.data);
+    console.log("LOGIN RESPONSE:", res.data);
 
-// 🔥 handle multiple response formats safely
-const token =
-  res.data.token ||
-  res.data?.data?.token ||
-  res.data?.accessToken;
+    // ✅ store token
+    localStorage.setItem("token", res.data.token);
 
-if (token) {
-  localStorage.setItem("token", token);
-} else {
-  console.log("❌ Token not found in response");
-}
+    // ✅ store user (optional but useful)
+    localStorage.setItem("user", JSON.stringify(res.data));
 
-// redirect
-if (role === "admin") navigate("/admin/dashboard");
-else if (role === "faculty") navigate("/faculty/dashboard");
-else navigate("/student/dashboard");
+    // ✅ IMPORTANT: navigate based on role
+    if (res.data.role === "admin") {
+      navigate("/admin/dashboard");
+    } else if (res.data.role === "faculty") {
+      navigate("/faculty/dashboard");
+    } else {
+      navigate("/student/dashboard");
+    }
 
   } catch (err) {
-    console.error("LOGIN ERROR:", err);
-
-    setError(
-      err.response?.data?.message ||
-      "Login failed. Please try again."
-    );
-  } finally {
-    setLoading(false);
+    console.error(err);
+    alert("Login failed");
   }
 };
-
   const bg = isDark
     ? "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)"
     : "linear-gradient(135deg, #e0f0ff 0%, #eae4ff 50%, #ffe4f0 100%)";
@@ -175,7 +165,7 @@ else navigate("/student/dashboard");
               {ROLES.map((r) => (
                 <button
                   key={r.label}
-                  type="button"
+                  type="submit"
                   onClick={() => setRole(r.label.toLowerCase())}
                   style={{
                     flex: 1,

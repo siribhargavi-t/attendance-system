@@ -1,12 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-const { register, login, updatePassword } = require("../controllers/authController");
-const authenticateJWT = require("../middleware/authenticateJWT");
+const { login } = require("../controllers/authController");
 
-// Auth Routes
-router.post("/register", register);
+// Only define the login route
 router.post("/login", login);
-router.put("/update-password", authenticateJWT, updatePassword);
 
 module.exports = router;

@@ -24,46 +24,53 @@ const Login = () => {
 
   const isDark = darkMode;
 
- const handleLogin = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-  try {
-    const res = await axios.post(
-      "https://attendance-system-cb8z.onrender.com/api/auth/login",
-      {
-        email,
-        password,
+    try {
+      const res = await axios.post(
+        "https://attendance-system-cb8z.onrender.com/api/auth/login",
+        {
+          email,
+          password,
+          role: role.toLowerCase(), // always send lowercase
+        }
+      );
+
+      // Compare selected role and backend role
+      const backendRole = res.data.role?.toLowerCase();
+      const selectedRole = role.toLowerCase();
+
+      if (backendRole !== selectedRole) {
+        setError(
+          `Wrong role selected. This account is "${res.data.role}". Please select the correct role.`
+        );
+        setLoading(false);
+        return;
       }
-    );
 
-    console.log("LOGIN SUCCESS:", res.data);
-console.log("ROLE FROM API:", res.data.role);
-    localStorage.setItem("token", res.data.token);
-    localStorage.setItem("userData", JSON.stringify(res.data));
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("userData", JSON.stringify(res.data));
 
-    // ✅ FIXED NAVIGATION
-  const userRole = res.data.role?.toLowerCase()?.trim();
-console.log("ROLE FROM API:", res.data.role);
-console.log("ROLE FROM API:", userRole);
+      if (backendRole === "admin") {
+        navigate("/admin/dashboard");
+      } else if (backendRole === "faculty") {
+        navigate("/faculty/dashboard");
+      } else if (backendRole === "student") {
+        navigate("/student/dashboard");
+      } else {
+        setError("Unknown role.");
+      }
 
-if (userRole === "admin") {
-  navigate("/admin/dashboard");
-} else if (userRole === "faculty") {
-  navigate("/faculty/dashboard");
-} else if (userRole === "student") {
-  navigate("/student/dashboard");
-} else {
-  console.error("Unknown role:", userRole);
-}
-
-  } catch (err) {
-    console.error("LOGIN ERROR:", err);
-    setError("Invalid email or password");
-  } finally {
-    setLoading(false);
-  }
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Invalid email or password"
+      );
+    } finally {
+      setLoading(false);
+    }
 };
 
   const bg = isDark

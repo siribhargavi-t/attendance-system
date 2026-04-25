@@ -17,7 +17,7 @@ const Report = () => {
           return;
         }
 
-        const response = await axios.get('/attendance/report', {
+        const response = await API.get('/attendance/report', {
           headers: {
             Authorization: `Bearer ${token}`
           }

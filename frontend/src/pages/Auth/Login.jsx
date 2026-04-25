@@ -35,26 +35,29 @@ const handleLogin = async (e) => {
   setError("");
 
   try {
-    const res = await axios.post(
-      "https://attendance-system-cb8z.onrender.com/api/auth/login",
-      {
-        email,
-        password,
-        role, // keep role (your UI uses it)
-      }
-    );
+   const res = await axios.post(
+  "https://attendance-system-cb8z.onrender.com/api/auth/login",
+  { email, password, role }
+);
 
-    console.log("LOGIN SUCCESS:", res.data);
+console.log("FULL RESPONSE:", res.data);
 
-    // store token if exists
-    if (res.data.token) {
-      localStorage.setItem("token", res.data.token);
-    }
+// 🔥 handle multiple response formats safely
+const token =
+  res.data.token ||
+  res.data?.data?.token ||
+  res.data?.accessToken;
 
-    // navigate based on role (optional)
-    if (role === "admin") navigate("/admin/dashboard");
-    else if (role === "faculty") navigate("/faculty/dashboard");
-    else navigate("/student/dashboard");
+if (token) {
+  localStorage.setItem("token", token);
+} else {
+  console.log("❌ Token not found in response");
+}
+
+// redirect
+if (role === "admin") navigate("/admin/dashboard");
+else if (role === "faculty") navigate("/faculty/dashboard");
+else navigate("/student/dashboard");
 
   } catch (err) {
     console.error("LOGIN ERROR:", err);

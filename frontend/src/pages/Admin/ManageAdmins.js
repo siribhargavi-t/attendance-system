@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../api/axios';
-import { AuthContext } from '../../contexts/AuthContext';
+import API from "../../services/api";import { AuthContext } from '../../contexts/AuthContext';
 import { UserPlus, Edit, Trash2, Shield, ShieldAlert, X } from 'lucide-react';
 
 const ManageAdmins = () => {

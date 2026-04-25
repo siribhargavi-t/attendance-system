@@ -12,7 +12,7 @@ const Requests = () => {
 
     const fetchRequests = async () => {
         try {
-            const res = await api.get('/admin/attendance');
+            const res = await API.get('/admin/attendance');
             const pendingReqs = res.data.data.filter(att => att.changeRequest === true && att.requestStatus === 'pending');
             setRequests(pendingReqs);
         } catch (err) {

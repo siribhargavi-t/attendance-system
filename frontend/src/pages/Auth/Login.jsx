@@ -24,42 +24,42 @@ const Login = () => {
 
   const isDark = darkMode;
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
+ const handleLogin = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError("");
 
-    try {
-      const res = await axios.post(
-        "https://attendance-system-cb8z.onrender.com/api/auth/login",
-        {
-          email,
-          password,
-          role,
-        }
-      );
+  try {
+    const res = await axios.post(
+      "https://attendance-system-cb8z.onrender.com/api/auth/login",
+      {
+        email,
+        password,
+        role,
+      }
+    );
 
-      console.log("LOGIN SUCCESS:", res.data);
+    console.log("LOGIN SUCCESS:", res.data);
 
-      // Save token + user
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("user", JSON.stringify(res.data));
+    localStorage.setItem("token", res.data.token);
+    localStorage.setItem("user", JSON.stringify(res.data));
 
-      // Redirect
-      window.location.href =
-        res.data.role === "admin"
-          ? "/admin/dashboard"
-          : res.data.role === "faculty"
-          ? "/faculty/dashboard"
-          : "/student/dashboard";
-
-    } catch (err) {
-      console.error("LOGIN ERROR:", err);
-      setError("Invalid email or password");
-    } finally {
-      setLoading(false);
+    // ✅ FIXED NAVIGATION
+    if (res.data.role === "admin") {
+      navigate("/admin/dashboard");
+    } else if (res.data.role === "faculty") {
+      navigate("/faculty/dashboard");
+    } else {
+      navigate("/student/dashboard");
     }
-  };
+
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
+    setError("Invalid email or password");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const bg = isDark
     ? "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)"

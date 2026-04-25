@@ -28,9 +28,8 @@ function NotFound() {
 function ProtectedRoute({ allowedRoles, children }) {
   const location = useLocation();
 
-  const stored = localStorage.getItem("userData");
+  const stored = localStorage.getItem("user"); // ✅ FIXED
 
-  // ❌ Not logged in
   if (!stored) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
@@ -42,15 +41,12 @@ function ProtectedRoute({ allowedRoles, children }) {
     return <Navigate to="/login" replace />;
   }
 
-  const role = user?.role;
-  console.log("Stored:", stored);
-  console.log("Role:", role);
-  // ❌ Role not valid
+  const role = user?.role?.toLowerCase(); // ✅ SAFE
+
   if (!role || !allowedRoles.includes(role)) {
     return <Navigate to="/login" replace />;
   }
 
-  // ✅ Allowed
   return children;
 }
 function App() {

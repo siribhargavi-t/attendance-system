@@ -27,15 +27,21 @@ const leaveRoutes = require("./routes/leaveRoutes");
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Enable CORS
-app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://attendance-system-4he7dhdhr-siribhargavi-ts-projects.vercel.app"
-  ],
-  credentials: true
-}));
+// ✅ FIXED CORS (FULL)
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      "https://attendance-system-4he7dhdhr-siribhargavi-ts-projects.vercel.app"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
+// ✅ VERY IMPORTANT (handles preflight)
+app.options("*", cors());
 // Mount routers
 app.use('/api/auth', authRoutes);
 app.use('/api/faculty', facultyRoutes);
@@ -52,11 +58,7 @@ app.get("/test", (req, res) => {
 // =================== ADD THIS SECTION ===================
 // Serve static assets if in production
 
-// REMOVE production static serving completely
-
-app.get("/test", (req, res) => {
-  res.send("Server working");
-});
+// REMOVE production static serving completelyS
 
 const PORT = process.env.PORT || 5000;
 

@@ -26,19 +26,45 @@ const Login = () => {
   const isDark = darkMode;
 
 
-const handleLogin = async () => {
+const handleLogin = async (e) => {
+  e.preventDefault(); // ✅ VERY IMPORTANT (fixes reload issue)
+
+  console.log("LOGIN CLICKED");
+
+  setLoading(true);
+  setError("");
+
   try {
     const res = await axios.post(
       "https://attendance-system-cb8z.onrender.com/api/auth/login",
       {
         email,
-        password
+        password,
+        role, // keep role (your UI uses it)
       }
     );
-console.log("LOGIN API HIT VERSION 999");
-    console.log(res.data);
+
+    console.log("LOGIN SUCCESS:", res.data);
+
+    // store token if exists
+    if (res.data.token) {
+      localStorage.setItem("token", res.data.token);
+    }
+
+    // navigate based on role (optional)
+    if (role === "admin") navigate("/admin/dashboard");
+    else if (role === "faculty") navigate("/faculty/dashboard");
+    else navigate("/student/dashboard");
+
   } catch (err) {
-    console.error(err);
+    console.error("LOGIN ERROR:", err);
+
+    setError(
+      err.response?.data?.message ||
+      "Login failed. Please try again."
+    );
+  } finally {
+    setLoading(false);
   }
 };
 

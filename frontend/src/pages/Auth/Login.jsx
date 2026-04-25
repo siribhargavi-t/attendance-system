@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiMail, FiLock, FiEye, FiEyeOff, FiBookOpen, FiArrowRight } from "react-icons/fi";
-// import API from "../../services/api";
 import axios from "axios";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -25,42 +24,43 @@ const Login = () => {
 
   const isDark = darkMode;
 
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
-const handleLogin = async (e) => {
-  e.preventDefault();
+    try {
+      const res = await axios.post(
+        "https://attendance-system-cb8z.onrender.com/api/auth/login",
+        {
+          email,
+          password,
+          role,
+        }
+      );
 
-  try {
-    const res = await axios.post(
-      "https://attendance-system-cb8z.onrender.com/api/auth/login",
-      {
-        email,
-        password,
-        role,
-      }
-    );
+      console.log("LOGIN SUCCESS:", res.data);
 
-    console.log("LOGIN RESPONSE:", res.data);
+      // Save token + user
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data));
 
-    // ✅ store token
-    localStorage.setItem("token", res.data.token);
+      // Redirect
+      window.location.href =
+        res.data.role === "admin"
+          ? "/admin/dashboard"
+          : res.data.role === "faculty"
+          ? "/faculty/dashboard"
+          : "/student/dashboard";
 
-    // ✅ store user (optional but useful)
-    localStorage.setItem("user", JSON.stringify(res.data));
-
-    // ✅ IMPORTANT: navigate based on role
-    if (res.data.role === "admin") {
-      navigate("/admin/dashboard");
-    } else if (res.data.role === "faculty") {
-      navigate("/faculty/dashboard");
-    } else {
-      navigate("/student/dashboard");
+    } catch (err) {
+      console.error("LOGIN ERROR:", err);
+      setError("Invalid email or password");
+    } finally {
+      setLoading(false);
     }
+  };
 
-  } catch (err) {
-    console.error(err);
-    alert("Login failed");
-  }
-};
   const bg = isDark
     ? "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)"
     : "linear-gradient(135deg, #e0f0ff 0%, #eae4ff 50%, #ffe4f0 100%)";
@@ -96,8 +96,6 @@ const handleLogin = async (e) => {
         padding: "24px",
       }}
     >
-      {/* Floating orbs (Clouds) */}
-
       <motion.div
         initial={{ opacity: 0, y: 40, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -143,12 +141,14 @@ const handleLogin = async (e) => {
           }}>
             AttendPro
           </h1>
+
           <p style={{ color: mutedColor, marginTop: 8, fontSize: 15 }}>
             Sign in to your account
           </p>
         </div>
 
         <form onSubmit={handleLogin}>
+          {/* ROLE */}
           <div style={{ marginBottom: 20 }}>
             <label style={{
               fontSize: 12,
@@ -161,11 +161,12 @@ const handleLogin = async (e) => {
             }}>
               Role
             </label>
+
             <div style={{ display: "flex", gap: 10 }}>
               {ROLES.map((r) => (
                 <button
                   key={r.label}
-                  type="submit"
+                  type="button"   // ✅ FIXED
                   onClick={() => setRole(r.label.toLowerCase())}
                   style={{
                     flex: 1,
@@ -191,43 +192,27 @@ const handleLogin = async (e) => {
             </div>
           </div>
 
+          {/* EMAIL */}
           <div style={{ marginBottom: 20, position: "relative" }}>
-            <FiMail
-              style={{
-                position: "absolute",
-                left: 16,
-                top: 16,
-                color: "#667eea",
-              }}
-            />
+            <FiMail style={{ position: "absolute", left: 16, top: 16, color: "#667eea" }} />
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email address"
               style={inputStyle}
-              onFocus={(e) => e.target.style.borderColor = "#667eea"}
-              onBlur={(e) => e.target.style.borderColor = inputBorder}
             />
           </div>
 
+          {/* PASSWORD */}
           <div style={{ marginBottom: 12, position: "relative" }}>
-            <FiLock
-              style={{
-                position: "absolute",
-                left: 16,
-                top: 16,
-                color: "#667eea",
-              }}
-            />
+            <FiLock style={{ position: "absolute", left: 16, top: 16, color: "#667eea" }} />
             <input
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
               style={{ ...inputStyle, paddingRight: 48 }}
-              onFocus={(e) => e.target.style.borderColor = "#667eea"}
-              onBlur={(e) => e.target.style.borderColor = inputBorder}
             />
 
             <button
@@ -241,92 +226,40 @@ const handleLogin = async (e) => {
                 background: "none",
                 color: mutedColor,
                 cursor: "pointer",
-                padding: 0,
               }}
             >
               {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
             </button>
           </div>
 
-          <div style={{ textAlign: "right", marginBottom: 24 }}>
-            <button
-              type="button"
-              onClick={() => navigate("/forgot-password")}
-              style={{
-                border: "none",
-                background: "none",
-                color: "#667eea",
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Forgot Password?
-            </button>
-          </div>
+          {/* ERROR */}
+          {error && (
+            <div style={{
+              color: "#f87171",
+              marginBottom: 16,
+              fontSize: 13
+            }}>
+              {error}
+            </div>
+          )}
 
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                style={{
-                  color: "#f87171",
-                  background: "rgba(248, 113, 113, 0.1)",
-                  padding: "10px 14px",
-                  borderRadius: 10,
-                  fontSize: 13,
-                  fontWeight: 500,
-                  marginBottom: 20,
-                  border: "1px solid rgba(248, 113, 113, 0.2)"
-                }}
-              >
-                {error}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
+          {/* SUBMIT */}
           <button
             type="submit"
             disabled={loading}
             style={{
               width: "100%",
               padding: 16,
-              border: "none",
               borderRadius: 14,
-              background: loading ? "#94a3b8" : "linear-gradient(135deg, #667eea, #764ba2)",
+              background: "linear-gradient(135deg, #667eea, #764ba2)",
               color: "white",
               fontWeight: 700,
-              fontSize: 16,
-              cursor: loading ? "not-allowed" : "pointer",
-              boxShadow: loading ? "none" : "0 8px 20px rgba(102,126,234,0.3)",
-              transition: "all 0.2s ease",
+              cursor: "pointer"
             }}
           >
-            {loading ? "Signing in..." : <>Sign In <FiArrowRight style={{ marginLeft: 6 }} /></>}
+            {loading ? "Signing in..." : "Sign In"}
           </button>
         </form>
-
-        <div style={{ textAlign: "center", marginTop: 24 }}>
-          <p style={{ color: mutedColor, fontSize: 14 }}>
-            Don't have an account?{" "}
-            <button
-              type="button"
-              onClick={() => navigate("/register")}
-              style={{
-                border: "none",
-                background: "none",
-                color: "#667eea",
-                fontWeight: 700,
-                cursor: "pointer",
-                textDecoration: "underline"
-              }}
-            >
-              Register now
-            </button>
-          </p>
-        </div>
       </motion.div>
     </div>
   );

@@ -53,8 +53,11 @@ const MainLayout = ({ children }) => {
       <Sidebar open={open} setOpen={setOpen} />
 
       {/* Main Content */}
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <div className="relative z-20">
+<div
+  className={`relative z-10 flex flex-col min-h-screen transition-all duration-300 ${
+    open ? "ml-72" : "ml-0"
+  }`}
+>        <div className="relative z-20">
           <Navbar
             darkMode={darkMode}
             toggleDarkMode={handleToggleTheme}

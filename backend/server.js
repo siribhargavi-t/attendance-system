@@ -40,8 +40,8 @@ app.use(
   })
 );
 
-// ✅ VERY IMPORTANT (handles preflight)
-app.options("*", cors());
+// ✅ If you want to keep preflight handling, use:
+
 // Mount routers
 app.use('/api/auth', authRoutes);
 app.use('/api/faculty', facultyRoutes);

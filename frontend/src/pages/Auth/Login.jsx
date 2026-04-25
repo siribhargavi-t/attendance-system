@@ -39,18 +39,24 @@ const Login = () => {
     );
 
     console.log("LOGIN SUCCESS:", res.data);
-
+console.log("ROLE FROM API:", res.data.role);
     localStorage.setItem("token", res.data.token);
-    localStorage.setItem("user", JSON.stringify(res.data));
+    localStorage.setItem("userData", JSON.stringify(res.data));
 
     // ✅ FIXED NAVIGATION
-    if (res.data.role === "admin") {
-      navigate("/admin/dashboard");
-    } else if (res.data.role === "faculty") {
-      navigate("/faculty/dashboard");
-    } else {
-      navigate("/student/dashboard");
-    }
+  const userRole = res.data.role?.toLowerCase()?.trim();
+console.log("ROLE FROM API:", res.data.role);
+console.log("ROLE FROM API:", userRole);
+
+if (userRole === "admin") {
+  navigate("/admin/dashboard");
+} else if (userRole === "faculty") {
+  navigate("/faculty/dashboard");
+} else if (userRole === "student") {
+  navigate("/student/dashboard");
+} else {
+  console.error("Unknown role:", userRole);
+}
 
   } catch (err) {
     console.error("LOGIN ERROR:", err);

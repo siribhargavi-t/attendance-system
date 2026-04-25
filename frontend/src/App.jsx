@@ -28,7 +28,7 @@ function NotFound() {
 function ProtectedRoute({ allowedRoles, children }) {
   const location = useLocation();
 
-  const stored = localStorage.getItem("user"); // ✅ FIXED
+  const stored = localStorage.getItem("userData"); // ✅ correct
 
   if (!stored) {
     return <Navigate to="/login" replace state={{ from: location }} />;
@@ -41,7 +41,7 @@ function ProtectedRoute({ allowedRoles, children }) {
     return <Navigate to="/login" replace />;
   }
 
-  const role = user?.role?.toLowerCase(); // ✅ SAFE
+  const role = user?.role?.toLowerCase();
 
   if (!role || !allowedRoles.includes(role)) {
     return <Navigate to="/login" replace />;

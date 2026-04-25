@@ -7,8 +7,21 @@ const Sidebar = ({ open, setOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const { user } = useContext(UserContext);
-  const role = user?.role;
+const { user } = useContext(UserContext);
+const safeUser = user || {};
+let role = safeUser.role;
+console.log("ROLE VALUE:", role);
+// 🔥 fallback from localStorage
+if (!role) {
+  const storedUser = localStorage.getItem("userData");
+  if (storedUser) {
+    try {
+      role = JSON.parse(storedUser).role;
+    } catch (e) {
+      console.error("Role parse error:", e);
+    }
+  }
+}
 
   const [showProfile, setShowProfile] = useState(false);
   const profileRef = useRef();
@@ -29,8 +42,9 @@ const Sidebar = ({ open, setOpen }) => {
       document.removeEventListener("mousedown", handleClickOutside);
   }, [showProfile]);
 
-  if (!role) return null;
-
+if (!role) {
+  console.log("Sidebar blocked: role missing");
+}
   let attendanceLabel = "Attendance";
   if (role === "admin") attendanceLabel = "View Attendance";
   if (role === "faculty") attendanceLabel = "Mark Attendance";
@@ -70,18 +84,14 @@ const Sidebar = ({ open, setOpen }) => {
       {/* ✅ Overlay */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/30"
-          onClick={() => setOpen(false)}
+className="fixed inset-0 bg-black bg-opacity-40 z-[90]"          onClick={() => setOpen(false)}
         />
       )}
 
       {/* ✅ Sidebar ONLY when open */}
       {open && (
         <aside
-          className="fixed left-0 top-0 h-full w-60 z-50 flex flex-col
-          bg-white dark:bg-gray-900 shadow-xl border-r p-4
-          transition-all duration-300"
-        >
+className="fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-900 shadow-xl transform transition-transform duration-300 ease-in-out z-[100] border-r border-gray-200 dark:border-gray-700">
           {/* HEADER */}
           <div className="flex items-center justify-between mb-8 px-2">
             <span className="text-2xl font-bold text-blue-600">
@@ -127,8 +137,8 @@ const Sidebar = ({ open, setOpen }) => {
               className="flex items-center gap-3 px-2 py-2 cursor-pointer rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition"
             >
               <div className="w-10 h-10 bg-gradient-to-tr from-blue-400 to-indigo-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-gray-800 overflow-hidden">
-                {user?.image ? (
-                  <img src={user.image} alt="Avatar" className="w-full h-full object-cover" />
+                {safeUser?.image ? (
+                  <img src={safeUser.image} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-xl text-white">👤</span>
                 )}
@@ -141,14 +151,14 @@ const Sidebar = ({ open, setOpen }) => {
             {showProfile && (
               <div className="absolute bottom-14 left-2 w-56 bg-white dark:bg-gray-800 shadow-xl rounded-xl p-4 z-50 border dark:border-gray-700">
                 <p className="font-semibold text-gray-900 dark:text-white">
-                  {user.name || "Demo User"}
+                  {safeUser.name || "Demo User"}
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-300 capitalize">
-                  {role}
+                  {role || "Unknown"}
                 </p>
 
                 <div className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                  <p>Email: {user.email}</p>
+                  <p>Email: {safeUser.email || "N/A"}</p>
                   <p>Dept: CSE</p>
                 </div>
 

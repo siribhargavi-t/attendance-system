@@ -158,6 +158,12 @@ const Login = () => {
             Sign in to your account
           </p>
         </div>
+        <p style={{ color: mutedColor, marginTop: 6, fontSize: 14 }}>
+  Don’t have an account?{" "}
+  <Link to="/register" style={{ color: "#667eea", fontWeight: 600 }}>
+    Register
+  </Link>
+</p>
 
         <form onSubmit={handleLogin}>
           {/* ROLE */}

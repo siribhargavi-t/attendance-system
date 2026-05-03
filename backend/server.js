@@ -32,7 +32,7 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://attendance-system-4he7dhdhr-siribhargavi-ts-projects.vercel.app"
+      "https://attendance-system-phi-one.vercel.app"
     ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],

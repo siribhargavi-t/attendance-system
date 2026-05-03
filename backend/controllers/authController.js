@@ -13,7 +13,7 @@ const login = async (req, res) => {
     password = password?.trim();
     role = role?.toLowerCase().trim();
 
-    // Find user
+    // Find user (do NOT filter by role)
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
@@ -27,7 +27,7 @@ const login = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Always require role and enforce match
+    // Always require role and enforce match AFTER password check
     if (!role) {
       return res.status(400).json({ message: "Role is required" });
     }

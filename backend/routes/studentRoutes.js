@@ -1,10 +1,10 @@
 const express = require("express");
 const router = express.Router();
-const authMiddleware = require('../middleware/authMiddleware');
+const { protect } = require('../middleware/authMiddleware');
+
+router.use(protect);
 const { getDashboardStats, getMyAttendance, submitAttendanceRequest } = require("../controllers/studentController");
 const { sendEmail } = require("../utils/emailService");
-
-router.use(authMiddleware);
 
 router.get("/dashboard", getDashboardStats);
 router.get("/attendance", getMyAttendance);

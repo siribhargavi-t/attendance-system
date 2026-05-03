@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { FiMail, FiLock, FiEye, FiEyeOff, FiBookOpen, FiArrowRight } from "react-icons/fi";
+import { useNavigate, Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import { FiMail, FiLock, FiEye, FiEyeOff, FiBookOpen } from "react-icons/fi";
 import axios from "axios";
 import { useTheme } from "../../context/ThemeContext";
 
@@ -35,17 +35,16 @@ const Login = () => {
         {
           email,
           password,
-          role: role.toLowerCase(), // always send lowercase
+          role: role.toLowerCase(),
         }
       );
 
-      // Compare selected role and backend role
       const backendRole = res.data.role?.toLowerCase();
       const selectedRole = role.toLowerCase();
 
       if (backendRole !== selectedRole) {
         setError(
-          `Wrong role selected. This account is "${res.data.role}". Please select the correct role.`
+          `Wrong role selected. This account is "${res.data.role}".`
         );
         setLoading(false);
         return;
@@ -54,24 +53,17 @@ const Login = () => {
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("userData", JSON.stringify(res.data));
 
-      if (backendRole === "admin") {
-        navigate("/admin/dashboard");
-      } else if (backendRole === "faculty") {
-        navigate("/faculty/dashboard");
-      } else if (backendRole === "student") {
-        navigate("/student/dashboard");
-      } else {
-        setError("Unknown role.");
-      }
+      if (backendRole === "admin") navigate("/admin/dashboard");
+      else if (backendRole === "faculty") navigate("/faculty/dashboard");
+      else if (backendRole === "student") navigate("/student/dashboard");
+      else setError("Unknown role");
 
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Invalid email or password"
-      );
+      setError(err.response?.data?.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }
-};
+  };
 
   const bg = isDark
     ? "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)"
@@ -93,25 +85,20 @@ const Login = () => {
     color: textColor,
     fontSize: 15,
     outline: "none",
-    boxSizing: "border-box",
-    transition: "all 0.2s ease",
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: bg,
-        padding: "24px",
-      }}
-    >
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: bg,
+      padding: 24,
+    }}>
       <motion.div
-        initial={{ opacity: 0, y: 40, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
         style={{
           width: "100%",
           maxWidth: 420,
@@ -119,158 +106,84 @@ const Login = () => {
           border: `1px solid ${cardBorder}`,
           borderRadius: 28,
           padding: 40,
-          backdropFilter: "blur(20px)",
-          boxShadow: isDark
-            ? "0 20px 50px rgba(0,0,0,0.3)"
-            : "0 20px 50px rgba(102,126,234,0.15)",
-          position: "relative",
-          zIndex: 10,
         }}
       >
-        <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <div
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #667eea, #764ba2)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              margin: "0 auto 16px",
-              boxShadow: "0 8px 20px rgba(102,126,234,0.3)",
-            }}
-          >
-            <FiBookOpen size={28} color="#fff" />
-          </div>
+        {/* HEADER */}
+        <div style={{ textAlign: "center", marginBottom: 30 }}>
+          <FiBookOpen size={40} color="#667eea" />
+          <h2 style={{ color: textColor }}>AttendPro</h2>
 
-          <h1 style={{
-            fontSize: 28,
-            fontWeight: 800,
-            margin: 0,
-            color: textColor,
-            letterSpacing: "-0.02em"
-          }}>
-            AttendPro
-          </h1>
-
-          <p style={{ color: mutedColor, marginTop: 8, fontSize: 15 }}>
+          <p style={{ color: mutedColor }}>
             Sign in to your account
+          </p>
+
+          {/* ✅ FIXED REGISTER LINK */}
+          <p style={{ marginTop: 10 }}>
+            Don't have an account?{" "}
+            <Link to="/register" style={{ color: "#667eea" }}>
+              Register
+            </Link>
           </p>
         </div>
 
         <form onSubmit={handleLogin}>
-          {/* ROLE */}
-          <div style={{ marginBottom: 20 }}>
-            <label style={{
-              fontSize: 12,
-              fontWeight: 700,
-              color: mutedColor,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              display: "block",
-              marginBottom: 8
-            }}>
-              Role
-            </label>
 
-            <div style={{ display: "flex", gap: 10 }}>
-              {ROLES.map((r) => (
-                <button
-                  key={r.label}
-                  type="button"   // ✅ FIXED
-                  onClick={() => setRole(r.label.toLowerCase())}
-                  style={{
-                    flex: 1,
-                    padding: "10px 4px",
-                    borderRadius: 12,
-                    border: "none",
-                    background: role === r.label.toLowerCase()
-                      ? "linear-gradient(135deg, #667eea, #764ba2)"
-                      : (isDark ? "rgba(255,255,255,0.05)" : "#f1f5f9"),
-                    color: role === r.label.toLowerCase() ? "white" : textColor,
-                    fontWeight: 600,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    transition: "all 0.2s ease",
-                    boxShadow: role === r.label.toLowerCase()
-                      ? "0 4px 12px rgba(102,126,234,0.3)"
-                      : "none",
-                  }}
-                >
-                  {r.emoji} {r.label}
-                </button>
-              ))}
-            </div>
+          {/* ROLE */}
+          <div style={{ marginBottom: 15 }}>
+            {ROLES.map((r) => (
+              <button
+                key={r.label}
+                type="button"
+                onClick={() => setRole(r.label.toLowerCase())}
+                style={{
+                  marginRight: 8,
+                  padding: 8,
+                  background: role === r.label.toLowerCase() ? "#667eea" : "#ccc",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 6,
+                  cursor: "pointer"
+                }}
+              >
+                {r.emoji} {r.label}
+              </button>
+            ))}
           </div>
 
           {/* EMAIL */}
-          <div style={{ marginBottom: 20, position: "relative" }}>
-            <FiMail style={{ position: "absolute", left: 16, top: 16, color: "#667eea" }} />
+          <div style={{ marginBottom: 15 }}>
             <input
               type="email"
+              placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value.trim().toLowerCase())}
-              placeholder="Email address"
               style={inputStyle}
             />
           </div>
 
           {/* PASSWORD */}
-          <div style={{ marginBottom: 12, position: "relative" }}>
-            <FiLock style={{ position: "absolute", left: 16, top: 16, color: "#667eea" }} />
+          <div style={{ marginBottom: 15 }}>
             <input
               type={showPassword ? "text" : "password"}
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value.trim())}
-              placeholder="Password"
-              style={{ ...inputStyle, paddingRight: 48 }}
+              style={inputStyle}
             />
-
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: "absolute",
-                right: 14,
-                top: 16,
-                border: "none",
-                background: "none",
-                color: mutedColor,
-                cursor: "pointer",
-              }}
-            >
-              {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-            </button>
           </div>
 
+          <button type="button" onClick={() => setShowPassword(!showPassword)}>
+            {showPassword ? "Hide" : "Show"}
+          </button>
+
           {/* ERROR */}
-          {error && (
-            <div style={{
-              color: "#f87171",
-              marginBottom: 16,
-              fontSize: 13
-            }}>
-              {error}
-            </div>
-          )}
+          {error && <p style={{ color: "red" }}>{error}</p>}
 
           {/* SUBMIT */}
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: "100%",
-              padding: 16,
-              borderRadius: 14,
-              background: "linear-gradient(135deg, #667eea, #764ba2)",
-              color: "white",
-              fontWeight: 700,
-              cursor: "pointer"
-            }}
-          >
-            {loading ? "Signing in..." : "Sign In"}
+          <button type="submit" disabled={loading}>
+            {loading ? "Signing in..." : "Login"}
           </button>
+
         </form>
       </motion.div>
     </div>

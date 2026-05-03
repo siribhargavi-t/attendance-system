@@ -140,7 +140,11 @@ function App() {
           />
           <Route
             path="/faculty/leave-requests"
-            element={<FacultyLeaveRequests />}
+            element={
+              <ProtectedRoute allowedRoles={["faculty"]}>
+                <FacultyLeaveRequests />
+              </ProtectedRoute>
+            }
           />
 
           {/* Profile & Settings */}

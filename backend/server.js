@@ -13,17 +13,14 @@ const app = express();
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:3000",
-      "https://attendance-system-phi-one.vercel.app",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    credentials: true,
-  })
-);
+const cors = require("cors");
 
+app.use(cors({
+  origin: "*",  // 🔥 allow all (temporary fix)
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
+app.options("*", cors());   // handle preflight fully
 // ================= SAFE ROUTE LOADER =================
 function loadRoute(path, name) {
   try {

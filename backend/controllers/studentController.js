@@ -1,4 +1,3 @@
-import API from "../services/api";
 const Attendance = require('../models/Attendance');
 const Student = require('../models/student');
 const User = require('../models/User');
@@ -71,12 +70,3 @@ module.exports = {
 };
 
 // Example: Fetch student dashboard stats in useEffect
-useEffect(() => {
-  const fetchStats = async () => {
-    const res = await API.get("/api/student/dashboard-stats", {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    setStats(res.data.stats);
-  };
-  fetchStats();
-}, []);

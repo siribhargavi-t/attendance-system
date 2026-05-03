@@ -1,33 +1,71 @@
 const express = require("express");
 const router = express.Router();
-const { protect } = require('../middleware/authMiddleware');
 
-router.use(protect);
-const { getDashboardStats, getMyAttendance, submitAttendanceRequest } = require("../controllers/studentController");
+const { protect } = require("../middleware/authMiddleware");
+const {
+  getDashboardStats,
+  getMyAttendance,
+  submitAttendanceRequest,
+} = require("../controllers/studentController");
+
 const { sendEmail } = require("../utils/emailService");
 
+// 🔒 Apply auth middleware to all routes
+router.use(protect);
+
+// ================= DASHBOARD =================
 router.get("/dashboard", getDashboardStats);
+
+// ================= ATTENDANCE =================
 router.get("/attendance", getMyAttendance);
+
+// ================= REQUEST =================
 router.post("/request", submitAttendanceRequest);
 
-// POST /api/send-warning
+// ================= SEND WARNING EMAIL =================
 router.post("/send-warning", async (req, res) => {
   try {
     const { studentName, studentEmail, reason, document } = req.body;
-    // Principal's email (replace with actual)
-    const principalEmail = "principal@example.com";
-    let message = `Warning Request from ${studentName} (${studentEmail}):\nReason: ${reason}`;
-    if (document) {
-      message += `\nDocument attached (base64): ${document.substring(0, 30)}...`;
+
+    // 🔍 Basic validation
+    if (!studentName || !studentEmail || !reason) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields (name, email, reason) are required",
+      });
     }
+
+    const principalEmail = "principal@example.com"; // 🔁 Replace with real email
+
+    let message = `
+Warning Request from ${studentName} (${studentEmail})
+
+Reason:
+${reason}
+`;
+
+    if (document) {
+      message += `\nDocument preview (base64): ${document.substring(0, 30)}...\n`;
+    }
+
     await sendEmail(
       principalEmail,
       "Student Warning Request",
       message
     );
-    res.json({ message: "Warning email sent to principal." });
+
+    res.status(200).json({
+      success: true,
+      message: "Warning email sent successfully",
+    });
+
   } catch (err) {
-    res.status(500).json({ message: "Failed to send warning email." });
+    console.error("SEND WARNING ERROR:", err);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to send warning email",
+    });
   }
 });
 

@@ -1,86 +1,91 @@
-const User = require("../models/User");
-const Student = require("../models/student");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const User = require("../models/User");
 
-// ================= LOGIN =================
-const login = async (req, res) => {
+// ================= REGISTER =================
+exports.register = async (req, res) => {
   try {
-    let { email, password, role } = req.body;
+    let { name, email, password, role } = req.body;
 
-    // Normalize input
-    email = email.toLowerCase().trim();
-    password = password?.trim();
-    role = role?.toLowerCase().trim();
+    email = email.trim().toLowerCase();
+    password = password.trim();
+    role = role?.toLowerCase() || "student";
 
-    // Find user (do NOT filter by role)
-    const user = await User.findOne({ email }).select("+password");
-
-    if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+    // Check existing user
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
     }
 
-    // Check password
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Save user
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+    });
+
+    await user.save();
+
+    res.status(201).json({
+      message: "User registered successfully",
+    });
+
+  } catch (err) {
+    console.error("REGISTER ERROR:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// ================= LOGIN =================
+exports.login = async (req, res) => {
+  try {
+    const email = req.body.email.trim().toLowerCase();
+    const password = req.body.password;
+    const role = req.body.role;
+
+    // 1️⃣ Find user
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid email or password" });
+    }
+
+    // 2️⃣ Check password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    // Always require role and enforce match AFTER password check
-    if (!role) {
-      return res.status(400).json({ message: "Role is required" });
-    }
+    // 3️⃣ Role check
     if (user.role !== role) {
-      return res.status(401).json({
-        message: `Wrong role selected. This account is ${user.role}`,
+      return res.status(400).json({
+        message: `Wrong role selected. This account is "${user.role}"`,
       });
     }
 
-    // Extra student data
-    let extraData = {};
-    if (user.role === "student") {
-      const studentProfile = await Student.findOne({ user: user._id });
-      if (studentProfile) {
-        extraData = {
-          rollNumber: studentProfile.rollNumber,
-          branch: studentProfile.branch,
-          year: studentProfile.year,
-          section: studentProfile.section,
-        };
-      }
-    }
-
-    // Token
+    // 4️⃣ REAL JWT TOKEN (IMPORTANT)
     const token = jwt.sign(
       { id: user._id, role: user.role },
-      process.env.JWT_SECRET || "secret",
+      process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    // Response
+    // 5️⃣ Response
     res.json({
+      token,
       role: user.role,
       email: user.email,
       name: user.name,
       _id: user._id,
-      rollNumber: user.rollNumber || extraData.rollNumber || "",
-      class:
-        user.class ||
-        (extraData.year ? `${extraData.year} - ${extraData.section}` : ""),
-      department: user.department || extraData.branch || "",
-      branch: extraData.branch || "",
-      year: extraData.year || "",
-      section: extraData.section || "",
-      adminRole: user.adminRole || "",
-      image: user.image || "",
-      banner: user.banner || "",
-      token,
     });
+
   } catch (err) {
     console.error("LOGIN ERROR:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
-
-module.exports = { login };

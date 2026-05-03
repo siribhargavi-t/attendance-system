@@ -49,7 +49,6 @@ app.use('/api/mail', mailRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/attendance', attendanceRoutes); // <-- Attendance routes connected here
 app.use('/api/leave', leaveRoutes);
-app.use('/api/student', studentAuthRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/profile', profileRoutes);
 app.use("/api/notifications", notificationRoutes);

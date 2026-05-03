@@ -19,7 +19,6 @@ app.use(cors({
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
-app.options("*", cors());   // handle preflight fully
 // ================= SAFE ROUTE LOADER =================
 function loadRoute(path, name) {
   try {

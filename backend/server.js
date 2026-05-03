@@ -24,49 +24,47 @@ app.use(
   })
 );
 
-// ================= ROUTES IMPORT =================
-const authRoutes = require("./routes/authRoutes");
-const studentRoutes = require("./routes/studentRoutes");
-const facultyRoutes = require("./routes/facultyRoutes");
-const adminRoutes = require("./routes/adminRoutes");
-const attendanceRoutes = require("./routes/attendanceRoutes");
-const leaveRoutes = require("./routes/leaveRoutes");
+// ================= SAFE ROUTE LOADER =================
+function loadRoute(path, name) {
+  try {
+    const route = require(path);
 
-// ⚠️ Optional routes (safe loading to prevent crash)
-let profileRoutes, notificationRoutes, mailRoutes;
+    if (typeof route !== "function") {
+      console.log(`❌ ${name} is NOT a router (invalid export)`);
+      return null;
+    }
 
-try {
-  profileRoutes = require("./routes/profileRoutes");
-} catch (err) {
-  console.log("profileRoutes not loaded");
+    console.log(`✅ ${name} loaded`);
+    return route;
+  } catch (err) {
+    console.log(`❌ Failed to load ${name}:`, err.message);
+    return null;
+  }
 }
 
-try {
-  notificationRoutes = require("./routes/notificationRoutes");
-} catch (err) {
-  console.log("notificationRoutes not loaded");
-}
+// ================= IMPORT ROUTES =================
+const authRoutes = loadRoute("./routes/authRoutes", "authRoutes");
+const studentRoutes = loadRoute("./routes/studentRoutes", "studentRoutes");
+const facultyRoutes = loadRoute("./routes/facultyRoutes", "facultyRoutes");
+const adminRoutes = loadRoute("./routes/adminRoutes", "adminRoutes");
+const attendanceRoutes = loadRoute("./routes/attendanceRoutes", "attendanceRoutes");
+const leaveRoutes = loadRoute("./routes/leaveRoutes", "leaveRoutes");
+const profileRoutes = loadRoute("./routes/profileRoutes", "profileRoutes");
+const notificationRoutes = loadRoute("./routes/notificationRoutes", "notificationRoutes");
+const mailRoutes = loadRoute("./routes/mailRoutes", "mailRoutes");
 
-try {
-  mailRoutes = require("./routes/mailRoutes");
-} catch (err) {
-  console.log("mailRoutes not loaded");
-}
-
-// ================= ROUTES =================
-app.use("/api/auth", authRoutes);
-app.use("/api/student", studentRoutes);
-app.use("/api/faculty", facultyRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/attendance", attendanceRoutes);
-app.use("/api/leave", leaveRoutes);
-
-// Optional routes (only if valid)
+// ================= MOUNT ROUTES =================
+if (authRoutes) app.use("/api/auth", authRoutes);
+if (studentRoutes) app.use("/api/student", studentRoutes);
+if (facultyRoutes) app.use("/api/faculty", facultyRoutes);
+if (adminRoutes) app.use("/api/admin", adminRoutes);
+if (attendanceRoutes) app.use("/api/attendance", attendanceRoutes);
+if (leaveRoutes) app.use("/api/leave", leaveRoutes);
 if (profileRoutes) app.use("/api/profile", profileRoutes);
 if (notificationRoutes) app.use("/api/notifications", notificationRoutes);
 if (mailRoutes) app.use("/api/mail", mailRoutes);
 
-// ================= TEST ROUTE =================
+// ================= TEST =================
 app.get("/test", (req, res) => {
   res.send("Server working");
 });
@@ -75,5 +73,5 @@ app.get("/test", (req, res) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

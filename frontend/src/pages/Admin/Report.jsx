@@ -4,8 +4,8 @@ import MainLayout from '../../components/Layout/MainLayout';
 import { motion } from "framer-motion";
 import { FiDownload, FiFileText, FiChevronLeft } from "react-icons/fi";
 import { useNavigate } from 'react-router-dom';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const Report = () => {
   const [attendanceData, setAttendanceData] = useState([]);
@@ -86,7 +86,7 @@ const Report = () => {
     ]);
     
     // Add Table
-    doc.autoTable({
+    autoTable(doc, {
       startY: 40,
       head: [tableColumn],
       body: tableRows,

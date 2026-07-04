@@ -14,10 +14,31 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 
+// Allow localhost origins for development and any production origins needed
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:5173",
+  "http://localhost:8000"
+];
+
 app.use(cors({
-  origin: "*",  // 🔥 allow all (temporary fix)
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl/Postman requests)
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.includes(origin) || 
+                      /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+                      
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
 }));
 // ================= SAFE ROUTE LOADER =================
 function loadRoute(path, name) {

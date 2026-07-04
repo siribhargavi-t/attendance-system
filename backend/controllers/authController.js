@@ -11,16 +11,14 @@ exports.register = async (req, res) => {
     password = password.trim();
     role = role?.toLowerCase() || "student";
 
-    // Check existing user
     const existingUser = await User.findOne({ email });
+
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Save user
     const user = new User({
       name,
       email,
@@ -36,46 +34,58 @@ exports.register = async (req, res) => {
 
   } catch (err) {
     console.error("REGISTER ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      error: err.message,
+    });
   }
 };
+
 
 // ================= LOGIN =================
 exports.login = async (req, res) => {
   try {
-    const email = req.body.email.trim().toLowerCase();
-    const password = req.body.password;
-    const role = req.body.role;
+    console.log("🔥 LOGIN API HIT"); // ✅ moved to TOP
 
-    // 1️⃣ Find user
-    const user = await User.findOne({ email });
+    // ✅ safe destructuring
+    let { email, password, role } = req.body || {};
 
-    if (!user) {
+    if (!email || !password || !role) {
+      return res.status(400).json({ message: "All fields required" });
+    }
+
+    email = email.trim().toLowerCase();
+    password = password.trim();
+    role = role.toLowerCase();
+
+    const user = await User.findOne({ email }).select("+password");
+
+    if (!user || !user.password) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    // 2️⃣ Check password
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
 
-    // 3️⃣ Role check
     if (user.role !== role) {
       return res.status(400).json({
         message: `Wrong role selected. This account is "${user.role}"`,
       });
     }
 
-    // 4️⃣ REAL JWT TOKEN (IMPORTANT)
+    // ✅ safeguard JWT
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT_SECRET not defined");
+    }
+
     const token = jwt.sign(
       { id: user._id, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    // 5️⃣ Response
     res.json({
       token,
       role: user.role,
@@ -86,6 +96,8 @@ exports.login = async (req, res) => {
 
   } catch (err) {
     console.error("LOGIN ERROR:", err);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({
+      error: err.message,
+    });
   }
 };

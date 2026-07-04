@@ -1,10 +1,11 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useContext } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiMail, FiLock, FiEye, FiEyeOff, FiBookOpen, FiArrowRight } from "react-icons/fi";
-import axios from "axios";
+import API from "../../services/api";
 import { useTheme } from "../../context/ThemeContext";
-import { Link } from "react-router-dom";
+import { UserContext } from "../../context/UserContext";
+
 const ROLES = [
   { label: "Admin", emoji: "🛡️" },
   { label: "Student", emoji: "🎓" },
@@ -14,6 +15,7 @@ const ROLES = [
 const Login = () => {
   const navigate = useNavigate();
   const { darkMode } = useTheme();
+  const { setUser } = useContext(UserContext);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,16 +32,12 @@ const Login = () => {
     setError("");
 
     try {
-      const res = await axios.post(
-        "https://attendance-system-cb8z.onrender.com/api/auth/login",
-        {
-          email,
-          password,
-          role: role.toLowerCase(), // always send lowercase
-        }
-      );
+      const res = await API.post("/api/auth/login", {
+        email,
+        password,
+        role: role.toLowerCase(),
+      });
 
-      // Compare selected role and backend role
       const backendRole = res.data.role?.toLowerCase();
       const selectedRole = role.toLowerCase();
 
@@ -53,25 +51,19 @@ const Login = () => {
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("userData", JSON.stringify(res.data));
+      setUser(res.data);
 
-      if (backendRole === "admin") {
-        navigate("/admin/dashboard");
-      } else if (backendRole === "faculty") {
-        navigate("/faculty/dashboard");
-      } else if (backendRole === "student") {
-        navigate("/student/dashboard");
-      } else {
-        setError("Unknown role.");
-      }
+      if (backendRole === "admin") navigate("/admin/dashboard");
+      else if (backendRole === "faculty") navigate("/faculty/dashboard");
+      else if (backendRole === "student") navigate("/student/dashboard");
+      else setError("Unknown role.");
 
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Invalid email or password"
-      );
+      setError(err.response?.data?.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }
-};
+  };
 
   const bg = isDark
     ? "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)"
@@ -98,16 +90,14 @@ const Login = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: bg,
-        padding: "24px",
-      }}
-    >
+    <div style={{
+      minHeight: "100vh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: bg,
+      padding: "24px",
+    }}>
       <motion.div
         initial={{ opacity: 0, y: 40, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -157,13 +147,17 @@ const Login = () => {
           <p style={{ color: mutedColor, marginTop: 8, fontSize: 15 }}>
             Sign in to your account
           </p>
+
+          {/* ✅ FIXED POSITION */}
+          <p style={{ color: mutedColor, marginTop: 6, fontSize: 14 }}>
+            Don’t have an account?{" "}
+            <Link to="/register" style={{ color: "#667eea", fontWeight: 600 }}>
+              Register
+            </Link>
+          </p>
         </div>
-        <p style={{ color: mutedColor, marginTop: 6, fontSize: 14 }}>
-  Don’t have an account?{" "}
-  <Link to="/register" style={{ color: "#667eea", fontWeight: 600 }}>
-    Register
-  </Link>
-</p>
+
+        {/* FORM (UNCHANGED) */}
 
         <form onSubmit={handleLogin}>
           {/* ROLE */}

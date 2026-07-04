@@ -42,24 +42,25 @@ if (!role) {
       document.removeEventListener("mousedown", handleClickOutside);
   }, [showProfile]);
 
-if (!role) {
-  console.log("Sidebar blocked: role missing");
-}
+  const lowerRole = role?.toLowerCase() || "";
+
+  if (!role) {
+    console.log("Sidebar blocked: role missing");
+  }
   let attendanceLabel = "Attendance";
-  if (role === "admin") attendanceLabel = "View Attendance";
-  if (role === "faculty") attendanceLabel = "Mark Attendance";
+  if (lowerRole === "admin") attendanceLabel = "View Attendance";
+  if (lowerRole === "faculty") attendanceLabel = "Mark Attendance";
 
   // Role-based links
   let navLinks = [];
-  if (role === "admin") {
+  if (lowerRole === "admin") {
     navLinks = [
       { name: "Dashboard", to: "/admin/dashboard", icon: "🏠" },
       { name: "Profile", to: "/admin/profile", icon: "👤" },
       { name: "Settings", to: "/admin/settings", icon: "⚙️" },
       { name: "Mail", to: "/admin/mail", icon: "📧" },
-      { name: attendanceLabel, to: "/admin/attendance", icon: "📋" },
     ];
-  } else if (role === "faculty") {
+  } else if (lowerRole === "faculty") {
     navLinks = [
       { name: "Dashboard", to: "/faculty/dashboard", icon: "🏠" },
       { name: "Profile", to: "/faculty/profile", icon: "👤" },
@@ -68,7 +69,7 @@ if (!role) {
       { name: attendanceLabel, to: "/faculty/attendance", icon: "📋" },
       { name: "Leave Requests", to: "/faculty/leave-requests", icon: "🗂️" },
     ];
-  } else if (role === "student") {
+  } else if (lowerRole === "student") {
     navLinks = [
       { name: "Dashboard", to: "/student/dashboard", icon: "🏠" },
       { name: "Profile", to: "/student/profile", icon: "👤" },

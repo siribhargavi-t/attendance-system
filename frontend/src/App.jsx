@@ -9,7 +9,7 @@ import StudentDashboard from "./pages/Student/StudentDashBoard";
 import FacultyDashboard from "./pages/Faculty/FacultyDashboard";
 import Register from "./pages/Auth/Register";
 import ForgotPassword from "./pages/Auth/ForgotPassword";
-import MarkAttendance from "./pages/Admin/MarkAttendance"; // <-- fixed import
+
 import StudentAttendance from "./pages/Student/Attendance";
 import FacultyAttendance from "./pages/Faculty/Attendance";
 import Profile from "./pages/Profile/Profile";
@@ -70,14 +70,7 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/admin/attendance"
-            element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <MarkAttendance />
-              </ProtectedRoute>
-            }
-          />
+
 
           {/* Student */}
           <Route

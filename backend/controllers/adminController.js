@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const Leave = require('../models/Leave');
+const Student = require('../models/student');
 const bcrypt = require('bcryptjs');
 const cacheManager = require('../utils/cacheManager');
 
@@ -80,6 +81,75 @@ const getStudents = async (req, res) => {
   }
 };
 
+const addStudent = async (req, res) => {
+  try {
+    let { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    email = email.trim().toLowerCase();
+    const existing = await User.findOne({ email });
+    if (existing) {
+      return res.status(400).json({ message: "Student with this email already exists" });
+    }
+
+    // Default formatting for new students created by Admin:
+    // Roll number: e.g. CS + last 3 digits of timestamp, class: 1st Year - SEC A
+    const rollNumber = `CS${String(Date.now()).slice(-3)}`;
+    const className = "1st Year - SEC A";
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: 'student',
+      rollNumber,
+      class: className
+    });
+    await user.save();
+
+    const studentProfile = new Student({
+      user: user._id,
+      name: user.name,
+      rollNumber,
+      branch: "CSE",
+      year: "1st Year",
+      section: "A"
+    });
+    await studentProfile.save();
+
+    res.status(201).json({ success: true, message: "Student added successfully", student: user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to add student", error: err.message });
+  }
+};
+
+const deleteStudent = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Remove User
+    await User.findByIdAndDelete(id);
+
+    // Remove linked Student profile document
+    await Student.findOneAndDelete({ user: id });
+
+    res.json({ success: true, message: "Student deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete student", error: err.message });
+  }
+};
+
 const getSubjectAttendanceStats = async (req, res) => {
   // Your logic here
   res.json({ message: "Subject attendance stats" });
@@ -88,5 +158,7 @@ const getSubjectAttendanceStats = async (req, res) => {
 module.exports = {
   getDashboardStats,
   getStudents,
+  addStudent,
+  deleteStudent,
   getSubjectAttendanceStats,
 };

@@ -29,9 +29,10 @@ const seedDemoCredentials = async () => {
     // Seed Users
     const seededUsers = {};
     for (const u of demoUsers) {
-      let user = await User.findOne({ email: u.email });
+      let user = await User.findOne({ email: u.email }).select("+password");
+      const hashedPassword = await bcrypt.hash(u.password, 10);
+      
       if (!user) {
-        const hashedPassword = await bcrypt.hash(u.password, 10);
         user = new User({
           name: u.name,
           email: u.email,
@@ -42,6 +43,14 @@ const seedDemoCredentials = async () => {
         });
         await user.save();
         console.log(`🌱 Seeded user: ${u.email} (${u.role})`);
+      } else {
+        // Ensure the password hash matches the demo password
+        const isMatch = await bcrypt.compare(u.password, user.password);
+        if (!isMatch) {
+          user.password = hashedPassword;
+          await user.save();
+          console.log(`🌱 Refreshed/repaired password hash for existing user: ${u.email}`);
+        }
       }
       
       // Update existing student user if class/rollNumber are missing

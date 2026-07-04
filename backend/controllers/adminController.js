@@ -2,10 +2,18 @@ const User = require('../models/User');
 const Attendance = require('../models/Attendance');
 const Leave = require('../models/Leave');
 const bcrypt = require('bcryptjs');
+const cacheManager = require('../utils/cacheManager');
 
 // ================== DASHBOARD ==================
 const getDashboardStats = async (req, res) => {
   try {
+    const cacheKey = "admin:dashboard:stats";
+    const cachedStats = await cacheManager.get(cacheKey);
+
+    if (cachedStats) {
+      return res.status(200).json(cachedStats);
+    }
+
     // ✅ Students & Faculty
     const totalStudents = await User.countDocuments({ role: 'student' });
     const totalFaculty = await User.countDocuments({ role: 'faculty' });
@@ -43,13 +51,18 @@ const getDashboardStats = async (req, res) => {
       percentage: s.total === 0 ? 0 : ((s.present / s.total) * 100).toFixed(2),
     }));
 
-    res.status(200).json({
+    const responseData = {
       totalStudents,
       totalFaculty,
       totalClasses,
       averageAttendance,
       subjectPerformance,
-    });
+    };
+
+    // Cache the analytics data for 5 minutes (300 seconds)
+    await cacheManager.setex(cacheKey, 300, responseData);
+
+    res.status(200).json(responseData);
 
   } catch (error) {
     console.error(error);

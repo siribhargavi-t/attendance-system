@@ -21,7 +21,8 @@
     "mongoose": "^9.4.1",
     "nodemailer": "^8.0.4",
     "react-chartjs-2": "^5.3.1",
-    "react-router-dom": "^7.13.2"
+    "react-router-dom": "^7.13.2",
+    "redis": "^6.1.0"
   },
   "devDependencies": {
     "supertest": "^7.2.2"

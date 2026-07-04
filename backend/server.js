@@ -19,8 +19,9 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:3001",
   "http://localhost:5173",
-  "http://localhost:8000"
-];
+  "http://localhost:8000",
+  process.env.FRONTEND_URL
+].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -28,7 +29,8 @@ app.use(cors({
     if (!origin) return callback(null, true);
     
     const isAllowed = allowedOrigins.includes(origin) || 
-                      /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+                      /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin) ||
+                      /^https?:\/\/[a-zA-Z0-9-]+\.(onrender\.com|vercel\.app|netlify\.app|github\.io)$/.test(origin);
                       
     if (isAllowed) {
       callback(null, true);

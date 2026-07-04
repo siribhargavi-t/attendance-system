@@ -9,6 +9,7 @@ const ManageStudents = () => {
     const [newStudent, setNewStudent] = useState({ name: '', email: '', password: '' });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const isDark = document.documentElement.classList.contains("dark");
     const textColor = isDark ? "#f1f5f9" : "#1e293b";
@@ -69,6 +70,11 @@ const ManageStudents = () => {
             }
         }
     };
+
+    const filteredStudents = students.filter(s => 
+        (s.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+        (s.email || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     const inputStyle = {
         background: inputBg,
@@ -178,10 +184,27 @@ const ManageStudents = () => {
                     className="glass-card overflow-hidden"
                     style={{ background: cardBg }}
                 >
-                    <div className="p-5 border-b" style={{ borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)" }}>
+                    <div className="p-5 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-4" style={{ borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)" }}>
                         <h2 className="font-bold text-lg" style={{ color: textColor }}>
-                            All Students ({students.length})
+                            All Students ({filteredStudents.length})
                         </h2>
+                        <input
+                            type="text"
+                            placeholder="Search students..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{
+                                background: inputBg,
+                                border: `1px solid ${inputBorder}`,
+                                borderRadius: "10px",
+                                padding: "6px 14px",
+                                color: textColor,
+                                outline: "none",
+                                fontSize: "14px",
+                                width: "100%",
+                                maxWidth: "240px"
+                            }}
+                        />
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm colorful-table">
@@ -200,14 +223,14 @@ const ManageStudents = () => {
                                             Loading students...
                                         </td>
                                     </tr>
-                                ) : students.length === 0 ? (
+                                ) : filteredStudents.length === 0 ? (
                                     <tr>
                                         <td colSpan="4" className="text-center p-6" style={{ color: mutedColor }}>
                                             No students found.
                                         </td>
                                     </tr>
                                 ) : (
-                                    students.map((student, idx) => (
+                                    filteredStudents.map((student, idx) => (
                                         <tr
                                             key={student._id}
                                             className="border-b transition"

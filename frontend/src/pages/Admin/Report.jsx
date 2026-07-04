@@ -104,6 +104,31 @@ const Report = () => {
     doc.save(`AttendPro_Report_${new Date().toISOString().split('T')[0]}.pdf`);
   };
 
+  const downloadCSV = () => {
+    const headers = ["#", "Student Name", "Email Address", "Subject", "Date", "Status"];
+    const csvRows = [
+      headers.join(","), // header row
+      ...attendanceData.map((record, index) => [
+        index + 1,
+        `"${(record.studentName || '').replace(/"/g, '""')}"`,
+        `"${(record.studentEmail || '').replace(/"/g, '""')}"`,
+        `"${(record.subject || '').replace(/"/g, '""')}"`,
+        `"${new Date(record.date).toLocaleDateString()}"`,
+        `"${record.status}"`
+      ].join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvRows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `AttendPro_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <MainLayout>
       <motion.div
@@ -129,16 +154,25 @@ const Report = () => {
               <p style={{ color: mutedColor, fontSize: 14 }}>Export and analyze campus-wide attendance stats</p>
             </div>
           </div>
-          <button
-            onClick={downloadPDF}
-            disabled={attendanceData.length === 0}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-white shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ 
-              background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
-            }}
-          >
-            <FiDownload /> Download PDF Report
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={downloadCSV}
+              disabled={attendanceData.length === 0}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold bg-emerald-600 text-white shadow-lg transition hover:bg-emerald-700 hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <FiFileText /> Export CSV
+            </button>
+            <button
+              onClick={downloadPDF}
+              disabled={attendanceData.length === 0}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl font-bold text-white shadow-lg transition hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ 
+                background: "linear-gradient(135deg, #6366f1 0%, #a855f7 100%)",
+              }}
+            >
+              <FiDownload /> Download PDF
+            </button>
+          </div>
         </div>
 
         {error && (

@@ -58,9 +58,15 @@ const Register = () => {
       return;
     }
 
-    if (form.role === 'student' && (!form.rollNumber || !form.branch || !form.year || !form.section)) {
-      setError("Please fill in all student details.");
-      return;
+    if (form.role === 'student') {
+      if (!form.rollNumber || !form.branch || !form.year || !form.section) {
+        setError("Please fill in all student details.");
+        return;
+      }
+      if (!/^[A-Za-z]{2}\d{3}$/.test(form.rollNumber.trim())) {
+        setError("Roll Number must be in the format of CS159 (2 letters, 3 digits).");
+        return;
+      }
     }
     if (!/\S+@\S+\.\S+/.test(form.email)) {
       setError("Please enter a valid email address.");
@@ -368,7 +374,7 @@ const Register = () => {
                       <input
                         type="text"
                         name="rollNumber"
-                        placeholder="e.g. 21CS101"
+                        placeholder="e.g. CS159"
                         value={form.rollNumber}
                         onChange={handleChange}
                         style={inputStyle}

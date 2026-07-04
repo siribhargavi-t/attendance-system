@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useContext } from "react";
 import { UserContext } from "../../context/UserContext";
 import { useNavigate } from "react-router-dom";
+import API from "../../services/api";
+
+const CLASSES = [
+  "1st Year - SEC A",
+  "1st Year - SEC B",
+  "2nd Year - CS",
+  "2nd Year - IT",
+  "3rd Year - CS",
+  "4th Year - CS"
+];
 
 const Profile = () => {
   const { user, setUser } = useContext(UserContext);
@@ -26,7 +36,7 @@ const Profile = () => {
       setImage(userData.image || "");
       setPreview(userData.image || "");
       setStudentClass(userData.class || "");
-      setRollNo(userData.rollNo || "");
+      setRollNo(userData.rollNo || userData.rollNumber || "");
       setDepartment(userData.department || "");
       setAdminRole(userData.adminRole || "");
     }
@@ -52,7 +62,11 @@ const Profile = () => {
     else if (!/^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(email)) errs.email = "Invalid email format";
     if (user?.role === "student") {
       if (!studentClass.trim()) errs.class = "Class is required";
-      if (!rollNo.trim()) errs.rollNo = "Roll No is required";
+      if (!rollNo.trim()) {
+        errs.rollNo = "Roll No is required";
+      } else if (!/^[A-Za-z]{2}\d{3}$/.test(rollNo.trim())) {
+        errs.rollNo = "Roll No must be in the format of CS159 (2 letters, 3 digits)";
+      }
     }
     if (user?.role === "faculty") {
       if (!department.trim()) errs.department = "Department is required";
@@ -80,6 +94,18 @@ const Profile = () => {
         ? { adminRole }
         : {}),
     };
+
+    const token = localStorage.getItem("token");
+    API.put("/api/profile", updatedUser, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(res => {
+      console.log("Profile updated successfully in DB");
+    })
+    .catch(err => {
+      console.error("Error updating profile in DB", err);
+    });
+
     // Save to localStorage
     localStorage.setItem("userData", JSON.stringify(updatedUser));
     // Update context
@@ -169,11 +195,14 @@ const Profile = () => {
             <label className="text-sm font-semibold text-gray-500 dark:text-gray-300 mb-1 block">Class</label>
             {editing ? (
               <>
-                <input
+                <select
                   value={studentClass}
                   onChange={(e) => setStudentClass(e.target.value)}
-                  className="w-full border border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-600 text-gray-900 dark:text-white transition"
-                />
+                  className="w-full border border-gray-300 dark:border-gray-700 bg-white/70 dark:bg-gray-900/60 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 dark:focus:ring-indigo-600 text-gray-900 dark:text-white transition cursor-pointer"
+                >
+                  <option value="" disabled>Select Class</option>
+                  {CLASSES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
                 {errors.class && (
                   <div className="text-red-600 text-sm mt-1">{errors.class}</div>
                 )}

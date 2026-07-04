@@ -37,7 +37,7 @@ const seedDemoCredentials = async () => {
           email: u.email,
           password: hashedPassword,
           role: u.role,
-          rollNumber: u.role === "student" ? "21CS101" : "",
+          rollNumber: u.role === "student" ? "CS159" : "",
           class: u.role === "student" ? "3rd Year - CS" : ""
         });
         await user.save();
@@ -45,8 +45,8 @@ const seedDemoCredentials = async () => {
       }
       
       // Update existing student user if class/rollNumber are missing
-      if (user && user.role === "student" && (!user.class || !user.rollNumber)) {
-        user.rollNumber = "21CS101";
+      if (user && user.role === "student" && (!user.class || !user.rollNumber || user.rollNumber === "21CS101")) {
+        user.rollNumber = "CS159";
         user.class = "3rd Year - CS";
         await user.save();
         console.log(`🌱 Updated existing student user ${u.email} with demo class and roll number`);
@@ -62,7 +62,7 @@ const seedDemoCredentials = async () => {
         studentProfile = new Student({
           user: studentUser._id,
           name: studentUser.name,
-          rollNumber: "21CS101",
+          rollNumber: "CS159",
           branch: "CSE",
           year: "3rd Year",
           section: "A"

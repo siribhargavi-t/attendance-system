@@ -9,8 +9,8 @@ const getDashboardStats = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Student profile not found.' });
         }
 
-        const totalDays = await Attendance.countDocuments({ studentId: student._id });
-        const present = await Attendance.countDocuments({ studentId: student._id, status: 'present' });
+        const totalDays = await Attendance.countDocuments({ studentEmail: req.user.email });
+        const present = await Attendance.countDocuments({ studentEmail: req.user.email, status: 'Present' });
         const percentage = totalDays > 0 ? (present / totalDays) * 100 : 100;
 
         res.status(200).json({
@@ -29,9 +29,7 @@ const getDashboardStats = async (req, res) => {
 
 const getMyAttendance = async (req, res) => {
     try {
-        const student = await Student.findOne({ user: req.user.id });
-        const attendance = await Attendance.find({ studentId: student._id })
-            .populate('subjectId', 'name code')
+        const attendance = await Attendance.find({ studentEmail: req.user.email })
             .sort({ date: -1 });
 
         res.status(200).json({ success: true, attendance });

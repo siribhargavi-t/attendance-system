@@ -1,6 +1,7 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Student = require("../models/student");
 
 // ================= REGISTER =================
 exports.register = async (req, res) => {
@@ -27,6 +28,18 @@ exports.register = async (req, res) => {
     });
 
     await user.save();
+
+    if (role === "student") {
+      const student = new Student({
+        user: user._id,
+        name: user.name,
+        rollNumber: req.body.rollNumber || `ROLL-${Date.now()}`,
+        branch: req.body.branch || "General",
+        year: req.body.year || "1st Year",
+        section: req.body.section || "A",
+      });
+      await student.save();
+    }
 
     res.status(201).json({
       message: "User registered successfully",

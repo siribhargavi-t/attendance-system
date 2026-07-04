@@ -22,6 +22,9 @@ const STAT_CONFIGS = [
 const StudentDashboard = () => {
   const [stats, setStats] = useState([]);
   const [attendancePercent, setAttendancePercent] = useState(null);
+  const [riskStatus, setRiskStatus] = useState("Good");
+  const [projectedMax, setProjectedMax] = useState(null);
+  const [classesRemaining, setClassesRemaining] = useState(0);
 
   const user = JSON.parse(localStorage.getItem("userData") || "{}");
   const token = localStorage.getItem("token");
@@ -40,7 +43,7 @@ const StudentDashboard = () => {
       },
     })
       .then((res) => {
-        const { totalDays, present, absent, percentage } = res.data.stats;
+        const { totalDays, present, absent, percentage, riskStatus, projectedMaxPercentage, classesRemaining } = res.data.stats;
 
         setStats([
           { label: "Total Classes", value: totalDays },
@@ -50,6 +53,9 @@ const StudentDashboard = () => {
         ]);
 
         setAttendancePercent(parseFloat(percentage));
+        setRiskStatus(riskStatus || "Good");
+        setProjectedMax(parseFloat(projectedMaxPercentage));
+        setClassesRemaining(classesRemaining || 0);
       })
       .catch((err) => {
         console.error("Failed to fetch dashboard stats", err);
@@ -81,16 +87,48 @@ const StudentDashboard = () => {
           </h2>
         </div>
 
-        {/* Alerts */}
-        {attendancePercent !== null && attendancePercent < 75 && (
-          <div className="p-4 bg-red-200 rounded">
-            ⚠️ Attendance below 75%
-          </div>
-        )}
-
-        {needed > 0 && (
-          <div className="p-4 bg-yellow-200 rounded">
-            Attend {needed} more classes to reach 75%
+        {/* Predictive Analytics Banner */}
+        {attendancePercent !== null && (
+          <div 
+            className="p-6 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-6"
+            style={{
+              background: isDark ? "rgba(15,23,42,0.6)" : "rgba(255,255,255,0.75)",
+              borderColor: riskStatus === "Good" 
+                ? "rgba(34,197,94,0.3)" 
+                : riskStatus === "At Risk" 
+                ? "rgba(234,179,8,0.3)" 
+                : "rgba(239,68,68,0.3)",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.03)"
+            }}
+          >
+            <div className="space-y-2 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">
+                  {riskStatus === "Good" ? "🛡️" : riskStatus === "At Risk" ? "⚠️" : "🚨"}
+                </span>
+                <h3 className="text-lg font-bold" style={{
+                  color: riskStatus === "Good" 
+                    ? "#22c55e" 
+                    : riskStatus === "At Risk" 
+                    ? "#eab308" 
+                    : "#ef4444"
+                }}>
+                  Attendance Profile: {riskStatus === "Good" ? "Safe & Eligible" : riskStatus === "At Risk" ? "At Risk Warning" : "Critically Ineligible (Defaulter)"}
+                </h3>
+              </div>
+              <p className="text-sm" style={{ color: isDark ? "#94a3b8" : "#475569" }}>
+                {riskStatus === "Good" && "Excellent! Your attendance is healthy. Maintain your routine to remain fully eligible for exams."}
+                {riskStatus === "At Risk" && `Your attendance is currently below 75%. You can still recover: you must attend at least ${needed} of the remaining ${classesRemaining} classes.`}
+                {riskStatus === "Defaulter" && `Critical: Even if you attend all remaining ${classesRemaining} classes, your maximum attendance will top out at ${projectedMax}%. Please contact admin.`}
+              </p>
+            </div>
+            
+            {/* Projected Max Mini Card */}
+            <div className="p-4 rounded-xl text-center md:text-right border bg-black/5 dark:bg-white/5" style={{ borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)" }}>
+              <p className="text-xs uppercase font-bold tracking-wider" style={{ color: isDark ? "#94a3b8" : "#64748b" }}>Projected Max %</p>
+              <p className="text-3xl font-black mt-1" style={{ color: textColor }}>{projectedMax}%</p>
+              <p className="text-[10px] mt-1" style={{ color: isDark ? "#64748b" : "#94a3b8" }}>if you attend all remaining classes</p>
+            </div>
           </div>
         )}
 

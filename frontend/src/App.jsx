@@ -20,6 +20,7 @@ import LeaveList from "./pages/Student/LeaveList";
 import NewLeave from "./pages/Student/NewLeave";
 import Mail from "./pages/Common/Mail";
 import Report from "./pages/Admin/Report";
+import ManageStudents from "./pages/Admin/ManageStudents";
 
 function NotFound() {
   return <h1>404 Page Not Found</h1>;
@@ -76,6 +77,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <Report />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/students"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <ManageStudents />
               </ProtectedRoute>
             }
           />

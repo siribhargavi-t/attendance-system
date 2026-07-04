@@ -4,7 +4,10 @@ const connectDB = require("./config/db");
 require("dotenv").config();
 
 // ================= DB =================
-connectDB();
+connectDB().then(() => {
+  const seedDemoCredentials = require("./utils/seeder");
+  seedDemoCredentials();
+});
 
 // ================= APP =================
 const app = express();

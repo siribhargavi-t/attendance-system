@@ -271,6 +271,63 @@ const Login = () => {
           >
             {loading ? "Signing in..." : "Sign In"}
           </button>
+
+          {/* DEMO CREDENTIALS QUICK-FILL */}
+          <div style={{
+            marginTop: 24,
+            paddingTop: 20,
+            borderTop: `1px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}`,
+            textAlign: "center"
+          }}>
+            <p style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: mutedColor,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              marginBottom: 12
+            }}>
+              Quick Demo Login
+            </p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+              {[
+                { label: "Admin", email: "admin@example.com", role: "admin" },
+                { label: "Faculty", email: "faculty@example.com", role: "faculty" },
+                { label: "Student", email: "student@example.com", role: "student" }
+              ].map(demo => (
+                <button
+                  key={demo.label}
+                  type="button"
+                  onClick={() => {
+                    setEmail(demo.email);
+                    setPassword("password");
+                    setRole(demo.role);
+                  }}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: 10,
+                    border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(102,126,234,0.15)"}`,
+                    background: isDark ? "rgba(255,255,255,0.03)" : "rgba(102,126,234,0.05)",
+                    color: textColor,
+                    fontSize: 12,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.08)" : "rgba(102,126,234,0.1)";
+                    e.currentTarget.style.borderColor = "#667eea";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.03)" : "rgba(102,126,234,0.05)";
+                    e.currentTarget.style.borderColor = isDark ? "rgba(255,255,255,0.1)" : "rgba(102,126,234,0.15)";
+                  }}
+                >
+                  {demo.label}
+                </button>
+              ))}
+            </div>
+          </div>
         </form>
       </motion.div>
     </div>

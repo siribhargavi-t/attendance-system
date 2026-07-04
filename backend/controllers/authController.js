@@ -20,11 +20,28 @@ exports.register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    let className = "";
+    let rollNumber = "";
+
+    if (role === "student") {
+      const year = req.body.year || "1st Year";
+      const branch = req.body.branch || "General";
+      const section = req.body.section || "A";
+      rollNumber = req.body.rollNumber || `ROLL-${Date.now()}`;
+
+      const displayBranch = branch === "CSE" ? "CS" : branch;
+      className = year === "1st Year"
+        ? `1st Year - SEC ${section}`
+        : `${year} - ${displayBranch}`;
+    }
+
     const user = new User({
       name,
       email,
       password: hashedPassword,
       role,
+      rollNumber,
+      class: className,
     });
 
     await user.save();
@@ -33,7 +50,7 @@ exports.register = async (req, res) => {
       const student = new Student({
         user: user._id,
         name: user.name,
-        rollNumber: req.body.rollNumber || `ROLL-${Date.now()}`,
+        rollNumber,
         branch: req.body.branch || "General",
         year: req.body.year || "1st Year",
         section: req.body.section || "A",

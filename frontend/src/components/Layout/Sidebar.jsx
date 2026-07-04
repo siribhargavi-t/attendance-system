@@ -56,6 +56,7 @@ if (!role) {
   if (lowerRole === "admin") {
     navLinks = [
       { name: "Dashboard", to: "/admin/dashboard", icon: "🏠" },
+      { name: "Reports", to: "/admin/reports", icon: "📊" },
       { name: "Profile", to: "/admin/profile", icon: "👤" },
       { name: "Settings", to: "/admin/settings", icon: "⚙️" },
       { name: "Mail", to: "/admin/mail", icon: "📧" },

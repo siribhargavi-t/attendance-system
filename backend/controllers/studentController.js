@@ -28,6 +28,25 @@ const getDashboardStats = async (req, res) => {
             }
         }
 
+        // Attendance Trend Calculation (Chronological cumulative percentage)
+        const records = await Attendance.find({ studentEmail: req.user.email }).sort({ date: 1 });
+        let runningPresent = 0;
+        const trend = records.map((record, index) => {
+            if (record.status === "Present") {
+                runningPresent++;
+            }
+            const totalSoFar = index + 1;
+            const percentageSoFar = (runningPresent / totalSoFar) * 100;
+            
+            const dateObj = new Date(record.date);
+            const formattedDate = `${String(dateObj.getMonth() + 1).padStart(2, '0')}/${String(dateObj.getDate()).padStart(2, '0')}`;
+            
+            return {
+                date: formattedDate,
+                percent: Number(percentageSoFar.toFixed(1))
+            };
+        });
+
         res.status(200).json({
             success: true,
             stats: {
@@ -38,7 +57,8 @@ const getDashboardStats = async (req, res) => {
                 riskStatus,
                 projectedMaxPercentage: projectedMaxPercentage.toFixed(2),
                 classesRemaining,
-                totalClassesInSemester
+                totalClassesInSemester,
+                trend
             }
         });
     } catch (err) {

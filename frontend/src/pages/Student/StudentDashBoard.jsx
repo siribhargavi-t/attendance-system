@@ -25,6 +25,7 @@ const StudentDashboard = () => {
   const [riskStatus, setRiskStatus] = useState("Good");
   const [projectedMax, setProjectedMax] = useState(null);
   const [classesRemaining, setClassesRemaining] = useState(0);
+  const [trendData, setTrendData] = useState([]);
 
   const user = JSON.parse(localStorage.getItem("userData") || "{}");
   const token = localStorage.getItem("token");
@@ -43,7 +44,7 @@ const StudentDashboard = () => {
       },
     })
       .then((res) => {
-        const { totalDays, present, absent, percentage, riskStatus, projectedMaxPercentage, classesRemaining } = res.data.stats;
+        const { totalDays, present, absent, percentage, riskStatus, projectedMaxPercentage, classesRemaining, trend } = res.data.stats;
 
         setStats([
           { label: "Total Classes", value: totalDays },
@@ -56,6 +57,7 @@ const StudentDashboard = () => {
         setRiskStatus(riskStatus || "Good");
         setProjectedMax(parseFloat(projectedMaxPercentage));
         setClassesRemaining(classesRemaining || 0);
+        setTrendData(trend || []);
       })
       .catch((err) => {
         console.error("Failed to fetch dashboard stats", err);
@@ -146,15 +148,39 @@ const StudentDashboard = () => {
           })}
         </div>
 
-        {/* Chart placeholder (optional) */}
-        <div className="p-6 rounded bg-white">
-          <h3 className="mb-2">Attendance Trend</h3>
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={[]}>
-              <XAxis dataKey="date" />
-              <YAxis />
-              <Tooltip />
-              <Line type="monotone" dataKey="percent" stroke="#4facfe" />
+        {/* Attendance Trend Chart */}
+        <div 
+          className="p-6 rounded-2xl border"
+          style={{
+            background: isDark ? "rgba(15,23,42,0.6)" : "rgba(255,255,255,0.75)",
+            borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+            backdropFilter: "blur(12px)",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.02)"
+          }}
+        >
+          <h3 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: textColor }}>
+            <FiTrendingUp className="text-blue-500" /> Attendance Trend Over Time
+          </h3>
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={trendData}>
+              <XAxis dataKey="date" stroke={isDark ? "#64748b" : "#94a3b8"} style={{ fontSize: 11 }} />
+              <YAxis domain={[0, 100]} stroke={isDark ? "#64748b" : "#94a3b8"} style={{ fontSize: 11 }} />
+              <Tooltip 
+                contentStyle={{
+                  background: isDark ? "#1e293b" : "#ffffff",
+                  borderColor: isDark ? "#334155" : "#e2e8f0",
+                  borderRadius: 10,
+                  color: textColor
+                }}
+              />
+              <Line 
+                type="monotone" 
+                dataKey="percent" 
+                stroke="#6366f1" 
+                strokeWidth={3}
+                dot={{ r: 4, stroke: "#6366f1", strokeWidth: 2, fill: isDark ? "#0f172a" : "#fff" }}
+                activeDot={{ r: 6 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>

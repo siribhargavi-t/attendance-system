@@ -32,7 +32,6 @@ const StudentDashboard = () => {
   const studentName = user.name || "Student";
 
   const isDark = document.documentElement.classList.contains("dark");
-  const chartBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.75)";
   const textColor = isDark ? "#e2e8f0" : "#1e293b";
 
   useEffect(() => {

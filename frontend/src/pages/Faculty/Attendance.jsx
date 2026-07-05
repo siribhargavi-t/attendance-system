@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import MainLayout from "../../components/Layout/MainLayout";
-import { FiSearch, FiCheckCircle, FiXCircle, FiSave, FiClock, FiBook, FiUsers, FiFilter } from "react-icons/fi";
+import { FiSearch, FiSave, FiClock, FiBook, FiUsers } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
 import API from "../../services/api";   // adjust path
 const SUBJECTS = ["Mathematics", "Physics", "Chemistry", "English", "Computer Science", "Engineering Graphics"];

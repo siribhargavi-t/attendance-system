@@ -11,7 +11,7 @@ const getDashboardStats = async (req, res) => {
 
         const totalDays = await Attendance.countDocuments({ studentEmail: req.user.email });
         const present = await Attendance.countDocuments({ studentEmail: req.user.email, status: 'Present' });
-        const percentage = totalDays > 0 ? (present / totalDays) * 100 : 100;
+        const percentage = totalDays > 0 ? (present / totalDays) * 100 : 0;
 
         res.status(200).json({
             success: true,

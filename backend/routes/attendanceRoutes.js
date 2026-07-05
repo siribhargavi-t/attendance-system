@@ -2,15 +2,11 @@ const express = require('express');
 const router = express.Router();
 const {
   markAttendance,
-  markAttendanceBulk,
   getAttendance,
   updateAttendance,
   deleteAttendance,
   getAttendancePercentage
 } = require('../controllers/attendanceController');
-
-// POST /api/attendance/bulk → Mark batch attendance
-router.post('/bulk', markAttendanceBulk);
 
 // POST /api/attendance/ → Mark attendance
 router.post('/', markAttendance);

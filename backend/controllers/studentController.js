@@ -13,52 +13,13 @@ const getDashboardStats = async (req, res) => {
         const present = await Attendance.countDocuments({ studentEmail: req.user.email, status: 'Present' });
         const percentage = totalDays > 0 ? (present / totalDays) * 100 : 100;
 
-        // Predictive Analytics (Assuming 40 total lectures in a standard semester)
-        const totalClassesInSemester = Math.max(40, totalDays);
-        const classesRemaining = Math.max(0, totalClassesInSemester - totalDays);
-        const maxPossiblePresent = present + classesRemaining;
-        const projectedMaxPercentage = (maxPossiblePresent / totalClassesInSemester) * 100;
-
-        let riskStatus = "Good";
-        if (percentage < 75) {
-            if (projectedMaxPercentage < 75) {
-                riskStatus = "Defaulter"; // Mathematically impossible to reach 75%
-            } else {
-                riskStatus = "At Risk"; // Below 75% currently, but can still recover
-            }
-        }
-
-        // Attendance Trend Calculation (Chronological cumulative percentage)
-        const records = await Attendance.find({ studentEmail: req.user.email }).sort({ date: 1 });
-        let runningPresent = 0;
-        const trend = records.map((record, index) => {
-            if (record.status === "Present") {
-                runningPresent++;
-            }
-            const totalSoFar = index + 1;
-            const percentageSoFar = (runningPresent / totalSoFar) * 100;
-            
-            const dateObj = new Date(record.date);
-            const formattedDate = `${String(dateObj.getMonth() + 1).padStart(2, '0')}/${String(dateObj.getDate()).padStart(2, '0')}`;
-            
-            return {
-                date: formattedDate,
-                percent: Number(percentageSoFar.toFixed(1))
-            };
-        });
-
         res.status(200).json({
             success: true,
             stats: {
                 totalDays,
                 present,
                 absent: totalDays - present,
-                percentage: percentage.toFixed(2),
-                riskStatus,
-                projectedMaxPercentage: projectedMaxPercentage.toFixed(2),
-                classesRemaining,
-                totalClassesInSemester,
-                trend
+                percentage: percentage.toFixed(2)
             }
         });
     } catch (err) {

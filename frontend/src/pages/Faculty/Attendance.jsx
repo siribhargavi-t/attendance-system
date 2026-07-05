@@ -103,8 +103,8 @@ const FacultyAttendance = () => {
         status: attendance[s.id] || "Absent",
       }));
 
-      // Send bulk request in a single optimized payload
-      await API.post("/api/attendance/bulk", { records });
+      // Save student attendance in parallel requests
+      await Promise.all(records.map(r => API.post("/api/attendance", r)));
       alert("Attendance records saved successfully!");
     } catch (err) {
       console.error(err);

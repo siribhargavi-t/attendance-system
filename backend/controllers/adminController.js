@@ -3,18 +3,10 @@ const Attendance = require('../models/Attendance');
 const Leave = require('../models/Leave');
 const Student = require('../models/student');
 const bcrypt = require('bcryptjs');
-const cacheManager = require('../utils/cacheManager');
 
 // ================== DASHBOARD ==================
 const getDashboardStats = async (req, res) => {
   try {
-    const cacheKey = "admin:dashboard:stats";
-    const cachedStats = await cacheManager.get(cacheKey);
-
-    if (cachedStats) {
-      return res.status(200).json(cachedStats);
-    }
-
     // ✅ Students & Faculty
     const totalStudents = await User.countDocuments({ role: 'student' });
     const totalFaculty = await User.countDocuments({ role: 'faculty' });
@@ -32,38 +24,34 @@ const getDashboardStats = async (req, res) => {
         ? ((presentRecords / totalAttendanceRecords) * 100).toFixed(2)
         : "0.00";
 
-    // ✅ Subject-wise stats (NEW)
-    const subjectStats = await Attendance.aggregate([
-      {
-        $group: {
-          _id: "$subject",
-          total: { $sum: 1 },
-          present: {
-            $sum: {
-              $cond: [{ $eq: ["$status", "Present"] }, 1, 0],
-            },
-          },
-        },
-      },
-    ]);
+    // Calculate subject-wise performance in standard Javascript memory loop (no aggregation pipelines)
+    const allRecords = await Attendance.find({});
+    const subjectCounts = {};
+    for (const rec of allRecords) {
+      if (!rec.subject) continue;
+      if (!subjectCounts[rec.subject]) {
+        subjectCounts[rec.subject] = { total: 0, present: 0 };
+      }
+      subjectCounts[rec.subject].total++;
+      if (rec.status === "Present") {
+        subjectCounts[rec.subject].present++;
+      }
+    }
 
-    const subjectPerformance = subjectStats.map((s) => ({
-      subject: s._id,
-      percentage: s.total === 0 ? 0 : ((s.present / s.total) * 100).toFixed(2),
+    const subjectPerformance = Object.keys(subjectCounts).map((subj) => ({
+      subject: subj,
+      percentage: subjectCounts[subj].total === 0 
+        ? 0 
+        : ((subjectCounts[subj].present / subjectCounts[subj].total) * 100).toFixed(2),
     }));
 
-    const responseData = {
+    res.status(200).json({
       totalStudents,
       totalFaculty,
       totalClasses,
       averageAttendance,
       subjectPerformance,
-    };
-
-    // Cache the analytics data for 5 minutes (300 seconds)
-    await cacheManager.setex(cacheKey, 300, responseData);
-
-    res.status(200).json(responseData);
+    });
 
   } catch (error) {
     console.error(error);

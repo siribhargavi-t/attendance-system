@@ -22,10 +22,6 @@ const STAT_CONFIGS = [
 const StudentDashboard = () => {
   const [stats, setStats] = useState([]);
   const [attendancePercent, setAttendancePercent] = useState(null);
-  const [riskStatus, setRiskStatus] = useState("Good");
-  const [projectedMax, setProjectedMax] = useState(null);
-  const [classesRemaining, setClassesRemaining] = useState(0);
-  const [trendData, setTrendData] = useState([]);
 
   const user = JSON.parse(localStorage.getItem("userData") || "{}");
   const token = localStorage.getItem("token");
@@ -43,7 +39,7 @@ const StudentDashboard = () => {
       },
     })
       .then((res) => {
-        const { totalDays, present, absent, percentage, riskStatus, projectedMaxPercentage, classesRemaining, trend } = res.data.stats;
+        const { totalDays, present, absent, percentage } = res.data.stats;
 
         setStats([
           { label: "Total Classes", value: totalDays },
@@ -53,10 +49,6 @@ const StudentDashboard = () => {
         ]);
 
         setAttendancePercent(parseFloat(percentage));
-        setRiskStatus(riskStatus || "Good");
-        setProjectedMax(parseFloat(projectedMaxPercentage));
-        setClassesRemaining(classesRemaining || 0);
-        setTrendData(trend || []);
       })
       .catch((err) => {
         console.error("Failed to fetch dashboard stats", err);
@@ -88,48 +80,16 @@ const StudentDashboard = () => {
           </h2>
         </div>
 
-        {/* Predictive Analytics Banner */}
-        {attendancePercent !== null && (
-          <div 
-            className="p-6 rounded-2xl border flex flex-col md:flex-row md:items-center justify-between gap-6"
-            style={{
-              background: isDark ? "rgba(15,23,42,0.6)" : "rgba(255,255,255,0.75)",
-              borderColor: riskStatus === "Good" 
-                ? "rgba(34,197,94,0.3)" 
-                : riskStatus === "At Risk" 
-                ? "rgba(234,179,8,0.3)" 
-                : "rgba(239,68,68,0.3)",
-              boxShadow: "0 10px 30px rgba(0,0,0,0.03)"
-            }}
-          >
-            <div className="space-y-2 flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">
-                  {riskStatus === "Good" ? "🛡️" : riskStatus === "At Risk" ? "⚠️" : "🚨"}
-                </span>
-                <h3 className="text-lg font-bold" style={{
-                  color: riskStatus === "Good" 
-                    ? "#22c55e" 
-                    : riskStatus === "At Risk" 
-                    ? "#eab308" 
-                    : "#ef4444"
-                }}>
-                  Attendance Profile: {riskStatus === "Good" ? "Safe & Eligible" : riskStatus === "At Risk" ? "At Risk Warning" : "Critically Ineligible (Defaulter)"}
-                </h3>
-              </div>
-              <p className="text-sm" style={{ color: isDark ? "#94a3b8" : "#475569" }}>
-                {riskStatus === "Good" && "Excellent! Your attendance is healthy. Maintain your routine to remain fully eligible for exams."}
-                {riskStatus === "At Risk" && `Your attendance is currently below 75%. You can still recover: you must attend at least ${needed} of the remaining ${classesRemaining} classes.`}
-                {riskStatus === "Defaulter" && `Critical: Even if you attend all remaining ${classesRemaining} classes, your maximum attendance will top out at ${projectedMax}%. Please contact admin.`}
-              </p>
-            </div>
-            
-            {/* Projected Max Mini Card */}
-            <div className="p-4 rounded-xl text-center md:text-right border bg-black/5 dark:bg-white/5" style={{ borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)" }}>
-              <p className="text-xs uppercase font-bold tracking-wider" style={{ color: isDark ? "#94a3b8" : "#64748b" }}>Projected Max %</p>
-              <p className="text-3xl font-black mt-1" style={{ color: textColor }}>{projectedMax}%</p>
-              <p className="text-[10px] mt-1" style={{ color: isDark ? "#64748b" : "#94a3b8" }}>if you attend all remaining classes</p>
-            </div>
+        {/* Basic Alert */}
+        {attendancePercent !== null && attendancePercent < 75 && (
+          <div className="p-4 bg-red-100 border border-red-200 text-red-700 rounded-xl">
+            ⚠️ Warning: Your overall attendance is currently below 75%.
+          </div>
+        )}
+
+        {needed > 0 && (
+          <div className="p-4 bg-yellow-100 border border-yellow-200 text-yellow-800 rounded-xl">
+            You need to attend at least {needed} more classes to reach the 75% requirement.
           </div>
         )}
 
@@ -145,43 +105,6 @@ const StudentDashboard = () => {
               </div>
             );
           })}
-        </div>
-
-        {/* Attendance Trend Chart */}
-        <div 
-          className="p-6 rounded-2xl border"
-          style={{
-            background: isDark ? "rgba(15,23,42,0.6)" : "rgba(255,255,255,0.75)",
-            borderColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
-            backdropFilter: "blur(12px)",
-            boxShadow: "0 10px 30px rgba(0,0,0,0.02)"
-          }}
-        >
-          <h3 className="text-lg font-bold mb-4 flex items-center gap-2" style={{ color: textColor }}>
-            <FiTrendingUp className="text-blue-500" /> Attendance Trend Over Time
-          </h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={trendData}>
-              <XAxis dataKey="date" stroke={isDark ? "#64748b" : "#94a3b8"} style={{ fontSize: 11 }} />
-              <YAxis domain={[0, 100]} stroke={isDark ? "#64748b" : "#94a3b8"} style={{ fontSize: 11 }} />
-              <Tooltip 
-                contentStyle={{
-                  background: isDark ? "#1e293b" : "#ffffff",
-                  borderColor: isDark ? "#334155" : "#e2e8f0",
-                  borderRadius: 10,
-                  color: textColor
-                }}
-              />
-              <Line 
-                type="monotone" 
-                dataKey="percent" 
-                stroke="#6366f1" 
-                strokeWidth={3}
-                dot={{ r: 4, stroke: "#6366f1", strokeWidth: 2, fill: isDark ? "#0f172a" : "#fff" }}
-                activeDot={{ r: 6 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
         </div>
 
       </motion.div>
